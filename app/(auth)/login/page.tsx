@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { SkynoteLogo } from '@/components/ui/SkyCoin'
 import { LoginForm } from '@/components/auth/LoginForm'
-import { GoogleButton } from '@/components/auth/GoogleButton'
+import { GithubButton } from '@/components/auth/GithubButton'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = { title: 'Connexion' }
@@ -23,7 +23,7 @@ export default function LoginPage({ searchParams }: { searchParams: { error?: st
               Une erreur est survenue. Réessaie.
             </div>
           )}
-          <GoogleButton />
+          <GithubButton />
           <div className="my-5 flex items-center gap-3">
             <div className="flex-1 border-t border-sky-border dark:border-night-border" />
             <span className="font-body text-[12px] text-text-tertiary dark:text-text-dark-tertiary">ou</span>

@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { SkynoteLogo } from '@/components/ui/SkyCoin'
 import { SignupForm } from '@/components/auth/SignupForm'
-import { GoogleButton } from '@/components/auth/GoogleButton'
+import { GithubButton } from '@/components/auth/GithubButton'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = { title: 'Créer un compte' }
@@ -15,7 +15,7 @@ export default function SignupPage() {
         </div>
         <div className="rounded-card-login bg-sky-surface p-8 shadow-card dark:bg-night-surface">
           <h1 className="mb-6 font-display text-h3 text-text-main dark:text-text-dark-main">Créer un compte</h1>
-          <GoogleButton label="Continuer avec Google" />
+          <GithubButton label="Continuer avec GitHub" />
           <div className="my-5 flex items-center gap-3">
             <div className="flex-1 border-t border-sky-border dark:border-night-border" />
             <span className="font-body text-[12px] text-text-tertiary">ou</span>
