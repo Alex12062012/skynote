@@ -6,6 +6,7 @@ import { CheckCircle, XCircle, Zap, RotateCcw, ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { SkyCoin } from '@/components/ui/SkyCoin'
 import { CoinAnimation, CoinToast } from '@/components/ui/CoinAnimation'
+import { useCoinReward } from '@/components/providers/CoinRewardProvider'
 import { saveQcmAttempt } from '@/lib/supabase/qcm-actions'
 import { cn } from '@/lib/utils'
 import type { QcmQuestion, Flashcard } from '@/types/database'
@@ -28,6 +29,7 @@ export function QcmEngine({ flashcard, questions, courseId }: QcmEngineProps) {
   const [answerState, setAnswerState] = useState<AnswerState>('unanswered')
   const [showResult, setShowResult] = useState(false)
   const [coinsEarned, setCoinsEarned] = useState(0)
+  const { showReward } = useCoinReward()
   const [showCoinAnim, setShowCoinAnim] = useState(false)
   const [showToast, setShowToast] = useState(false)
 
@@ -65,7 +67,7 @@ export function QcmEngine({ flashcard, questions, courseId }: QcmEngineProps) {
           answers: newAnswers.map((a) => a.chosenIndex),
         })
         setCoinsEarned(earned)
-        if (earned > 0) { setShowCoinAnim(true); setTimeout(() => setShowToast(true), 400) }
+        if (earned > 0) { showReward({ amount: earned, reason: 'Score parfait au QCM !', icon: '⚡' }) }
         setShowResult(true)
       })
     }

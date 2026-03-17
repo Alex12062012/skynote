@@ -56,7 +56,7 @@ export function CoinCounter({ initialCoins, userId }: CoinCounterProps) {
   }, [userId])
 
   return (
-    <div className="relative flex items-center gap-1.5 rounded-pill border border-sky-border bg-sky-surface px-3 py-1.5 dark:border-night-border dark:bg-night-surface">
+    <div data-coin-counter className="relative flex items-center gap-1.5 rounded-pill border border-sky-border bg-sky-surface px-3 py-1.5 dark:border-night-border dark:bg-night-surface">
       <SkyCoin size={18} />
       <span
         className="font-display text-[14px] font-bold tabular-nums text-text-main dark:text-text-dark-main transition-all duration-300"

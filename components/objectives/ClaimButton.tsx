@@ -2,11 +2,14 @@
 
 import { useState, useTransition, useRef } from 'react'
 import { SkyCoin } from '@/components/ui/SkyCoin'
+import { useCoinReward } from '@/components/providers/CoinRewardProvider'
 import { claimObjectiveReward } from '@/lib/supabase/claim-actions'
 
 interface ClaimButtonProps {
   objectiveId: string
   rewardCoins: number
+  objectiveTitle?: string
+  objectiveIcon?: string
   onClaimed?: (coins: number) => void
 }
 
@@ -16,8 +19,9 @@ interface FlyingCoin {
   startY: number
 }
 
-export function ClaimButton({ objectiveId, rewardCoins, onClaimed }: ClaimButtonProps) {
+export function ClaimButton({ objectiveId, rewardCoins, objectiveTitle, objectiveIcon, onClaimed }: ClaimButtonProps) {
   const [isPending, startTransition] = useTransition()
+  const { showReward } = useCoinReward()
   const [claimed, setClaimed] = useState(false)
   const [flyingCoins, setFlyingCoins] = useState<FlyingCoin[]>([])
   const btnRef = useRef<HTMLButtonElement>(null)
