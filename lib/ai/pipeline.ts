@@ -69,45 +69,37 @@ export async function processCourse(courseId: string): Promise<void> {
       .update({ progress: 60 })
       .eq('id', courseId)
 
-    // 5. Générer les QCM pour chaque fiche (en parallèle par batch de 2)
+    // 5. Générer les QCM pour chaque fiche (séquentiel pour fiabilité)
     const qcmInserts: any[] = []
 
-    for (let i = 0; i < insertedFlashcards.length; i += 2) {
-      const batch = insertedFlashcards.slice(i, i + 2)
+    for (let i = 0; i < insertedFlashcards.length; i++) {
+      const flashcard = insertedFlashcards[i]
+      try {
+        const keyPoints = Array.isArray(flashcard.key_points)
+          ? flashcard.key_points
+          : JSON.parse(String(flashcard.key_points) || '[]')
 
-      const batchResults = await Promise.allSettled(
-        batch.map(async (flashcard) => {
-          const keyPoints = Array.isArray(flashcard.key_points)
-            ? flashcard.key_points
-            : JSON.parse(String(flashcard.key_points) || '[]')
+        const questions = await generateQcmQuestions(
+          flashcard.title,
+          flashcard.summary,
+          keyPoints
+        )
 
-          const questions = await generateQcmQuestions(
-            flashcard.title,
-            flashcard.summary,
-            keyPoints
-          )
-
-          return questions.map((q) => ({
-            flashcard_id: flashcard.id,
-            course_id: courseId,
-            user_id: course.user_id,
-            question: q.question,
-            options: q.options,
-            correct_index: q.correct_index,
-            explanation: q.explanation,
-          }))
-        })
-      )
-
-      for (const result of batchResults) {
-        if (result.status === 'fulfilled') {
-          qcmInserts.push(...result.value)
-        }
+        qcmInserts.push(...questions.map((q) => ({
+          flashcard_id: flashcard.id,
+          course_id: courseId,
+          user_id: course.user_id,
+          question: q.question,
+          options: q.options,
+          correct_index: q.correct_index,
+          explanation: q.explanation,
+        })))
+      } catch {
         // On continue même si une fiche échoue
       }
 
-      // Mettre à jour la progression graduellement
-      const progressStep = 60 + Math.round(((i + 2) / insertedFlashcards.length) * 35)
+      // Mettre à jour la progression
+      const progressStep = 60 + Math.round(((i + 1) / insertedFlashcards.length) * 35)
       await supabase
         .from('courses')
         .update({ progress: Math.min(progressStep, 95) })
