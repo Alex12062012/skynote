@@ -37,6 +37,23 @@ export function SignupForm() {
       <Input id="email" type="email" label="Email" placeholder="toi@exemple.com"
         value={email} onChange={(e) => setEmail(e.target.value)} required error={error} />
       <ReferralInput value={referralCode} onChange={setReferralCode} />
+
+      {/* Case RGPD */}
+      <label className="flex items-start gap-3 cursor-pointer">
+        <input
+          type="checkbox"
+          checked={rgpdAccepted}
+          onChange={(e) => setRgpdAccepted(e.target.checked)}
+          className="mt-0.5 h-4 w-4 flex-shrink-0 rounded border-sky-border accent-brand dark:accent-brand-dark"
+        />
+        <span className="font-body text-[13px] text-text-secondary dark:text-text-dark-secondary leading-relaxed">
+          J'ai 15 ans ou plus (ou j'ai l'autorisation de mes parents) et j'accepte les{' '}
+          <a href="/terms" target="_blank" className="text-brand hover:underline dark:text-brand-dark">CGU</a>
+          {' '}et la{' '}
+          <a href="/privacy" target="_blank" className="text-brand hover:underline dark:text-brand-dark">politique de confidentialité</a>
+          {' '}de Skynote.
+        </span>
+      </label>
       <Button type="submit" loading={loading} size="lg" className="w-full mt-1">
         Recevoir le code de vérification
       </Button>

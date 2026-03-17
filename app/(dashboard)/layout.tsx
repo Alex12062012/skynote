@@ -4,6 +4,7 @@ import { Navbar } from '@/components/layout/Navbar'
 import { SkyBackground } from '@/components/ui/SkyBackground'
 import { StreakTracker } from '@/components/dashboard/StreakTracker'
 import { CoinRewardProvider } from '@/components/providers/CoinRewardProvider'
+import { FeedbackButton } from '@/components/ui/FeedbackButton'
 import type { Profile } from '@/types/database'
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -23,6 +24,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
       <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
         {children}
       </main>
+      <FeedbackButton userId={user.id} />
     </div>
     </CoinRewardProvider>
   )
