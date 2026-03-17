@@ -70,7 +70,7 @@ export function FeedbackButton({ userId }: { userId: string }) {
                     {[1,2,3,4,5,6,7,8,9,10].map((n) => (
                       <div key={n} className="relative flex-1">
                         {n === 10 && (
-                          <span className="pointer-events-none absolute -top-3 left-1/2 -translate-x-1/2 text-[13px]" style={{ transform: 'translateX(-50%) rotate(-20deg)', display: 'inline-block' }}>
+                          <span className="pointer-events-none absolute -top-2 -right-1 text-[11px]" style={{ transform: 'rotate(25deg)', display: 'inline-block', zIndex: 10 }}>
                             👑
                           </span>
                         )}
