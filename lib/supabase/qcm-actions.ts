@@ -60,10 +60,24 @@ export async function saveQcmAttempt(input: SaveAttemptInput): Promise<{
     }
   }
 
+  // Si score parfait → marquer la fiche comme maîtrisée automatiquement
+  if (perfect) {
+    await supabase.from('flashcards').update({ is_mastered: true }).eq('id', input.flashcardId).eq('user_id', user.id)
+    const { data: fc } = await supabase.from('flashcards').select('course_id').eq('id', input.flashcardId).single()
+    if (fc) {
+      const { data: all } = await supabase.from('flashcards').select('is_mastered').eq('course_id', fc.course_id)
+      if (all) {
+        const progress = Math.round((all.filter((f: any) => f.is_mastered).length / all.length) * 100)
+        await supabase.from('courses').update({ progress }).eq('id', fc.course_id)
+      }
+    }
+  }
+
   // Vérifier objectif "perfect_qcm_10"
   await checkQcmObjectives(user.id)
 
   revalidatePath('/objectives')
+  revalidatePath('/courses')
   return { coinsEarned, error: null }
 }
 

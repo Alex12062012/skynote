@@ -16,7 +16,22 @@ export function CoinCounter({ initialCoins, userId }: CoinCounterProps) {
   const prevCoins = useRef(initialCoins)
   const supabase = createClient()
 
-  // Écoute realtime Supabase sur le profil
+  // Récupérer le vrai solde au montage (évite le solde périmé du SSR)
+  useEffect(() => {
+    supabase
+      .from('profiles')
+      .select('sky_coins')
+      .eq('id', userId)
+      .single()
+      .then(({ data }) => {
+        if (data && data.sky_coins !== prevCoins.current) {
+          setCoins(data.sky_coins)
+          prevCoins.current = data.sky_coins
+        }
+      })
+  }, [userId])
+
+  // Écoute realtime — mise à jour en direct quand les coins changent
   useEffect(() => {
     const channel = supabase
       .channel(`coins-${userId}`)
@@ -38,7 +53,7 @@ export function CoinCounter({ initialCoins, userId }: CoinCounterProps) {
       .subscribe()
 
     return () => { supabase.removeChannel(channel) }
-  }, [userId, supabase])
+  }, [userId])
 
   return (
     <div className="relative flex items-center gap-1.5 rounded-pill border border-sky-border bg-sky-surface px-3 py-1.5 dark:border-night-border dark:bg-night-surface">
@@ -47,7 +62,7 @@ export function CoinCounter({ initialCoins, userId }: CoinCounterProps) {
         className="font-display text-[14px] font-bold tabular-nums text-text-main dark:text-text-dark-main transition-all duration-300"
         style={{ minWidth: 24 }}
       >
-        {coins}
+        {coins.toLocaleString('fr-FR')}
       </span>
 
       {/* Delta +X qui apparaît brièvement */}
