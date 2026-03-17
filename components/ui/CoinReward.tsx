@@ -5,8 +5,8 @@ import { SkyCoin } from './SkyCoin'
 
 interface CoinParticle {
   id: number
-  startX: number
-  startY: number
+  x: number
+  y: number
   offsetX: number
   offsetY: number
   delay: number
@@ -21,13 +21,11 @@ interface CoinRewardProps {
   onDone?: () => void
 }
 
-// Son satisfaisant via Web Audio API
+// Son satisfaisant — accord montant
 function playRewardSound() {
   try {
     const ctx = new (window.AudioContext || (window as any).webkitAudioContext)()
-
-    // Accord de 3 notes montantes (do-mi-sol)
-    const notes = [523.25, 659.25, 783.99]
+    const notes = [523.25, 659.25, 783.99, 1046.5]
     notes.forEach((freq, i) => {
       const osc = ctx.createOscillator()
       const gain = ctx.createGain()
@@ -35,16 +33,16 @@ function playRewardSound() {
       gain.connect(ctx.destination)
       osc.type = 'sine'
       osc.frequency.value = freq
-      gain.gain.setValueAtTime(0, ctx.currentTime + i * 0.12)
-      gain.gain.linearRampToValueAtTime(0.3, ctx.currentTime + i * 0.12 + 0.01)
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.12 + 0.3)
-      osc.start(ctx.currentTime + i * 0.12)
-      osc.stop(ctx.currentTime + i * 0.12 + 0.35)
+      gain.gain.setValueAtTime(0, ctx.currentTime + i * 0.1)
+      gain.gain.linearRampToValueAtTime(0.25, ctx.currentTime + i * 0.1 + 0.01)
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.1 + 0.25)
+      osc.start(ctx.currentTime + i * 0.1)
+      osc.stop(ctx.currentTime + i * 0.1 + 0.3)
     })
   } catch {}
 }
 
-function playCoinSound() {
+function playCoinTick() {
   try {
     const ctx = new (window.AudioContext || (window as any).webkitAudioContext)()
     const osc = ctx.createOscillator()
@@ -52,187 +50,163 @@ function playCoinSound() {
     osc.connect(gain)
     gain.connect(ctx.destination)
     osc.type = 'sine'
-    osc.frequency.setValueAtTime(880, ctx.currentTime)
-    osc.frequency.exponentialRampToValueAtTime(1760, ctx.currentTime + 0.08)
-    gain.gain.setValueAtTime(0.15, ctx.currentTime)
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.12)
+    osc.frequency.setValueAtTime(1200, ctx.currentTime)
+    osc.frequency.exponentialRampToValueAtTime(1800, ctx.currentTime + 0.05)
+    gain.gain.setValueAtTime(0.1, ctx.currentTime)
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.08)
     osc.start(ctx.currentTime)
-    osc.stop(ctx.currentTime + 0.15)
+    osc.stop(ctx.currentTime + 0.1)
   } catch {}
 }
 
 export function CoinReward({ visible, amount, reason, icon = '🏆', onDone }: CoinRewardProps) {
-  const [phase, setPhase] = useState<'hidden' | 'show' | 'fly' | 'count' | 'done'>('hidden')
   const [particles, setParticles] = useState<CoinParticle[]>([])
+  const [showToast, setShowToast] = useState(false)
   const [displayedCoins, setDisplayedCoins] = useState(0)
-  const [counterPos, setCounterPos] = useState({ x: 0, y: 0 })
-  const containerRef = useRef<HTMLDivElement>(null)
   const countRef = useRef(0)
-  const coinSoundCooldown = useRef(false)
+  const tickCooldown = useRef(false)
 
   useEffect(() => {
-    if (!visible) { setPhase('hidden'); setDisplayedCoins(0); return }
-
-    // Trouver la position du compteur de coins dans la navbar
-    const findCounter = () => {
-      const counter = document.querySelector('[data-coin-counter]')
-      if (counter) {
-        const rect = counter.getBoundingClientRect()
-        setCounterPos({ x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 })
-      } else {
-        setCounterPos({ x: window.innerWidth - 100, y: 32 })
-      }
+    if (!visible) {
+      setParticles([])
+      setShowToast(false)
+      setDisplayedCoins(0)
+      return
     }
-    findCounter()
 
-    setPhase('show')
+    // Trouver le compteur dans la navbar
+    const counter = document.querySelector('[data-coin-counter]')
+    const counterRect = counter?.getBoundingClientRect()
+    const targetX = counterRect ? counterRect.left + counterRect.width / 2 : window.innerWidth - 100
+    const targetY = counterRect ? counterRect.top + counterRect.height / 2 : 32
+
+    // Point de départ = centre de l'écran
+    const startX = window.innerWidth / 2
+    const startY = window.innerHeight / 2
+
+    // Jouer le son de récompense
     playRewardSound()
 
-    // Après 1.5s → lancer les particules
-    const t1 = setTimeout(() => {
-      const cx = window.innerWidth / 2
-      const cy = window.innerHeight / 2
-      const count = Math.min(amount, 12)
+    // Afficher le toast
+    setShowToast(true)
 
+    // Créer les particules après 0.5s
+    setTimeout(() => {
+      const count = Math.min(amount, 10)
       const newParticles: CoinParticle[] = Array.from({ length: count }, (_, i) => ({
         id: i,
-        startX: cx,
-        startY: cy,
-        offsetX: (Math.random() - 0.5) * 120,
-        offsetY: (Math.random() - 0.5) * 120,
-        delay: i * 80,
-        size: 24 + Math.floor(Math.random() * 16),
+        x: startX + (Math.random() - 0.5) * 80,
+        y: startY + (Math.random() - 0.5) * 80,
+        offsetX: targetX,
+        offsetY: targetY,
+        delay: i * 100,
+        size: 20 + Math.floor(Math.random() * 14),
       }))
       setParticles(newParticles)
-      setPhase('fly')
-    }, 1500)
 
-    return () => clearTimeout(t1)
-  }, [visible, amount])
+      // Incrémenter le compteur au fur et à mesure
+      countRef.current = 0
+      const interval = setInterval(() => {
+        countRef.current += 1
+        setDisplayedCoins(countRef.current)
 
-  // Incrémenter le compteur au fur et à mesure que les pièces arrivent
-  useEffect(() => {
-    if (phase !== 'fly') return
+        if (!tickCooldown.current) {
+          tickCooldown.current = true
+          playCoinTick()
+          setTimeout(() => { tickCooldown.current = false }, 90)
+        }
 
-    countRef.current = 0
-    setDisplayedCoins(0)
+        if (countRef.current >= amount) {
+          clearInterval(interval)
+          setTimeout(() => {
+            setParticles([])
+            setShowToast(false)
+            setDisplayedCoins(0)
+            onDone?.()
+          }, 1500)
+        }
+      }, Math.max(60, 900 / amount))
 
-    const interval = setInterval(() => {
-      countRef.current += 1
-      setDisplayedCoins(countRef.current)
+    }, 500)
 
-      // Son par pièce
-      if (!coinSoundCooldown.current) {
-        coinSoundCooldown.current = true
-        playCoinSound()
-        setTimeout(() => { coinSoundCooldown.current = false }, 80)
-      }
+  }, [visible, amount, onDone])
 
-      if (countRef.current >= amount) {
-        clearInterval(interval)
-        setPhase('count')
-        setTimeout(() => {
-          setPhase('done')
-          onDone?.()
-        }, 1500)
-      }
-    }, Math.max(30, 800 / amount))
-
-    return () => clearInterval(interval)
-  }, [phase, amount, onDone])
-
-  if (phase === 'hidden') return null
+  if (!visible && particles.length === 0 && !showToast) return null
 
   return (
-    <div
-      ref={containerRef}
-      className="fixed inset-0 z-[200] flex items-center justify-center"
-      style={{
-        background: 'var(--reward-bg, rgba(255,255,255,0.96))',
-        backdropFilter: 'blur(8px)',
-        animation: phase === 'done' ? 'reward-fade-out 0.4s ease-out forwards' : 'reward-fade-in 0.3s ease-out forwards',
-      }}
-      onClick={() => { if (phase === 'count' || phase === 'done') onDone?.() }}
-    >
+    <>
       <style>{`
-        @keyframes reward-fade-in { from { opacity: 0 } to { opacity: 1 } }
-        @keyframes reward-fade-out { from { opacity: 1 } to { opacity: 0 } }
-        @keyframes particle-burst {
+        @keyframes coin-fly {
           0%   { transform: translate(0, 0) scale(1); opacity: 1; }
-          40%  { transform: translate(var(--ox), var(--oy)) scale(1.2); opacity: 1; }
-          100% { transform: translate(var(--tx), var(--ty)) scale(0.3); opacity: 0; }
+          30%  { opacity: 1; transform: translate(
+            calc((var(--tx) - var(--sx)) * 0.15 + var(--rx)),
+            calc((var(--ty) - var(--sy)) * 0.15 + var(--ry))
+          ) scale(1.3); }
+          100% { transform: translate(
+            calc(var(--tx) - var(--sx)),
+            calc(var(--ty) - var(--sy))
+          ) scale(0.3); opacity: 0; }
         }
-        @keyframes reward-pop {
-          0%   { transform: scale(0.5); opacity: 0; }
-          60%  { transform: scale(1.1); opacity: 1; }
-          100% { transform: scale(1); opacity: 1; }
+        @keyframes toast-in {
+          from { opacity: 0; transform: translateX(-50%) translateY(20px) scale(0.9); }
+          to   { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
         }
-        @keyframes coin-count-pop {
-          0%   { transform: scale(1); }
-          50%  { transform: scale(1.15); }
-          100% { transform: scale(1); }
+        @keyframes toast-out {
+          from { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+          to   { opacity: 0; transform: translateX(-50%) translateY(-10px) scale(0.95); }
         }
-        .dark-reward { background: rgba(6, 13, 26, 0.97) !important; }
       `}</style>
 
-      {/* Contenu central */}
-      <div className="flex flex-col items-center gap-6 text-center px-8"
-        style={{ animation: 'reward-pop 0.5s cubic-bezier(0.34,1.56,0.64,1) forwards' }}>
-
-        {/* Icône objectif */}
-        <div className="flex h-24 w-24 items-center justify-center rounded-full bg-brand-soft dark:bg-brand-dark-soft text-5xl">
-          {icon}
+      {/* Pièces volantes */}
+      {particles.map((p) => (
+        <div
+          key={p.id}
+          className="pointer-events-none fixed z-[999]"
+          style={{
+            left: p.x,
+            top: p.y,
+            '--sx': `${p.x}px`,
+            '--sy': `${p.y}px`,
+            '--tx': `${p.offsetX}px`,
+            '--ty': `${p.offsetY}px`,
+            '--rx': `${(Math.random() - 0.5) * 60}px`,
+            '--ry': `${(Math.random() - 0.5) * 60}px`,
+            animation: `coin-fly 0.9s cubic-bezier(0.4,0,0.2,1) ${p.delay}ms forwards`,
+          } as React.CSSProperties}
+        >
+          <SkyCoin size={p.size} />
         </div>
+      ))}
 
-        {/* Raison */}
-        <div>
-          <p className="font-body text-[13px] font-semibold uppercase tracking-widest text-brand dark:text-brand-dark mb-2">
-            Récompense
-          </p>
-          <h2 className="font-display text-[26px] font-bold text-text-main dark:text-text-dark-main leading-tight">
-            {reason}
-          </h2>
-        </div>
-
-        {/* Compteur de coins animé */}
-        <div className="flex items-center gap-3"
-          style={{ animation: displayedCoins > 0 ? 'coin-count-pop 0.1s ease-out' : 'none' }}>
-          <SkyCoin size={48} />
-          <span className="font-display text-[52px] font-bold text-brand dark:text-brand-dark tabular-nums leading-none">
-            +{displayedCoins}
-          </span>
-        </div>
-
-        {/* Message félicitations */}
-        {(phase === 'count' || phase === 'done') && (
-          <p className="font-body text-[15px] text-text-secondary dark:text-text-dark-secondary animate-fade-in">
-            Félicitations ! 🎉 Appuie n'importe où pour continuer.
-          </p>
-        )}
-      </div>
-
-      {/* Particules volantes */}
-      {particles.map((p) => {
-        const tx = counterPos.x - p.startX
-        const ty = counterPos.y - p.startY
-        return (
-          <div
-            key={p.id}
-            className="pointer-events-none fixed"
-            style={{
-              left: p.startX,
-              top: p.startY,
-              '--ox': `${p.offsetX}px`,
-              '--oy': `${p.offsetY}px`,
-              '--tx': `${tx}px`,
-              '--ty': `${ty}px`,
-              animation: `particle-burst 1.2s cubic-bezier(0.4,0,0.2,1) ${p.delay}ms forwards`,
-            } as React.CSSProperties}
-          >
-            <SkyCoin size={p.size} />
+      {/* Toast en bas au milieu */}
+      {showToast && (
+        <div
+          className="pointer-events-none fixed bottom-8 left-1/2 z-[998]"
+          style={{
+            animation: displayedCoins >= amount
+              ? 'toast-out 0.4s ease-out forwards'
+              : 'toast-in 0.3s cubic-bezier(0.34,1.56,0.64,1) forwards',
+          }}
+        >
+          <div className="flex items-center gap-3 rounded-2xl border border-brand/20 bg-sky-surface px-6 py-4 shadow-2xl dark:border-brand-dark/20 dark:bg-night-surface">
+            <span className="text-3xl">{icon}</span>
+            <div>
+              <p className="font-body text-[12px] font-semibold uppercase tracking-wider text-brand dark:text-brand-dark">
+                {reason}
+              </p>
+              <div className="flex items-center gap-1.5 mt-0.5">
+                <SkyCoin size={20} />
+                <span className="font-display text-[22px] font-bold text-text-main dark:text-text-dark-main tabular-nums">
+                  +{displayedCoins}
+                </span>
+                <span className="font-body text-[13px] text-text-tertiary dark:text-text-dark-tertiary">
+                  / {amount}
+                </span>
+              </div>
+            </div>
           </div>
-        )
-      })}
-    </div>
+        </div>
+      )}
+    </>
   )
 }
