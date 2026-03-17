@@ -48,10 +48,12 @@ export default async function QcmPage({ params }: Props) {
     .eq('user_id', user.id)
 
   // Grouper par fiche
-  const questionsByFlashcard: Record<string, QcmQuestion[]> = {}
-  for (const fid of flashcardIds) {
-    questionsByFlashcard[fid] = (allQuestions || []).filter((q) => q.flashcard_id === fid)
-  }
+const questions = (allQuestions ?? []) as QcmQuestion[]
+const questionsByFlashcard: Record<string, QcmQuestion[]> = {}
+for (const fid of flashcardIds) {
+  questionsByFlashcard[fid] = questions.filter((q) => q.flashcard_id === fid)
+}
+  
 
   return (
     <div className="mx-auto max-w-2xl animate-fade-in">
