@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { signOut } from '@/lib/supabase/actions'
-import { PlanBadge } from '@/components/ui/Badge'
+import { PlanBadge, BetaBadge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { SkyCoin } from '@/components/ui/SkyCoin'
 import { ProgressBar } from '@/components/ui/ProgressBar'
@@ -43,6 +43,7 @@ export default async function ProfilePage() {
           <p className="font-body text-[13px] text-text-secondary dark:text-text-dark-secondary truncate">{user.email}</p>
           <div className="mt-2 flex flex-wrap items-center gap-2">
             <PlanBadge plan={profile?.plan ?? 'free'} />
+            {profile?.is_beta_tester && <BetaBadge />}
             {isPremium && profile?.plan_expires_at && (
               <span className="font-body text-[11px] text-text-tertiary dark:text-text-dark-tertiary">
                 expire le {formatDate(profile.plan_expires_at)}

@@ -29,9 +29,13 @@ export function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   const [actionLoading, setActionLoading] = useState(false)
   const [feedback, setFeedback] = useState('')
   const [newPin, setNewPin] = useState('')
+  const [feedbacks, setFeedbacks] = useState<any[]>([])
+  const [avgScore, setAvgScore] = useState('0')
+  const [betaEnabled, setBetaEnabled] = useState(true)
+  const [betaLoading, setBetaLoading] = useState(false)
   const [pinFeedback, setPinFeedback] = useState('')
 
-  useEffect(() => { loadData() }, [])
+  useEffect(() => { loadData(); loadFeedbacks(); loadBeta() }, [])
 
   async function loadData() {
     setLoading(true)
@@ -44,6 +48,37 @@ export function AdminDashboard({ onLogout }: { onLogout: () => void }) {
       setDailySignups(data.dailySignups)
     } catch {}
     setLoading(false)
+  }
+
+  async function loadFeedbacks() {
+    try {
+      const res = await fetch('/api/admin/feedbacks')
+      const data = await res.json()
+      setFeedbacks(data.feedbacks)
+      setAvgScore(data.avgScore)
+    } catch {}
+  }
+
+  async function loadBeta() {
+    try {
+      const res = await fetch('/api/admin/beta')
+      const data = await res.json()
+      setBetaEnabled(data.enabled)
+    } catch {}
+  }
+
+  async function toggleBeta() {
+    setBetaLoading(true)
+    try {
+      const res = await fetch('/api/admin/beta', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ enabled: !betaEnabled }),
+      })
+      const data = await res.json()
+      setBetaEnabled(data.enabled)
+    } catch {}
+    setBetaLoading(false)
   }
 
   async function doAction(userId: string, action: string, value?: any) {
@@ -107,7 +142,7 @@ export function AdminDashboard({ onLogout }: { onLogout: () => void }) {
 
       {/* Tabs */}
       <div className="flex border-b border-slate-800 px-6">
-        {[['stats', '📊 Statistiques'], ['users', '👥 Utilisateurs'], ['settings', '⚙️ Paramètres']].map(([id, label]) => (
+        {[['stats', '📊 Statistiques'], ['users', '👥 Utilisateurs'], ['feedbacks', '💬 Feedbacks'], ['settings', '⚙️ Paramètres']].map(([id, label]) => (
           <button key={id} onClick={() => setTab(id as any)}
             className={`px-4 py-3 text-[14px] font-medium border-b-2 transition-colors ${tab === id ? 'border-blue-500 text-blue-400' : 'border-transparent text-slate-400 hover:text-white'}`}>
             {label}
@@ -355,9 +390,72 @@ export function AdminDashboard({ onLogout }: { onLogout: () => void }) {
           </div>
         )}
 
+        {/* ── FEEDBACKS TAB ── */}
+        {tab === 'feedbacks' && (
+          <div className="space-y-6">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="rounded-xl border border-slate-800 bg-slate-900 p-5">
+                <p className="text-[12px] text-slate-400 mb-1">Note moyenne</p>
+                <p className="font-bold text-[36px]" style={{ color: parseFloat(avgScore) >= 8 ? '#34D399' : parseFloat(avgScore) >= 6 ? '#FBBF24' : '#F87171' }}>
+                  {avgScore}<span className="text-[16px] text-slate-500">/10</span>
+                </p>
+              </div>
+              <div className="rounded-xl border border-slate-800 bg-slate-900 p-5">
+                <p className="text-[12px] text-slate-400 mb-1">Total feedbacks</p>
+                <p className="font-bold text-[36px] text-white">{feedbacks.length}</p>
+              </div>
+            </div>
+            <div className="space-y-3">
+              {feedbacks.length === 0 ? (
+                <div className="rounded-xl border border-slate-800 bg-slate-900 p-8 text-center text-slate-400">
+                  Aucun feedback pour l&apos;instant
+                </div>
+              ) : feedbacks.map((f: any) => (
+                <div key={f.id} className="rounded-xl border border-slate-800 bg-slate-900 p-5">
+                  <div className="flex items-start justify-between mb-3">
+                    <div>
+                      <p className="text-[14px] font-medium text-white">{f.profiles?.full_name || 'Anonyme'}</p>
+                      <p className="text-[11px] text-slate-400">
+                        {f.profiles?.email}
+                        {f.profiles?.is_beta_tester && <span className="text-blue-400"> · Bêta testeur</span>}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {f.milestone && <span className="text-[11px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-400">{f.milestone} QCM</span>}
+                      <span className="font-bold text-[20px]" style={{ color: f.score >= 8 ? '#34D399' : f.score >= 6 ? '#FBBF24' : '#F87171' }}>
+                        {f.score}/10
+                      </span>
+                    </div>
+                  </div>
+                  {f.love && <div className="mb-2"><p className="text-[11px] text-emerald-400 font-semibold mb-1">✓ Ce qu&apos;il aime</p><p className="text-[13px] text-slate-300">{f.love}</p></div>}
+                  {f.missing && <div><p className="text-[11px] text-amber-400 font-semibold mb-1">⚠ Ce qui manque</p><p className="text-[13px] text-slate-300">{f.missing}</p></div>}
+                  <p className="text-[11px] text-slate-500 mt-2">{new Date(f.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* ── SETTINGS TAB ── */}
         {tab === 'settings' && (
           <div className="max-w-md space-y-6">
+
+            {/* Beta mode toggle */}
+            <div className="rounded-xl border border-slate-800 bg-slate-900 p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="font-semibold text-[15px] text-white">Mode Bêta Testing</h3>
+                  <p className="text-[13px] text-slate-400 mt-1">
+                    {betaEnabled ? '🟢 Activé — les nouveaux inscrits reçoivent le badge Bêta testeur' : '🔴 Désactivé — inscription normale'}
+                  </p>
+                </div>
+                <button onClick={toggleBeta} disabled={betaLoading}
+                  className={`relative h-7 w-12 rounded-full transition-colors duration-200 ${betaEnabled ? 'bg-blue-600' : 'bg-slate-600'}`}>
+                  <span className={`absolute top-1 h-5 w-5 rounded-full bg-white transition-transform duration-200 ${betaEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
+                </button>
+              </div>
+            </div>
+
             <div className="rounded-xl border border-slate-800 bg-slate-900 p-6">
               <h3 className="font-semibold text-[15px] text-white mb-1">Changer le code d'accès</h3>
               <p className="text-[13px] text-slate-400 mb-4">Minimum 4 caractères. Tu seras déconnecté après le changement.</p>

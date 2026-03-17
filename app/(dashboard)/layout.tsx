@@ -5,6 +5,7 @@ import { SkyBackground } from '@/components/ui/SkyBackground'
 import { StreakTracker } from '@/components/dashboard/StreakTracker'
 import { CoinRewardProvider } from '@/components/providers/CoinRewardProvider'
 import { FeedbackButton } from '@/components/ui/FeedbackButton'
+import { FeedbackTrigger } from '@/components/providers/FeedbackTrigger'
 import type { Profile } from '@/types/database'
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -25,6 +26,11 @@ export default async function DashboardLayout({ children }: { children: React.Re
         {children}
       </main>
       <FeedbackButton userId={user.id} />
+      <FeedbackTrigger
+        userId={user.id}
+        initialShown5={profile?.feedback_shown_5 ?? false}
+        initialShown25={profile?.feedback_shown_25 ?? false}
+      />
     </div>
     </CoinRewardProvider>
   )

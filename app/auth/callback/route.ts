@@ -23,6 +23,14 @@ export async function GET(request: NextRequest) {
     if (!error) {
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
+        // Vérifier si le mode beta est actif
+        const { data: betaSetting } = await supabase
+          .from('admin_settings')
+          .select('value')
+          .eq('key', 'beta_mode')
+          .single()
+        const isBeta = betaSetting?.value === 'true'
+
         await supabase.from('profiles').upsert({
           id: user.id,
           email: user.email!,
@@ -32,7 +40,8 @@ export async function GET(request: NextRequest) {
           sky_coins: 0,
           streak_days: 0,
           last_login_at: new Date().toISOString(),
-        }, { onConflict: 'id', ignoreDuplicates: false })
+          is_beta_tester: isBeta,
+        }, { onConflict: 'id', ignoreDuplicates: true })
       }
       return NextResponse.redirect(`${origin}${next}`)
     }

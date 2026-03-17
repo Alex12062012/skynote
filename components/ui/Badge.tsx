@@ -23,6 +23,14 @@ export function SubjectBadge({ subject, className }: { subject: string; classNam
   )
 }
 
+export function BetaBadge() {
+  return (
+    <span className="inline-flex items-center gap-1 rounded-pill bg-blue-100 px-2.5 py-0.5 font-body text-[11px] font-bold text-blue-700 dark:bg-blue-950/30 dark:text-blue-400">
+      🧪 Bêta testeur
+    </span>
+  )
+}
+
 export function PlanBadge({ plan }: { plan: 'free' | 'premium' }) {
   return plan === 'premium' ? (
     <span className="inline-flex items-center gap-1 rounded-pill bg-amber-100 px-3 py-1 font-body text-[12px] font-bold text-amber-700 dark:bg-amber-950/30 dark:text-amber-400">
