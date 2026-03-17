@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { Navbar } from '@/components/layout/Navbar'
 import { SkyBackground } from '@/components/ui/SkyBackground'
 import { StreakTracker } from '@/components/dashboard/StreakTracker'
+import { CoinRewardProvider } from '@/components/providers/CoinRewardProvider'
 import type { Profile } from '@/types/database'
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -13,6 +14,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single()
 
   return (
+    <CoinRewardProvider>
     <div className="min-h-screen">
       <SkyBackground />
       <Navbar profile={profile as Profile | null} />
@@ -22,5 +24,6 @@ export default async function DashboardLayout({ children }: { children: React.Re
         {children}
       </main>
     </div>
+    </CoinRewardProvider>
   )
 }
