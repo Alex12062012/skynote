@@ -11,12 +11,15 @@ export function SignupForm() {
   const [email, setEmail] = useState('')
   const [referralCode, setReferralCode] = useState('')
   const [error, setError] = useState('')
+  const [rgpdAccepted, setRgpdAccepted] = useState(false)
   const [loading, setLoading] = useState(false)
   const [otpSent, setOtpSent] = useState(false)
   const supabase = createClient()
 
   async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault(); setError(''); setLoading(true)
+    e.preventDefault()
+    if (!rgpdAccepted) { setError('Tu dois accepter les conditions pour continuer'); setLoading(false); return }
+    setError(''); setLoading(true)
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {
