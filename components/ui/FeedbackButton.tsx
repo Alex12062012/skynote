@@ -66,20 +66,30 @@ export function FeedbackButton({ userId }: { userId: string }) {
                   <p className="font-body text-[13px] font-medium text-text-main dark:text-text-dark-main mb-2">
                     Note Skynote sur 10 *
                   </p>
-                  <div className="flex gap-1.5 flex-wrap">
+                  <div className="flex gap-1 w-full">
                     {[1,2,3,4,5,6,7,8,9,10].map((n) => (
-                      <button
-                        key={n}
-                        type="button"
-                        onClick={() => setScore(n)}
-                        className={`h-8 w-8 rounded-input font-body text-[13px] font-bold transition-all ${
-                          score === n
-                            ? 'bg-brand text-white dark:bg-brand-dark dark:text-night-bg'
-                            : 'bg-sky-cloud text-text-secondary hover:bg-brand-soft dark:bg-night-border dark:text-text-dark-secondary'
-                        }`}
-                      >
-                        {n}
-                      </button>
+                      <div key={n} className="relative flex-1">
+                        {n === 10 && (
+                          <span className="pointer-events-none absolute -top-3 left-1/2 -translate-x-1/2 text-[13px]" style={{ transform: 'translateX(-50%) rotate(-20deg)', display: 'inline-block' }}>
+                            👑
+                          </span>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => setScore(n)}
+                          className={`relative w-full h-9 rounded-input font-body text-[13px] font-bold transition-all ${
+                            n === 10
+                              ? score === n
+                                ? 'bg-amber-400 text-white shadow-md'
+                                : 'bg-amber-100 text-amber-600 hover:bg-amber-200 dark:bg-amber-950/40 dark:text-amber-400 dark:hover:bg-amber-900/50'
+                              : score === n
+                                ? 'bg-brand text-white dark:bg-brand-dark dark:text-night-bg'
+                                : 'bg-sky-cloud text-text-secondary hover:bg-brand-soft dark:bg-night-border dark:text-text-dark-secondary'
+                          }`}
+                        >
+                          {n}
+                        </button>
+                      </div>
                     ))}
                   </div>
                 </div>
