@@ -451,7 +451,7 @@ export function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                 </div>
                 <button onClick={toggleBeta} disabled={betaLoading}
                   className={`relative h-7 w-12 rounded-full transition-colors duration-200 ${betaEnabled ? 'bg-blue-600' : 'bg-slate-600'}`}>
-                  <span className={`absolute top-1 h-5 w-5 rounded-full bg-white transition-transform duration-200 ${betaEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
+                  <span className={`absolute top-0.5 h-6 w-6 rounded-full bg-white shadow transition-transform duration-200 ${betaEnabled ? 'translate-x-5' : 'translate-x-0.5'}`} />
                 </button>
               </div>
             </div>
