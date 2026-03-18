@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { getFamilleStats, calculateTalent } from '@/lib/supabase/famille-actions'
+import { getFamilleStats } from '@/lib/supabase/famille-actions'
+import { calculateTalent } from '@/lib/famille-utils'
 import { FamilleManager } from '@/components/famille/FamilleManager'
 import type { Metadata } from 'next'
 
