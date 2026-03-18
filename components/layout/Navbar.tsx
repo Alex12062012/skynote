@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState } from 'react'
-import { BookOpen, Target, User, Menu, X, Plus, LayoutDashboard } from 'lucide-react'
+import { BookOpen, Target, User, Menu, X, Plus, LayoutDashboard, Users, Trophy } from 'lucide-react'
 import { SkyCoin } from '@/components/ui/SkyCoin'
 import { CoinCounter } from '@/components/ui/CoinCounter'
 import { ThemeToggle } from '@/components/ui/ThemeToggle'
@@ -15,6 +15,7 @@ const navLinks = [
   { href: '/courses', label: 'Mes cours', icon: BookOpen },
   { href: '/objectives', label: 'Objectifs', icon: Target },
   { href: '/profile', label: 'Profil', icon: User },
+  { href: '/leaderboard', label: 'Classement', icon: Trophy },
 ]
 
 export function Navbar({ profile }: { profile: Profile | null }) {

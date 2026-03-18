@@ -31,12 +31,22 @@ export function BetaBadge() {
   )
 }
 
-export function PlanBadge({ plan }: { plan: 'free' | 'premium' }) {
-  return plan === 'premium' ? (
-    <span className="inline-flex items-center gap-1 rounded-pill bg-amber-100 px-3 py-1 font-body text-[12px] font-bold text-amber-700 dark:bg-amber-950/30 dark:text-amber-400">
-      ⭐ Premium
-    </span>
-  ) : (
+export function PlanBadge({ plan }: { plan: string }) {
+  if (plan === 'plus' || plan === 'premium') {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-pill bg-amber-100 px-3 py-1 font-body text-[12px] font-bold text-amber-700 dark:bg-amber-950/30 dark:text-amber-400">
+        ⭐ Plus
+      </span>
+    )
+  }
+  if (plan === 'famille') {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-pill bg-purple-100 px-3 py-1 font-body text-[12px] font-bold text-purple-700 dark:bg-purple-950/30 dark:text-purple-400">
+        👨‍👩‍👧 Famille
+      </span>
+    )
+  }
+  return (
     <span className="inline-flex items-center rounded-pill bg-sky-cloud px-3 py-1 font-body text-[12px] font-medium text-text-secondary dark:bg-night-border dark:text-text-dark-secondary">
       Gratuit
     </span>

@@ -21,6 +21,7 @@ export function CreateCourseForm() {
   const [file, setFile] = useState<File | null>(null)
   const [voiceTranscript, setVoiceTranscript] = useState('')
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [limitReached, setLimitReached] = useState(false)
 
   function validate(): boolean {
     const e: Record<string, string> = {}
@@ -55,7 +56,12 @@ export function CreateCourseForm() {
       const { courseId, error } = await createCourse(formData)
 
       if (error || !courseId) {
-        setErrors({ form: error ?? 'Erreur lors de la création' })
+        if (error?.startsWith('LIMIT:')) {
+          setErrors({ form: error.replace('LIMIT:', '') })
+          setLimitReached(true)
+        } else {
+          setErrors({ form: error ?? 'Erreur lors de la création' })
+        }
         return
       }
 
