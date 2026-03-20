@@ -407,9 +407,13 @@ export function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                           className={`flex-1 h-10 rounded-xl text-[13px] font-semibold transition-colors ${selectedUser.plan === 'free' ? 'bg-slate-600 text-white' : 'border border-slate-700 text-slate-400 hover:bg-slate-800'}`}>
                           Gratuit
                         </button>
-                        <button onClick={() => doAction(selectedUser.id, 'set_plan', 'premium')} disabled={actionLoading}
-                          className={`flex-1 h-10 rounded-xl text-[13px] font-semibold transition-colors ${selectedUser.plan === 'premium' ? 'bg-amber-600 text-white' : 'border border-slate-700 text-slate-400 hover:bg-slate-800'}`}>
-                          ⭐ Premium
+                        <button onClick={() => doAction(selectedUser.id, 'set_plan', 'plus')} disabled={actionLoading}
+                          className={`flex-1 h-10 rounded-xl text-[13px] font-semibold transition-colors ${selectedUser.plan === 'plus' || selectedUser.plan === 'premium' ? 'bg-amber-600 text-white' : 'border border-slate-700 text-slate-400 hover:bg-slate-800'}`}>
+                          ⭐ Plus
+                        </button>
+                        <button onClick={() => doAction(selectedUser.id, 'set_plan', 'famille')} disabled={actionLoading}
+                          className={`flex-1 h-10 rounded-xl text-[13px] font-semibold transition-colors ${selectedUser.plan === 'famille' ? 'bg-purple-600 text-white' : 'border border-slate-700 text-slate-400 hover:bg-slate-800'}`}>
+                          👨‍👩‍👧
                         </button>
                       </div>
                     </div>

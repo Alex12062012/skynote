@@ -34,21 +34,21 @@ export function BetaBadge() {
 export function PlanBadge({ plan }: { plan: string }) {
   if (plan === 'plus' || plan === 'premium') {
     return (
-      <span className="inline-flex items-center gap-1 rounded-pill bg-amber-100 px-3 py-1 font-body text-[12px] font-bold text-amber-700 dark:bg-amber-950/30 dark:text-amber-400">
+      <a href="/pricing" className="inline-flex items-center gap-1 rounded-pill bg-amber-100 px-3 py-1 font-body text-[12px] font-bold text-amber-700 hover:bg-amber-200 transition-colors dark:bg-amber-950/30 dark:text-amber-400 dark:hover:bg-amber-900/40 cursor-pointer">
         ⭐ Plus
-      </span>
+      </a>
     )
   }
   if (plan === 'famille') {
     return (
-      <span className="inline-flex items-center gap-1 rounded-pill bg-purple-100 px-3 py-1 font-body text-[12px] font-bold text-purple-700 dark:bg-purple-950/30 dark:text-purple-400">
+      <a href="/pricing" className="inline-flex items-center gap-1 rounded-pill bg-purple-100 px-3 py-1 font-body text-[12px] font-bold text-purple-700 hover:bg-purple-200 transition-colors dark:bg-purple-950/30 dark:text-purple-400 dark:hover:bg-purple-900/40 cursor-pointer">
         👨‍👩‍👧 Famille
-      </span>
+      </a>
     )
   }
   return (
-    <span className="inline-flex items-center rounded-pill bg-sky-cloud px-3 py-1 font-body text-[12px] font-medium text-text-secondary dark:bg-night-border dark:text-text-dark-secondary">
-      Gratuit
-    </span>
+    <a href="/pricing" className="inline-flex items-center rounded-pill bg-sky-cloud px-3 py-1 font-body text-[12px] font-medium text-text-secondary hover:bg-sky-border transition-colors dark:bg-night-border dark:text-text-dark-secondary dark:hover:bg-night-border/80 cursor-pointer">
+      Gratuit →
+    </a>
   )
 }
