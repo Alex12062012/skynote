@@ -3,7 +3,6 @@ import { createClient } from '@/lib/supabase/server'
 import { SkyCoin } from '@/components/ui/SkyCoin'
 import { ProgressBar } from '@/components/ui/ProgressBar'
 import { PlanBadge } from '@/components/ui/Badge'
-import { ActivatePremiumButton } from '@/components/objectives/ActivatePremiumButton'
 import { ReferralCard } from '@/components/objectives/ReferralCard'
 import { ClaimButton } from '@/components/objectives/ClaimButton'
 import { getReferralStats } from '@/lib/supabase/referral-actions'
@@ -61,7 +60,9 @@ export default async function ObjectivesPage() {
               <p className="font-body text-[13px] text-brand/70 dark:text-brand-dark/70">750 Sky Coins = 1 mois</p>
               <div className="mt-2">
                 {coins >= 750 ? (
-                  <ActivatePremiumButton coins={coins} />
+                  <a href="/pricing" className="inline-flex items-center gap-1.5 rounded-pill bg-brand px-3 py-1.5 font-body text-[13px] font-semibold text-white hover:bg-brand-hover dark:bg-brand-dark dark:text-night-bg">
+                    🪙 Utiliser mes coins →
+                  </a>
                 ) : (
                   <div>
                     <ProgressBar value={coins} max={750} className="mb-1" />
