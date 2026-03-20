@@ -231,7 +231,26 @@ export async function activatePremiumWithCoins(): Promise<{ success: boolean; er
   const result = await spendCoins(user.id, PREMIUM_COST, '⭐ Activation Plus — 1 mois')
   if (!result.success) return result
 
-  const expiresAt = new Date()
+  // Si l'utilisateur a déjà un plan Plus actif → prolonger au lieu de reset
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('plan, plan_expires_at')
+    .eq('id', user.id)
+    .single()
+
+  const now = new Date()
+  let baseDate = now
+
+  if (
+    profile?.plan === 'plus' &&
+    profile?.plan_expires_at &&
+    new Date(profile.plan_expires_at) > now
+  ) {
+    // Prolonger depuis la date d'expiration actuelle
+    baseDate = new Date(profile.plan_expires_at)
+  }
+
+  const expiresAt = new Date(baseDate)
   expiresAt.setMonth(expiresAt.getMonth() + 1)
 
   await supabase
@@ -241,5 +260,6 @@ export async function activatePremiumWithCoins(): Promise<{ success: boolean; er
 
   revalidatePath('/profile')
   revalidatePath('/objectives')
+  revalidatePath('/pricing')
   return { success: true }
 }
