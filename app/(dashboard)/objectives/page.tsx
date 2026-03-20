@@ -32,7 +32,7 @@ export default async function ObjectivesPage() {
 
   const userObjMap = new Map(userObjectives.map((uo: any) => [uo.objective_id, uo]))
   const coins = profile?.sky_coins ?? 0
-  const isPremium = profile?.plan === 'premium'
+  const isPremium = profile?.plan === 'plus'
 
   return (
     <div className="mx-auto max-w-2xl flex flex-col gap-8 animate-fade-in">
@@ -57,15 +57,15 @@ export default async function ObjectivesPage() {
         {!isPremium ? (
           <div className="flex flex-col gap-2 sm:items-end">
             <div className="rounded-card-sm border border-brand/20 bg-brand-soft px-4 py-3 dark:border-brand-dark/20 dark:bg-brand-dark-soft sm:text-right">
-              <p className="font-display text-[15px] font-bold text-brand dark:text-brand-dark">⭐ Débloquer Premium</p>
-              <p className="font-body text-[13px] text-brand/70 dark:text-brand-dark/70">100 Sky Coins = 1 mois</p>
+              <p className="font-display text-[15px] font-bold text-brand dark:text-brand-dark">⭐ Débloquer Plus</p>
+              <p className="font-body text-[13px] text-brand/70 dark:text-brand-dark/70">750 Sky Coins = 1 mois</p>
               <div className="mt-2">
-                {coins >= 100 ? (
+                {coins >= 750 ? (
                   <ActivatePremiumButton coins={coins} />
                 ) : (
                   <div>
-                    <ProgressBar value={coins} max={100} className="mb-1" />
-                    <p className="font-body text-[11px] text-text-tertiary dark:text-text-dark-tertiary">{coins} / 100 coins</p>
+                    <ProgressBar value={coins} max={750} className="mb-1" />
+                    <p className="font-body text-[11px] text-text-tertiary dark:text-text-dark-tertiary">{coins} / 750 coins</p>
                   </div>
                 )}
               </div>

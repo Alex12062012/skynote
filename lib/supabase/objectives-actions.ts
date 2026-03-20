@@ -226,9 +226,9 @@ export async function activatePremiumWithCoins(): Promise<{ success: boolean; er
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { success: false, error: 'Non connecté' }
 
-  const PREMIUM_COST = 100
+  const PREMIUM_COST = 750
 
-  const result = await spendCoins(user.id, PREMIUM_COST, '🌟 Activation Premium — 1 mois')
+  const result = await spendCoins(user.id, PREMIUM_COST, '⭐ Activation Plus — 1 mois')
   if (!result.success) return result
 
   const expiresAt = new Date()
@@ -236,7 +236,7 @@ export async function activatePremiumWithCoins(): Promise<{ success: boolean; er
 
   await supabase
     .from('profiles')
-    .update({ plan: 'premium', plan_expires_at: expiresAt.toISOString() })
+    .update({ plan: 'plus', plan_expires_at: expiresAt.toISOString() })
     .eq('id', user.id)
 
   revalidatePath('/profile')
