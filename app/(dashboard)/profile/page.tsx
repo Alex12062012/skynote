@@ -7,6 +7,7 @@ import { SkyCoin } from '@/components/ui/SkyCoin'
 import { ProgressBar } from '@/components/ui/ProgressBar'
 import { getInitials, formatDate } from '@/lib/utils'
 import Link from 'next/link'
+import { NameChangeForm } from '@/components/profile/NameChangeForm'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = { title: 'Mon profil' }
@@ -41,6 +42,7 @@ export default async function ProfilePage() {
             {profile?.full_name ?? 'Anonyme'}
           </p>
           <p className="font-body text-[13px] text-text-secondary dark:text-text-dark-secondary truncate">{user.email}</p>
+          <NameChangeForm currentName={profile?.full_name ?? null} nameChangedAt={profile?.name_changed_at ?? null} />
           <div className="mt-2 flex flex-wrap items-center gap-2">
             <PlanBadge plan={profile?.plan ?? 'free'} />
             {profile?.is_beta_tester && <BetaBadge />}

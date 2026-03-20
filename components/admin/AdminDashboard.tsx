@@ -106,6 +106,7 @@ export function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   const [search, setSearch] = useState('')
   const [selectedUser, setSelectedUser] = useState<User | null>(null)
   const [coinAmount, setCoinAmount] = useState('')
+  const [newName, setNewName] = useState('')
   const [actionLoading, setActionLoading] = useState(false)
   const [feedback, setFeedback] = useState('')
   const [newPin, setNewPin] = useState('')
@@ -418,6 +419,15 @@ export function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                       </div>
                     </div>
                     {feedback && <p className={`text-[13px] font-medium ${feedback.startsWith('✓') ? 'text-green-400' : 'text-red-400'}`}>{feedback}</p>}
+                    <div>
+                      <p className="text-[13px] font-medium text-white mb-2">Changer le prénom</p>
+                      <div className="flex gap-2">
+                        <input type="text" value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="Nouveau prénom"
+                          className="flex-1 h-10 rounded-xl border border-slate-700 bg-slate-800 px-3 text-[14px] text-white focus:border-blue-500 focus:outline-none" />
+                        <button onClick={() => doAction(selectedUser.id, 'set_name', newName)} disabled={actionLoading || !newName.trim()}
+                          className="px-4 rounded-xl bg-blue-600 text-[13px] font-semibold text-white hover:bg-blue-500 disabled:opacity-50">OK</button>
+                      </div>
+                    </div>
                     <button onClick={() => { if (confirm(`Supprimer ${selectedUser.email} ?`)) doAction(selectedUser.id, 'delete_user') }} disabled={actionLoading}
                       className="w-full h-10 rounded-xl border border-red-900/50 bg-red-950/20 text-[13px] font-semibold text-red-400 hover:bg-red-950/40 disabled:opacity-50 flex items-center justify-center gap-2">
                       <Trash2 className="h-4 w-4" /> Supprimer ce compte
