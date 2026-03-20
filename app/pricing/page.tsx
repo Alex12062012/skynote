@@ -245,7 +245,7 @@ export default function PricingPage() {
         <div className="mt-10 grid gap-4 sm:grid-cols-2">
           {[
             ['Puis-je changer de forfait ?', 'Oui, à tout moment depuis ton profil.'],
-            ['Comment fonctionne l\'annuel ?', 'Tu paies une fois pour 12 mois, ~15% moins cher.'],
+            ['Comment fonctionne l\'annuel ?', 'Tu paies 47,88€ une seule fois pour 12 mois. Ça revient à 3,99€/mois au lieu de 4,99€ — soit 2 mois offerts.'],
             ['C\'est quoi les Sky Coins ?', 'Monnaie virtuelle gagnée en révisant. 750 coins = 1 mois Plus.'],
             ['Le plan Famille c\'est pour qui ?', 'Pour les parents avec jusqu\'à 6 enfants à suivre.'],
           ].map(([q, a]) => (
