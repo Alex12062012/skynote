@@ -11,7 +11,6 @@ interface FamilleManagerProps {
   parentId: string
   initialGroup: any
   initialChildren: any[]
-  calculateTalent: (stats: any[]) => { subject: string; score: number } | null
 }
 
 const SUBJECT_EMOJIS: Record<string, string> = {
@@ -20,7 +19,7 @@ const SUBJECT_EMOJIS: Record<string, string> = {
   'Espagnol': '🇪🇸', 'Philosophie': '🤔', 'Général': '📚',
 }
 
-export function FamilleManager({ parentId, initialGroup, initialChildren, calculateTalent }: FamilleManagerProps) {
+export function FamilleManager({ parentId, initialGroup, initialChildren }: FamilleManagerProps) {
   const [group, setGroup] = useState(initialGroup)
   const [children, setChildren] = useState(initialChildren)
   const [isPending, startTransition] = useTransition()
@@ -92,7 +91,7 @@ export function FamilleManager({ parentId, initialGroup, initialChildren, calcul
     )
   }
 
-  const talent = selectedChild ? calculateTalent(selectedChild.child_stats || []) : null
+  const talent = selectedChild?.talent ?? null
 
   return (
     <div className="grid gap-6 lg:grid-cols-3">

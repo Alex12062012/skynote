@@ -5,7 +5,9 @@ import { getFamilleStats } from '@/lib/supabase/famille-actions'
 import { calculateTalent } from '@/lib/famille-utils'
 import { FamilleManager } from '@/components/famille/FamilleManager'
 import type { Metadata } from 'next'
+export const dynamic = 'force-dynamic'
 
+export const metadata: Metadata = { title: 'Navigation Familiale — Skynote' }
 
 export default async function FamillePage() {
   const supabase = await createClient()
@@ -34,6 +36,12 @@ export default async function FamillePage() {
 
   const { group, children } = await getFamilleStats(user.id)
 
+  // Calculer les talents côté serveur pour éviter de passer une fonction au client
+  const childrenWithTalent = (children || []).map((child: any) => ({
+    ...child,
+    talent: calculateTalent(child.child_stats || []),
+  }))
+
   return (
     <div className="mx-auto max-w-4xl animate-fade-in">
       <div className="mb-8">
@@ -48,8 +56,7 @@ export default async function FamillePage() {
       <FamilleManager
         parentId={user.id}
         initialGroup={group}
-        initialChildren={children}
-        calculateTalent={calculateTalent}
+        initialChildren={childrenWithTalent}
       />
     </div>
   )
