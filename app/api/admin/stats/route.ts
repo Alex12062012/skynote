@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { createClient as createServiceClient } from '@supabase/supabase-js'
 
 function getDaysArray(days: number): string[] {
   return Array.from({ length: days }, (_, i) => {
@@ -21,7 +22,11 @@ function buildTimeSeries(days: string[], data: any[], dateField: string): { date
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = await createClient()
+    // Utiliser le service role pour bypasser le RLS
+    const supabase = createServiceClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    )
     const { searchParams } = new URL(request.url)
     const period = searchParams.get('period') || '7' // '7', '30', 'all'
 
@@ -51,7 +56,7 @@ export async function GET(request: NextRequest) {
       supabase.from('qcm_attempts').select('*', { count: 'exact', head: true }),
       supabase.from('qcm_attempts').select('*', { count: 'exact', head: true }).eq('perfect', true),
       supabase.from('flashcards').select('*', { count: 'exact', head: true }),
-      supabase.from('profiles').select('id,email,full_name,sky_coins,plan,streak_days,created_at,last_login_at,is_beta_tester').order('created_at', { ascending: false }).limit(50),
+      supabase.from('profiles').select('id,email,full_name,sky_coins,plan,streak_days,created_at,last_login_at,is_beta_tester').order('created_at', { ascending: false, nullsFirst: false }).limit(50),
       supabase.from('profiles').select('id,email,full_name,sky_coins,plan,streak_days').order('sky_coins', { ascending: false }).limit(10),
       supabase.from('profiles').select('created_at').gte('created_at', sinceISO),
       supabase.from('qcm_attempts').select('created_at').gte('created_at', sinceISO),
