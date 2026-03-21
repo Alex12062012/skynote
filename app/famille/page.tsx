@@ -5,7 +5,7 @@ import { getFamilleStats } from '@/lib/supabase/famille-actions'
 import { calculateTalent } from '@/lib/famille-utils'
 import { FamilleManager } from '@/components/famille/FamilleManager'
 import type { Metadata } from 'next'
-export const dynamic = 'force-dynamic'
+
 
 export const metadata: Metadata = { title: 'Navigation Familiale — Skynote' }
 
