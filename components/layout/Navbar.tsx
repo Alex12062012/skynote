@@ -12,13 +12,13 @@ import type { Profile } from '@/types/database'
 
 const navLinks = [
   { href: '/dashboard', label: 'Accueil', icon: LayoutDashboard },
-  { href: '/courses', label: 'Mes cours', icon: BookOpen },
   { href: '/objectives', label: 'Objectifs', icon: Target },
   { href: '/profile', label: 'Profil', icon: User },
-  { href: '/leaderboard', label: 'Classement', icon: Trophy },
 ]
 
 export function Navbar({ profile }: { profile: Profile | null }) {
+  const isFamille = profile?.plan === 'famille'
+
   const pathname = usePathname()
   const [open, setOpen] = useState(false)
   const [coinSpinning, setCoinSpinning] = useState(false)
@@ -68,6 +68,17 @@ export function Navbar({ profile }: { profile: Profile | null }) {
               <l.icon className="h-4 w-4" />{l.label}
             </Link>
           ))}
+          {isFamille && (
+            <Link href="/famille"
+              className={cn(
+                'flex items-center gap-2 rounded-input px-3 py-2 font-body text-[14px] transition-colors',
+                pathname.startsWith('/famille')
+                  ? 'bg-purple-100 text-purple-700 dark:bg-purple-950/30 dark:text-purple-400 font-medium'
+                  : 'text-text-secondary hover:bg-sky-cloud hover:text-text-main dark:text-text-dark-secondary dark:hover:bg-night-border'
+              )}>
+              <Users className="h-4 w-4" /> Famille
+            </Link>
+          )}
         </nav>
 
         {/* Actions droite */}

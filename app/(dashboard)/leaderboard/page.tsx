@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
+import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { SkyCoin } from '@/components/ui/SkyCoin'
 import { cn } from '@/lib/utils'
 import type { Metadata } from 'next'
@@ -7,8 +7,15 @@ import type { Metadata } from 'next'
 export const metadata: Metadata = { title: 'Classement — Skynote' }
 
 export default async function LeaderboardPage() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const supabase = createServiceClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+
+  // Auth check with regular client
+  const { createClient } = await import('@/lib/supabase/server')
+  const authClient = await createClient()
+  const { data: { user } } = await authClient.auth.getUser()
   if (!user) redirect('/login')
 
   // Top 100

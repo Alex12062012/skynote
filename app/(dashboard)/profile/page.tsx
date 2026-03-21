@@ -56,26 +56,31 @@ export default async function ProfilePage() {
       </div>
 
       {/* Sky Coins */}
-      <div className="flex items-center gap-4 rounded-card border border-sky-border bg-sky-surface p-5 dark:border-night-border dark:bg-night-surface">
-        <SkyCoin size={48} />
-        <div className="flex-1">
-          <div className="flex items-center justify-between mb-1.5">
+      <div className="rounded-card border border-sky-border bg-sky-surface p-5 dark:border-night-border dark:bg-night-surface">
+        <div className="flex items-center gap-4 mb-3">
+          <SkyCoin size={44} />
+          <div className="flex-1">
             <p className="font-display text-[28px] font-bold leading-none text-text-main dark:text-text-dark-main">
-              {coins}{' '}
+              {coins.toLocaleString('fr-FR')}{' '}
               <span className="font-body text-[14px] font-normal text-text-tertiary">Sky Coins</span>
             </p>
-            <Link href="/objectives">
-              <Button size="sm" variant="ghost" className="text-[13px]">Objectifs →</Button>
-            </Link>
+            {isFree && (
+              <>
+                <ProgressBar value={Math.min(coins, 750)} max={750} className="mt-2" />
+                <p className="mt-1 font-body text-[11px] text-text-tertiary dark:text-text-dark-tertiary">
+                  {Math.max(0, 750 - coins)} coins manquants pour 1 mois Plus
+                </p>
+              </>
+            )}
           </div>
-          {!isPremium && (
-            <>
-              <ProgressBar value={coins} max={100} />
-              <p className="mt-1 font-body text-[11px] text-text-tertiary dark:text-text-dark-tertiary">
-                {Math.max(0, 100 - coins)} coins manquants pour Premium
-              </p>
-            </>
-          )}
+        </div>
+        <div className="flex gap-2">
+          <Link href="/objectives" className="flex-1 flex items-center justify-center h-9 rounded-input border border-sky-border font-body text-[13px] font-medium text-text-secondary hover:bg-sky-cloud dark:border-night-border dark:text-text-dark-secondary transition-colors">
+            🎯 Objectifs
+          </Link>
+          <Link href="/leaderboard" className="flex-1 flex items-center justify-center h-9 rounded-input border border-sky-border font-body text-[13px] font-medium text-text-secondary hover:bg-sky-cloud dark:border-night-border dark:text-text-dark-secondary transition-colors">
+            🏆 Classement
+          </Link>
         </div>
       </div>
 
@@ -110,6 +115,22 @@ export default async function ProfilePage() {
       <p className="text-center font-body text-[13px] text-text-tertiary dark:text-text-dark-tertiary">
         Membre depuis {profile?.created_at ? formatDate(profile.created_at) : '—'}
       </p>
+
+      {/* Mise à niveau — seulement pour les gratuits */}
+      {isFree && (
+        <Link href="/pricing"
+          className="flex items-center justify-between rounded-card border border-brand/30 bg-brand-soft p-5 hover:bg-brand/10 transition-colors dark:border-brand-dark/30 dark:bg-brand-dark-soft">
+          <div>
+            <p className="font-display text-[16px] font-bold text-brand dark:text-brand-dark">
+              ⭐ Passer au plan Plus
+            </p>
+            <p className="font-body text-[13px] text-brand/70 dark:text-brand-dark/70 mt-0.5">
+              Cours illimités, vocal, et plus encore
+            </p>
+          </div>
+          <span className="font-body text-[14px] font-bold text-brand dark:text-brand-dark">4,99€/mois →</span>
+        </Link>
+      )}
 
       <form action={signOut}>
         <Button type="submit" variant="ghost" className="w-full text-error hover:bg-error/10">
