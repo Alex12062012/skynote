@@ -25,15 +25,11 @@ export default async function LeaderboardPage() {
     .order('sky_coins', { ascending: false })
     .limit(100)
 
-  // Rang de l'utilisateur connecté
-  const { count: userRank } = await supabase
-    .from('profiles')
-    .select('id', { count: 'exact' })
-    .gt('sky_coins', top100?.find(p => p.id === user.id)?.sky_coins ?? 0)
-
-  const myRank = (userRank ?? 0) + 1
+  // Rang = position dans le top100 (index + 1)
+  const myRankInTop100 = (top100 || []).findIndex(p => p.id === user.id)
+  const myRank = myRankInTop100 >= 0 ? myRankInTop100 + 1 : null
   const myProfile = top100?.find(p => p.id === user.id)
-  const isInTop100 = !!myProfile
+  const isInTop100 = myRankInTop100 >= 0
 
   const MEDALS = ['🥇', '🥈', '🥉']
 
@@ -146,9 +142,13 @@ export default async function LeaderboardPage() {
       </div>
 
       {/* Ma position en bas si dans le top 100 */}
-      {isInTop100 && (
+      {isInTop100 && myRank && (
         <p className="mt-4 text-center font-body text-[13px] text-text-secondary dark:text-text-dark-secondary">
-          Tu es #{myRank} dans le classement 🎉
+          {myRank === 1 ? '🥇 Tu es 1er du classement !' :
+           myRank === 2 ? '🥈 Tu es 2ème du classement !' :
+           myRank === 3 ? '🥉 Tu es 3ème du classement !' :
+           myRank <= 10 ? `Tu es #${myRank} du classement — dans le top 10 !` :
+           `Tu es #${myRank} du classement`}
         </p>
       )}
 
