@@ -111,8 +111,13 @@ export default async function LeaderboardPage() {
                     'font-body text-[14px] font-semibold truncate',
                     isMe ? 'text-brand dark:text-brand-dark' : 'text-text-main dark:text-text-dark-main'
                   )}>
-                    {profile.full_name?.split(' ')[0] || 'Anonyme'}
-                    {isMe && ' (toi)'}
+                    {isMe
+                      ? ((profile.full_name?.split(' ')[0] || 'Anonyme') + ' (toi)')
+                      : (() => {
+                          const name = profile.full_name?.split(' ')[0] || 'Anonyme'
+                          return name.length <= 2 ? name : name[0].toUpperCase() + name.slice(1, 3).toLowerCase() + '...'
+                        })()
+                    }
                   </p>
                   {profile.streak_days >= 7 && (
                     <span className="text-[12px]" title={`${profile.streak_days} jours de streak`}>🔥</span>

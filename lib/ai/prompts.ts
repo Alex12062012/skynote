@@ -11,7 +11,7 @@ RÈGLES ABSOLUES :
 - Adapte le niveau au contenu (collège ou lycée).
 - Utilise un langage simple, direct, accessible.
 - Les points essentiels doivent être des phrases courtes et percutantes.
-- Maximum 6 fiches par cours, minimum 2.
+- Maximum 5 fiches par cours, minimum 2. Ne génère JAMAIS plus de 5 fiches.
 - Chaque fiche couvre un sous-thème distinct.
 
 FORMAT JSON ATTENDU :
@@ -69,7 +69,7 @@ Contenu du cours :
 ${content.slice(0, 6000)}
 ---
 
-Génère entre 2 et 6 fiches de révision en JSON.`
+Génère entre 2 et 5 fiches de révision en JSON. MAXIMUM 5 FICHES, même si le cours est long. Fais des fiches plus denses plutôt que plus nombreuses.`
 }
 
 export function buildQcmPrompt(flashcardTitle: string, summary: string, keyPoints: string[]): string {

@@ -1,5 +1,5 @@
 'use client'
-import { useState, useTransition } from 'react'
+import { useState, useTransition, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
@@ -8,8 +8,11 @@ import { SourceTypeTabs } from './SourceTypeTabs'
 import { FileDropzone } from './FileDropzone'
 import { VoiceRecorder } from './VoiceRecorder'
 import { createCourse } from '@/lib/supabase/course-actions'
+import { Camera, X, AlertTriangle } from 'lucide-react'
 
 type SourceType = 'text' | 'pdf' | 'photo' | 'vocal'
+
+const PHOTO_WARNING_KEY = 'skynote_hide_photo_warning'
 
 export function CreateCourseForm() {
   const router = useRouter()
@@ -23,15 +26,62 @@ export function CreateCourseForm() {
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [limitReached, setLimitReached] = useState(false)
 
+  // Photo states
+  const [showPhotoWarning, setShowPhotoWarning] = useState(false)
+  const [extracting, setExtracting] = useState(false)
+  const [extractedText, setExtractedText] = useState('')
+  const [showExtracted, setShowExtracted] = useState(false)
+  const pendingFileRef = useRef<File | null>(null)
+
   function validate(): boolean {
     const e: Record<string, string> = {}
     if (!title.trim()) e.title = 'Le titre est requis'
     if (!subject) e.subject = 'La matière est requise'
     if (sourceType === 'text' && !textContent.trim()) e.content = 'Le contenu est requis'
-    if ((sourceType === 'pdf' || sourceType === 'photo') && !file) e.file = 'Le fichier est requis'
+    if (sourceType === 'photo' && !extractedText.trim() && !file) e.file = 'La photo est requise'
+    if (sourceType === 'pdf' && !file) e.file = 'Le fichier est requis'
     if (sourceType === 'vocal' && !voiceTranscript.trim()) e.content = 'Enregistre du contenu vocal'
     setErrors(e)
     return Object.keys(e).length === 0
+  }
+
+  function handleFileChange(newFile: File | null) {
+    setFile(newFile)
+    if (newFile && sourceType === 'photo') {
+      const hideWarning = localStorage.getItem(PHOTO_WARNING_KEY) === 'true'
+      if (hideWarning) {
+        // Extraire directement sans popup
+        extractTextFromPhoto(newFile)
+      } else {
+        pendingFileRef.current = newFile
+        setShowPhotoWarning(true)
+      }
+    }
+  }
+
+  async function extractTextFromPhoto(photoFile: File) {
+    setExtracting(true)
+    setShowPhotoWarning(false)
+    try {
+      const formData = new FormData()
+      formData.append('file', photoFile)
+      const res = await fetch('/api/extract-photo', { method: 'POST', body: formData })
+      const data = await res.json()
+      if (data.success && data.text) {
+        setExtractedText(data.text)
+        setShowExtracted(true)
+      } else {
+        setErrors({ file: 'Impossible de lire la photo. Essaie avec une meilleure qualité ou saisis le texte manuellement.' })
+      }
+    } catch {
+      setErrors({ file: 'Erreur lors de la lecture de la photo.' })
+    }
+    setExtracting(false)
+  }
+
+  function handlePhotoWarningOk(dontShowAgain: boolean) {
+    if (dontShowAgain) localStorage.setItem(PHOTO_WARNING_KEY, 'true')
+    if (pendingFileRef.current) extractTextFromPhoto(pendingFileRef.current)
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -46,11 +96,9 @@ export function CreateCourseForm() {
 
       if (sourceType === 'text') formData.set('content', textContent)
       else if (sourceType === 'vocal') formData.set('content', voiceTranscript)
+      else if (sourceType === 'photo') formData.set('content', extractedText)
       else if (file) {
-        // Pour PDF/photo : on lit en base64 pour l'IA, ou on extrait le texte côté client
-        // Ici on stocke le nom + taille comme contenu temporaire ; le pipeline IA traitera le fichier
         formData.set('content', `[Fichier: ${file.name} — ${Math.round(file.size / 1024)} Ko]\n\nTraitement en cours via l'IA...`)
-        // TODO partie 6 : upload réel dans Supabase Storage
       }
 
       const { courseId, error } = await createCourse(formData)
@@ -65,89 +113,221 @@ export function CreateCourseForm() {
         return
       }
 
+      await fetch('/api/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ courseId }),
+      })
+
       router.push(`/courses/${courseId}`)
+      router.refresh()
     })
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-      {errors.form && (
-        <div className="rounded-input border border-error/20 bg-error/10 px-4 py-3 font-body text-[14px] text-error">
-          {errors.form}
+    <>
+      {/* Pop-up avertissement photo */}
+      {showPhotoWarning && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+          <div className="relative z-10 w-full max-w-md rounded-card-login border border-sky-border bg-sky-surface p-6 shadow-2xl dark:border-night-border dark:bg-night-surface animate-slide-in">
+            <div className="mb-4 flex items-start gap-3">
+              <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-amber-100 dark:bg-amber-950/30">
+                <Camera className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+              </div>
+              <div>
+                <h3 className="font-display text-[17px] font-bold text-text-main dark:text-text-dark-main">
+                  Conseil pour les photos 📸
+                </h3>
+              </div>
+            </div>
+
+            <div className="rounded-input border border-amber-200 bg-amber-50 p-4 dark:border-amber-800/30 dark:bg-amber-950/20 mb-4">
+              <p className="font-body text-[13px] text-amber-800 dark:text-amber-300 leading-relaxed">
+                Pour les photos, <strong>privilégie les cours imprimés</strong> car l'IA a du mal à lire les cours manuscrits
+                — surtout les cours d'espagnol écrits à Larache à la dernière minute 😉
+              </p>
+            </div>
+
+            <p className="font-body text-[13px] text-text-secondary dark:text-text-dark-secondary mb-5 leading-relaxed">
+              Si l'IA n'arrive pas à lire ta photo, tu pourras modifier le texte détecté avant de valider.
+              Tu peux aussi supprimer ce cours et le saisir en vocal — ça marche souvent mieux !
+            </p>
+
+            <div className="flex gap-3">
+              <Button
+                variant="secondary"
+                className="flex-1"
+                onClick={() => {
+                  setShowPhotoWarning(false)
+                  setFile(null)
+                  pendingFileRef.current = null
+                }}
+              >
+                Annuler
+              </Button>
+              <Button
+                className="flex-1"
+                onClick={() => handlePhotoWarningOk(false)}
+              >
+                OK, continuer
+              </Button>
+            </div>
+
+            <button
+              onClick={() => handlePhotoWarningOk(true)}
+              className="mt-3 w-full text-center font-body text-[12px] text-text-tertiary hover:text-text-secondary dark:hover:text-text-dark-secondary transition-colors"
+            >
+              Ne plus afficher pour les prochains cours
+            </button>
+          </div>
         </div>
       )}
 
-      <Input
-        id="title"
-        label="Titre du cours"
-        placeholder="Ex : La photosynthèse, Les équations du 2e degré..."
-        value={title}
-        onChange={(e) => setTitle(e.target.value)}
-        error={errors.title}
-        maxLength={120}
-      />
+      {/* Extraction en cours */}
+      {extracting && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" />
+          <div className="relative z-10 flex flex-col items-center gap-4 rounded-card-login bg-sky-surface p-8 shadow-2xl dark:bg-night-surface">
+            <div className="h-10 w-10 rounded-full border-3 border-brand border-t-transparent animate-spin dark:border-brand-dark" />
+            <p className="font-display text-[16px] font-bold text-text-main dark:text-text-dark-main">
+              Lecture de ta photo...
+            </p>
+            <p className="font-body text-[13px] text-text-secondary dark:text-text-dark-secondary">
+              L'IA analyse et transcrit ton cours ✨
+            </p>
+          </div>
+        </div>
+      )}
 
-      <SubjectSelect value={subject} onChange={setSubject} error={errors.subject} />
+      <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+        <Input
+          id="title"
+          label="Titre du cours"
+          placeholder="Ex: Les fonctions — Mathématiques"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          error={errors.title}
+          required
+        />
 
-      <SourceTypeTabs value={sourceType} onChange={setSourceType} />
+        <SubjectSelect value={subject} onChange={setSubject} error={errors.subject} />
 
-      {/* Zone de contenu selon le type */}
-      {sourceType === 'text' && (
-        <div className="flex flex-col gap-1.5">
-          <label className="font-body text-[13px] font-medium text-text-main dark:text-text-dark-main">
-            Colle ou tape ton cours ici
-          </label>
-          <textarea
-            value={textContent}
-            onChange={(e) => setTextContent(e.target.value)}
-            placeholder="Colle ton cours, tes notes de classe, un résumé..."
-            rows={10}
-            className="w-full resize-y rounded-input border border-sky-border bg-sky-surface px-4 py-3 font-body text-[14px] text-text-main placeholder:text-text-tertiary transition-all focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/15 dark:border-night-border dark:bg-night-surface dark:text-text-dark-main dark:placeholder:text-text-dark-tertiary dark:focus:border-brand-dark"
-          />
-          {errors.content && <p className="font-body text-[12px] text-error">{errors.content}</p>}
-          <p className="font-body text-[12px] text-text-tertiary dark:text-text-dark-tertiary">
-            {textContent.length} caractères — Plus c'est long, meilleures seront les fiches !
+        <div>
+          <p className="mb-2 font-body text-[13px] font-medium text-text-main dark:text-text-dark-main">
+            Source du cours
           </p>
+          <SourceTypeTabs value={sourceType} onChange={(v) => {
+            setSourceType(v as SourceType)
+            setExtractedText('')
+            setShowExtracted(false)
+            setFile(null)
+          }} />
         </div>
-      )}
 
-      {(sourceType === 'pdf') && (
-        <div>
+        {/* Contenu selon le type */}
+        {sourceType === 'text' && (
+          <div>
+            <label className="mb-1.5 block font-body text-[13px] font-medium text-text-main dark:text-text-dark-main">
+              Contenu du cours
+            </label>
+            <textarea
+              value={textContent}
+              onChange={(e) => setTextContent(e.target.value)}
+              placeholder="Colle ou tape ton cours ici..."
+              rows={8}
+              className="w-full resize-none rounded-input border border-sky-border bg-sky-surface px-4 py-3 font-body text-[14px] text-text-main placeholder:text-text-tertiary focus:border-brand focus:outline-none dark:border-night-border dark:bg-night-surface dark:text-text-dark-main dark:focus:border-brand-dark"
+            />
+            {errors.content && <p className="mt-1 font-body text-[12px] text-error">{errors.content}</p>}
+          </div>
+        )}
+
+        {sourceType === 'photo' && !showExtracted && (
+          <div>
+            <FileDropzone
+              accept="image/*"
+              label="Photo du cours"
+              value={file}
+              onChange={handleFileChange}
+              error={errors.file}
+            />
+          </div>
+        )}
+
+        {/* Texte extrait — éditable */}
+        {sourceType === 'photo' && showExtracted && (
+          <div>
+            <div className="mb-2 flex items-center justify-between">
+              <label className="font-body text-[13px] font-medium text-text-main dark:text-text-dark-main">
+                ✅ Texte détecté — tu peux le modifier
+              </label>
+              <button
+                type="button"
+                onClick={() => { setShowExtracted(false); setExtractedText(''); setFile(null) }}
+                className="flex items-center gap-1 font-body text-[12px] text-text-tertiary hover:text-error transition-colors"
+              >
+                <X className="h-3.5 w-3.5" /> Changer la photo
+              </button>
+            </div>
+            <textarea
+              value={extractedText}
+              onChange={(e) => setExtractedText(e.target.value)}
+              rows={10}
+              className="w-full resize-none rounded-input border border-emerald-300 bg-emerald-50/30 px-4 py-3 font-body text-[14px] text-text-main focus:border-brand focus:outline-none dark:border-emerald-800/40 dark:bg-emerald-950/10 dark:text-text-dark-main"
+            />
+            {extractedText.includes('[illisible]') && (
+              <div className="mt-2 flex items-start gap-2 rounded-input border border-amber-200 bg-amber-50 p-3 dark:border-amber-800/30 dark:bg-amber-950/20">
+                <AlertTriangle className="h-4 w-4 flex-shrink-0 text-amber-600 mt-0.5" />
+                <p className="font-body text-[12px] text-amber-700 dark:text-amber-400">
+                  Certaines parties sont marquées [illisible]. Tu peux les corriger manuellement avant de valider.
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {sourceType === 'pdf' && (
           <FileDropzone
-            accept="application/pdf"
-            label="Importer un PDF"
-            file={file}
-            onFile={setFile}
+            accept=".pdf"
+            label="PDF du cours"
+            value={file}
+            onChange={setFile}
+            error={errors.file}
           />
-          {errors.file && <p className="mt-1 font-body text-[12px] text-error">{errors.file}</p>}
-          <p className="mt-2 font-body text-[12px] text-text-tertiary dark:text-text-dark-tertiary">
-            💡 Astuce : Copie le texte du PDF et utilise l'onglet "Texte" pour de meilleurs résultats.
-          </p>
-        </div>
-      )}
+        )}
 
-      {sourceType === 'photo' && (
-        <div>
-          <FileDropzone
-            accept="image/*"
-            label="Importer une photo de cours"
-            file={file}
-            onFile={setFile}
+        {sourceType === 'vocal' && (
+          <VoiceRecorder
+            value={voiceTranscript}
+            onChange={setVoiceTranscript}
+            error={errors.content}
           />
-          {errors.file && <p className="mt-1 font-body text-[12px] text-error">{errors.file}</p>}
-        </div>
-      )}
+        )}
 
-      {sourceType === 'vocal' && (
-        <div>
-          <VoiceRecorder transcript={voiceTranscript} onTranscript={setVoiceTranscript} />
-          {errors.content && <p className="mt-1 font-body text-[12px] text-error">{errors.content}</p>}
-        </div>
-      )}
+        {/* Limite atteinte */}
+        {limitReached && errors.form && (
+          <div className="rounded-input border border-amber-200 bg-amber-50 p-4 dark:border-amber-800/30 dark:bg-amber-950/20">
+            <p className="font-body text-[13px] text-amber-800 dark:text-amber-300">{errors.form}</p>
+            <a href="/pricing" className="mt-2 inline-block font-body text-[13px] font-semibold text-brand hover:underline dark:text-brand-dark">
+              Passer au plan Plus pour des cours illimités →
+            </a>
+          </div>
+        )}
 
-      <Button type="submit" size="lg" loading={isPending} className="w-full">
-        {isPending ? 'Création en cours...' : '✨ Générer mes fiches avec l\'IA'}
-      </Button>
-    </form>
+        {errors.form && !limitReached && (
+          <p className="font-body text-[13px] text-error">{errors.form}</p>
+        )}
+
+        <Button
+          type="submit"
+          loading={isPending || extracting}
+          size="lg"
+          className="w-full"
+          disabled={sourceType === 'photo' && !showExtracted}
+        >
+          {isPending ? 'Génération en cours...' : 'Créer le cours ✨'}
+        </Button>
+      </form>
+    </>
   )
 }
