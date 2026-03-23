@@ -92,15 +92,23 @@ export async function GET() {
 
   // ── Plans ──
   const planCounts = { free: 0, plus: 0, famille: 0 }
+  const paidCounts = { plus: 0, famille: 0 } // Vrais payants uniquement (Stripe)
   ;(allProfiles || []).forEach((p: any) => {
-    if (p.plan === 'plus' || p.plan === 'premium') planCounts.plus++
-    else if (p.plan === 'famille') planCounts.famille++
-    else planCounts.free++
+    if (p.plan === 'plus' || p.plan === 'premium') {
+      planCounts.plus++
+      if (!p.is_manual_upgrade) paidCounts.plus++
+    } else if (p.plan === 'famille') {
+      planCounts.famille++
+      if (!p.is_manual_upgrade) paidCounts.famille++
+    } else {
+      planCounts.free++
+    }
   })
-  const conversionRate = totalU > 0 ? (((planCounts.plus + planCounts.famille) / totalU) * 100).toFixed(1) : '0'
-  const mrr = (planCounts.plus * 4.99 + planCounts.famille * 11.99).toFixed(2)
+  const paidTotal = paidCounts.plus + paidCounts.famille
+  const conversionRate = totalU > 0 ? ((paidTotal / totalU) * 100).toFixed(1) : '0'
+  const mrr = (paidCounts.plus * 4.99 + paidCounts.famille * 11.99).toFixed(2)
   const arr = (parseFloat(mrr) * 12).toFixed(2)
-  const ltv = ((planCounts.plus * 4.99 * 12) + (planCounts.famille * 11.99 * 12)).toFixed(2)
+  const ltv = ((paidCounts.plus * 4.99 * 12) + (paidCounts.famille * 11.99 * 12)).toFixed(2)
 
   // ── Feedbacks ──
   const scores = (feedbacks || []).map((f: any) => f.score)
