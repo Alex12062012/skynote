@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 export const dynamic = 'force-dynamic'
+export const dynamic = 'force-dynamic'
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
 
@@ -114,6 +115,13 @@ export async function GET(request: NextRequest) {
       ? ((totalQcm ?? 0) / totalUsers).toFixed(1)
       : '0'
 
+    // Utilisateurs connectés aujourd'hui
+    const { data: activeUsersToday } = await supabase
+      .from('profiles')
+      .select('id, full_name, email, last_login_at, plan, sky_coins')
+      .gte('last_login_at', sinceISO)
+      .order('last_login_at', { ascending: false })
+
     return NextResponse.json({
       stats: {
         totalUsers: totalUsers ?? 0,
@@ -128,6 +136,7 @@ export async function GET(request: NextRequest) {
       },
       recentUsers: recentUsers || [],
       topUsers: topUsers || [],
+      activeUsersToday: activeUsersToday || [],
       timeSeries: {
         signups: signupsSeries,
         qcm: qcmSeries,

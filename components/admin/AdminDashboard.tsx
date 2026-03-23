@@ -113,6 +113,8 @@ export function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   const [pinFeedback, setPinFeedback] = useState('')
   const [betaEnabled, setBetaEnabled] = useState(true)
   const [betaLoading, setBetaLoading] = useState(false)
+  const [activeUsersToday, setActiveUsersToday] = useState<any[]>([])
+  const [showActiveUsers, setShowActiveUsers] = useState(false)
 
   useEffect(() => { loadData(); loadFeedbacks(); loadBeta() }, [period])
 
@@ -125,6 +127,7 @@ export function AdminDashboard({ onLogout }: { onLogout: () => void }) {
       setUsers(data.recentUsers)
       setTopUsers(data.topUsers)
       setTimeSeries(data.timeSeries || {})
+      setActiveUsersToday(data.activeUsersToday || [])
     } catch {}
     setLoading(false)
   }
@@ -183,11 +186,12 @@ export function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   // KPI Cards data
   const kpiCards = [
     { key: 'signups' as ChartKey, icon: <Users className="h-5 w-5" />, label: 'Utilisateurs', value: stats?.totalUsers ?? 0, color: '#60A5FA' },
+    { key: null, icon: <Users className="h-5 w-5" />, label: 'Connectés aujourd\'hui', value: activeUsersToday.length, color: '#34D399', onClick: () => setShowActiveUsers(true) },
     { key: 'courses' as ChartKey, icon: <BookOpen className="h-5 w-5" />, label: 'Cours créés', value: stats?.totalCourses ?? 0, color: '#FBBF24' },
     { key: 'qcm' as ChartKey, icon: <Zap className="h-5 w-5" />, label: 'QCM faits', value: stats?.totalQcm ?? 0, color: '#34D399' },
     { key: 'avgQcm' as ChartKey, icon: <Trophy className="h-5 w-5" />, label: 'Moy. QCM/élève', value: stats?.avgQcmPerUser ?? '0', color: '#F87171' },
     { key: 'coins' as ChartKey, icon: <span className="text-base">🪙</span>, label: 'Coins distribués', value: stats?.totalCoinsDistributed ?? 0, color: '#A78BFA' },
-    { key: null, icon: <DollarSign className="h-5 w-5" />, label: 'Coût API ($)', value: `$${stats?.estimatedApiCost ?? '0'}`, color: '#6EE7B7' },
+    { key: null, icon: <DollarSign className="h-5 w-5" />, label: 'Coût API ($)', value: `$${stats?.estimatedApiCost ?? '0'}`, color: '#6EE7B7', onClick: undefined },
     { key: null, icon: <BookOpen className="h-5 w-5" />, label: 'Cours/utilisateur', value: stats?.avgCoursesPerUser ?? '0', color: '#FCA5A5' },
     { key: null, icon: <Trophy className="h-5 w-5" />, label: 'Scores parfaits', value: stats?.perfectQcm ?? 0, color: '#C4B5FD' },
   ]
@@ -247,13 +251,45 @@ export function AdminDashboard({ onLogout }: { onLogout: () => void }) {
               <>
                 {/* KPI Cards — cliquables */}
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                {/* Modal utilisateurs connectés aujourd'hui */}
+                {showActiveUsers && (
+                  <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={() => setShowActiveUsers(false)}>
+                    <div className="w-full max-w-md rounded-2xl border border-slate-700 bg-slate-900 p-6" onClick={e => e.stopPropagation()}>
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="font-bold text-[16px] text-white">⚡ Connectés aujourd'hui ({activeUsersToday.length})</h3>
+                        <button onClick={() => setShowActiveUsers(false)} className="text-slate-400 hover:text-white text-xl">×</button>
+                      </div>
+                      <div className="space-y-2 max-h-80 overflow-y-auto">
+                        {activeUsersToday.length === 0 ? (
+                          <p className="text-slate-400 text-center py-4">Aucun utilisateur connecté aujourd'hui</p>
+                        ) : activeUsersToday.map((u: any) => (
+                          <div key={u.id} className="flex items-center justify-between rounded-xl bg-slate-800 px-4 py-2.5">
+                            <div>
+                              <p className="text-[14px] font-medium text-white">{u.full_name || 'Anonyme'}</p>
+                              <p className="text-[11px] text-slate-400">{u.email}</p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className={`text-[11px] px-2 py-0.5 rounded-full ${u.plan === 'plus' || u.plan === 'premium' ? 'bg-amber-900/30 text-amber-400' : u.plan === 'famille' ? 'bg-purple-900/30 text-purple-400' : 'bg-slate-700 text-slate-400'}`}>
+                                {u.plan === 'plus' || u.plan === 'premium' ? '⭐' : u.plan === 'famille' ? '👨‍👩‍👧' : '🆓'}
+                              </span>
+                              <span className="text-[11px] text-slate-400">
+                                {u.last_login_at ? new Date(u.last_login_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : ''}
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                   {kpiCards.map((card) => {
                     const isActive = activeChart === card.key && card.key !== null
                     const series = card.key ? timeSeries[card.key] : null
                     return (
                       <div key={card.label}
-                        onClick={() => card.key && setActiveChart(activeChart === card.key ? null : card.key)}
-                        className={`rounded-xl border p-4 transition-all ${card.key ? 'cursor-pointer hover:border-slate-600' : ''} ${isActive ? 'border-blue-500 bg-slate-800' : 'border-slate-800 bg-slate-900'}`}>
+                        onClick={() => { if (card.onClick) { card.onClick() } else if (card.key) { setActiveChart(activeChart === card.key ? null : card.key) } }}
+                        className={`rounded-xl border p-4 transition-all ${card.key || (card as any).onClick ? 'cursor-pointer hover:border-slate-600' : ''} ${isActive ? 'border-blue-500 bg-slate-800' : 'border-slate-800 bg-slate-900'}`}>
                         <div className="flex items-center justify-between mb-2">
                           <div style={{ color: card.color }}>{card.icon}</div>
                           {card.key && <ChevronUp className={`h-3.5 w-3.5 text-slate-500 transition-transform ${isActive ? 'rotate-180' : ''}`} />}
