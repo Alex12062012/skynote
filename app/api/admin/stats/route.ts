@@ -115,12 +115,33 @@ export async function GET(request: NextRequest) {
       ? ((totalQcm ?? 0) / totalUsers).toFixed(1)
       : '0'
 
-    // Utilisateurs connectés aujourd'hui
-    const { data: activeUsersToday } = await supabase
-      .from('profiles')
-      .select('id, full_name, email, last_login_at, plan, sky_coins')
-      .gte('last_login_at', sinceISO)
-      .order('last_login_at', { ascending: false })
+    // Listes détaillées pour chaque stat cliquable
+    const [
+      { data: activeUsersToday },
+      { data: usersWithCourses },
+      { data: usersWithQcm },
+      { data: usersWithPerfect },
+      { data: premiumUsers },
+      { data: streakUsers },
+    ] = await Promise.all([
+      supabase.from('profiles').select('id, full_name, email, last_login_at, plan, sky_coins').gte('last_login_at', sinceISO).order('last_login_at', { ascending: false }),
+      supabase.from('courses').select('user_id, profiles(full_name, email, plan)').gte('created_at', sinceISO),
+      supabase.from('qcm_attempts').select('user_id, profiles(full_name, email, plan)').gte('created_at', sinceISO),
+      supabase.from('qcm_attempts').select('user_id, profiles(full_name, email, plan)').eq('perfect', true).gte('created_at', sinceISO),
+      supabase.from('profiles').select('id, full_name, email, plan, sky_coins, last_login_at').in('plan', ['plus', 'premium', 'famille']).order('sky_coins', { ascending: false }),
+      supabase.from('profiles').select('id, full_name, email, streak_days, plan').gte('streak_days', 3).order('streak_days', { ascending: false }),
+    ])
+
+    // Dédupliquer par user_id
+    function dedup(rows: any[]) {
+      const seen = new Set()
+      return rows.filter((r: any) => {
+        const id = r.user_id || r.id
+        if (seen.has(id)) return false
+        seen.add(id)
+        return true
+      })
+    }
 
     return NextResponse.json({
       stats: {
@@ -137,6 +158,11 @@ export async function GET(request: NextRequest) {
       recentUsers: recentUsers || [],
       topUsers: topUsers || [],
       activeUsersToday: activeUsersToday || [],
+      usersWithCourses: dedup(usersWithCourses || []),
+      usersWithQcm: dedup(usersWithQcm || []),
+      usersWithPerfect: dedup(usersWithPerfect || []),
+      premiumUsers: premiumUsers || [],
+      streakUsers: streakUsers || [],
       timeSeries: {
         signups: signupsSeries,
         qcm: qcmSeries,
