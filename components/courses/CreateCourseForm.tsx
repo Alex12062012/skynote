@@ -136,7 +136,7 @@ export function CreateCourseForm() {
             <div className="mb-4 rounded-input border border-amber-200 bg-amber-50 p-4 dark:border-amber-800/30 dark:bg-amber-950/20">
               <p className="font-body text-[13px] text-amber-800 dark:text-amber-300 leading-relaxed">
                 Pour les photos, <strong>privilégie les cours imprimés</strong> car l'IA a du mal à lire les cours manuscrits
-                — surtout les cours d'espagnol écrits à Larache à la dernière minute 😉
+                — surtout les cours d'espagnol écrits à la dernière minute 😉
               </p>
             </div>
 
