@@ -105,14 +105,15 @@ export function CreateCourseForm() {
         return
       }
 
-      await fetch('/api/generate', {
+      // Lancer la génération sans attendre (fire and forget)
+      fetch('/api/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ courseId }),
-      })
+      }).catch(console.error)
 
+      // Rediriger immédiatement vers la page de chargement
       router.push(`/courses/${courseId}`)
-      router.refresh()
     })
   }
 
