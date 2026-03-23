@@ -58,6 +58,8 @@ export default function MetricsPage() {
   const [metrics, setMetrics] = useState<Metrics | null>(null)
   const [loading, setLoading] = useState(false)
   const printRef = useRef<HTMLDivElement>(null)
+  const [manualPlus, setManualPlus] = useState(0)
+  const [manualFamille, setManualFamille] = useState(0)
 
   async function loadMetrics() {
     setLoading(true)
@@ -252,36 +254,64 @@ export default function MetricsPage() {
         {/* Section 4 — Monétisation */}
         <section className="mb-8">
           <h2 className="text-[11px] font-semibold uppercase tracking-widest text-amber-400 mb-4">04 — Monétisation</h2>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            {[
-              { label: 'MRR actuel', value: `${k.mrr}€`, sub: 'Revenu mensuel récurrent', color: 'text-amber-400' },
-              { label: 'ARR projeté', value: `${k.arr}€`, sub: 'Revenu annuel récurrent', color: 'text-amber-300' },
-              { label: 'Taux conversion', value: `${k.conversionRate}%`, sub: 'Gratuit → Payant', color: 'text-emerald-400' },
-              { label: 'LTV estimée', value: `${k.ltv}€`, sub: '12 mois abonnés actifs', color: 'text-purple-400' },
-            ].map(item => (
-              <div key={item.label} className="card rounded-xl border border-slate-800 bg-slate-900 p-4">
-                <p className={`font-bold text-[26px] leading-none ${item.color}`}>{item.value}</p>
-                <p className="text-[12px] font-semibold text-white mt-1">{item.label}</p>
-                <p className="text-[10px] text-slate-500">{item.sub}</p>
+
+          {/* Ajustement manuel — upgrades offerts */}
+          <div className="card mb-4 rounded-xl border border-amber-800/30 bg-amber-950/20 p-4 no-print">
+            <p className="text-[13px] font-semibold text-amber-400 mb-3">⚙️ Ajustement — Upgrades offerts (non payants)</p>
+            <div className="flex gap-4">
+              <div className="flex-1">
+                <label className="text-[11px] text-slate-400 mb-1 block">Comptes Plus offerts</label>
+                <input type="number" min={0} value={manualPlus} onChange={e => setManualPlus(parseInt(e.target.value) || 0)}
+                  className="h-9 w-full rounded-lg border border-slate-700 bg-slate-800 px-3 text-[14px] text-white focus:border-amber-500 focus:outline-none" />
+                <p className="text-[10px] text-slate-500 mt-1">= -{(manualPlus * 4.99).toFixed(2)}€/mois</p>
               </div>
-            ))}
+              <div className="flex-1">
+                <label className="text-[11px] text-slate-400 mb-1 block">Comptes Famille offerts</label>
+                <input type="number" min={0} value={manualFamille} onChange={e => setManualFamille(parseInt(e.target.value) || 0)}
+                  className="h-9 w-full rounded-lg border border-slate-700 bg-slate-800 px-3 text-[14px] text-white focus:border-amber-500 focus:outline-none" />
+                <p className="text-[10px] text-slate-500 mt-1">= -{(manualFamille * 11.99).toFixed(2)}€/mois</p>
+              </div>
+            </div>
           </div>
+
+          {(() => {
+            const deductPlus = manualPlus * 4.99
+            const deductFamille = manualFamille * 11.99
+            const realMrr = Math.max(0, parseFloat(k.mrr) - deductPlus - deductFamille)
+            const realArr = (realMrr * 12).toFixed(2)
+            return (
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                {[
+                  { label: 'MRR réel', value: `${realMrr.toFixed(2)}€`, sub: `Brut: ${k.mrr}€ — Offerts: ${(deductPlus + deductFamille).toFixed(2)}€`, color: 'text-amber-400' },
+                  { label: 'ARR projeté', value: `${realArr}€`, sub: 'Revenu annuel récurrent', color: 'text-amber-300' },
+                  { label: 'Taux conversion', value: `${k.conversionRate}%`, sub: 'Gratuit → Payant (Stripe)', color: 'text-emerald-400' },
+                  { label: 'LTV estimée', value: `${k.ltv}€`, sub: '12 mois abonnés payants', color: 'text-purple-400' },
+                ].map(item => (
+                  <div key={item.label} className="card rounded-xl border border-slate-800 bg-slate-900 p-4">
+                    <p className={`font-bold text-[26px] leading-none ${item.color}`}>{item.value}</p>
+                    <p className="text-[12px] font-semibold text-white mt-1">{item.label}</p>
+                    <p className="text-[10px] text-slate-500">{item.sub}</p>
+                  </div>
+                ))}
+              </div>
+            )
+          })()}
 
           {/* Répartition plans */}
           <div className="card mt-3 rounded-xl border border-slate-800 bg-slate-900 p-5">
             <p className="text-[13px] font-semibold text-white mb-4">Répartition des plans</p>
-            <div className="flex gap-4 items-center">
-              <div className="flex-1 h-4 rounded-pill overflow-hidden flex">
+            <div className="flex gap-4 items-center flex-wrap">
+              <div className="flex-1 h-4 rounded-pill overflow-hidden flex min-w-32">
                 {k.totalUsers > 0 && <>
                   <div className="h-full bg-slate-600" style={{ width: `${(k.planCounts.free / k.totalUsers) * 100}%` }} />
                   <div className="h-full bg-amber-500" style={{ width: `${(k.planCounts.plus / k.totalUsers) * 100}%` }} />
                   <div className="h-full bg-purple-500" style={{ width: `${(k.planCounts.famille / k.totalUsers) * 100}%` }} />
                 </>}
               </div>
-              <div className="flex gap-4 text-[12px]">
+              <div className="flex gap-4 text-[12px] flex-wrap">
                 <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded-sm bg-slate-600 inline-block" /> Gratuit ({k.planCounts.free})</span>
-                <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded-sm bg-amber-500 inline-block" /> Plus ({k.planCounts.plus})</span>
-                <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded-sm bg-purple-500 inline-block" /> Famille ({k.planCounts.famille})</span>
+                <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded-sm bg-amber-500 inline-block" /> Plus ({k.planCounts.plus}){manualPlus > 0 && <span className="text-amber-600"> (dont {manualPlus} offerts)</span>}</span>
+                <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded-sm bg-purple-500 inline-block" /> Famille ({k.planCounts.famille}){manualFamille > 0 && <span className="text-purple-600"> (dont {manualFamille} offerts)</span>}</span>
               </div>
             </div>
           </div>
