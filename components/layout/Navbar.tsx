@@ -3,22 +3,22 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState } from 'react'
-import { BookOpen, Target, User, Menu, X, Plus, LayoutDashboard, Users, Trophy } from 'lucide-react'
+import { Target, LayoutDashboard, Users, Menu, X, Tag } from 'lucide-react'
 import { SkyCoin } from '@/components/ui/SkyCoin'
 import { CoinCounter } from '@/components/ui/CoinCounter'
 import { ThemeToggle } from '@/components/ui/ThemeToggle'
 import { cn } from '@/lib/utils'
+import { getInitials } from '@/lib/utils'
 import type { Profile } from '@/types/database'
 
 const navLinks = [
   { href: '/dashboard', label: 'Accueil', icon: LayoutDashboard },
   { href: '/objectives', label: 'Objectifs', icon: Target },
-  { href: '/profile', label: 'Profil', icon: User },
+  { href: '/pricing', label: 'Forfaits', icon: Tag },
 ]
 
 export function Navbar({ profile }: { profile: Profile | null }) {
   const isFamille = profile?.plan === 'famille'
-
   const pathname = usePathname()
   const [open, setOpen] = useState(false)
   const [coinSpinning, setCoinSpinning] = useState(false)
@@ -61,7 +61,7 @@ export function Navbar({ profile }: { profile: Profile | null }) {
             <Link key={l.href} href={l.href}
               className={cn(
                 'flex items-center gap-2 rounded-input px-3 py-2 font-body text-[14px] transition-colors',
-                pathname.startsWith(l.href)
+                pathname.startsWith(l.href) && l.href !== '/dashboard' || pathname === l.href
                   ? 'bg-brand-soft text-brand dark:bg-brand-dark-soft dark:text-brand-dark font-medium'
                   : 'text-text-secondary hover:bg-sky-cloud hover:text-text-main dark:text-text-dark-secondary dark:hover:bg-night-border dark:hover:text-text-dark-main'
               )}>
@@ -83,15 +83,28 @@ export function Navbar({ profile }: { profile: Profile | null }) {
 
         {/* Actions droite */}
         <div className="flex items-center gap-2">
-          {/* Compteur coins temps réel */}
+          {/* Compteur coins */}
           {profile && (
             <CoinCounter initialCoins={profile.sky_coins} userId={profile.id} />
           )}
+
+          {/* Theme toggle */}
           <ThemeToggle />
-          <Link href="/courses/new"
-            className="hidden items-center gap-1.5 rounded-input bg-brand px-3 py-2 font-body text-[13px] font-medium text-white transition-colors hover:bg-brand-hover sm:flex dark:bg-brand-dark dark:text-night-bg dark:hover:bg-brand-dark-hover">
-            <Plus className="h-4 w-4" /> Nouveau cours
-          </Link>
+
+          {/* Avatar → profil */}
+          {profile && (
+            <Link href="/profile"
+              className={cn(
+                'flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full font-display text-[14px] font-bold transition-all hover:scale-105',
+                pathname.startsWith('/profile')
+                  ? 'bg-brand text-white dark:bg-brand-dark dark:text-night-bg ring-2 ring-brand/30'
+                  : 'bg-brand text-white dark:bg-brand-dark dark:text-night-bg'
+              )}>
+              {getInitials(profile.full_name || profile.email || 'U')}
+            </Link>
+          )}
+
+          {/* Menu mobile */}
           <button onClick={() => setOpen(!open)}
             className="flex h-9 w-9 items-center justify-center rounded-input text-text-secondary hover:bg-sky-cloud dark:text-text-dark-secondary dark:hover:bg-night-border md:hidden">
             {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -113,9 +126,15 @@ export function Navbar({ profile }: { profile: Profile | null }) {
               <l.icon className="h-4 w-4" />{l.label}
             </Link>
           ))}
-          <Link href="/courses/new" onClick={() => setOpen(false)}
-            className="mt-2 flex items-center gap-2 rounded-input bg-brand px-3 py-2.5 font-body text-[14px] font-medium text-white dark:bg-brand-dark dark:text-night-bg">
-            <Plus className="h-4 w-4" /> Nouveau cours
+          {isFamille && (
+            <Link href="/famille" onClick={() => setOpen(false)}
+              className="flex items-center gap-3 rounded-input px-3 py-2.5 font-body text-[14px] text-text-main hover:bg-sky-cloud dark:text-text-dark-main dark:hover:bg-night-border">
+              <Users className="h-4 w-4" /> Famille
+            </Link>
+          )}
+          <Link href="/profile" onClick={() => setOpen(false)}
+            className="flex items-center gap-3 rounded-input px-3 py-2.5 font-body text-[14px] text-text-main hover:bg-sky-cloud dark:text-text-dark-main dark:hover:bg-night-border">
+            Mon compte
           </Link>
         </div>
       )}
