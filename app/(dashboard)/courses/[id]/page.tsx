@@ -6,6 +6,7 @@ import { getCourse, getCourseFlashcards } from '@/lib/supabase/queries'
 import { ProcessingLoader } from '@/components/courses/ProcessingLoader'
 import { GenerationTrigger } from '@/components/courses/GenerationTrigger'
 import { FlashcardViewer } from '@/components/courses/FlashcardViewer'
+import { QcmGenerator } from '@/components/courses/QcmGenerator'
 import { DeleteCourseButton } from '@/components/courses/DeleteCourseButton'
 import { SubjectBadge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
@@ -106,23 +107,30 @@ async function ReadyCourse({ courseId, userId, qcmStatus }: { courseId: string; 
 
   return (
     <div className="flex flex-col gap-6">
-      {/* CTA QCM */}
-      <div className="flex items-center justify-between rounded-card border border-sky-border bg-sky-surface-2 px-5 py-4 dark:border-night-border dark:bg-night-surface-2">
-        <div>
-          <p className="font-body text-[14px] font-semibold text-text-main dark:text-text-dark-main">
-            {flashcards.length} fiches générées ✨
-          </p>
-          <p className="font-body text-[13px] text-text-secondary dark:text-text-dark-secondary">
-            {qcmReady ? 'Score parfait au QCM = +10 Sky Coins' : '⏳ QCM en cours de génération...'}
-          </p>
+      {/* QCM en cours ou prêt */}
+      {!qcmReady ? (
+        <QcmGenerator
+          courseId={courseId}
+          flashcards={flashcards.map(f => ({ id: f.id, title: f.title }))}
+        />
+      ) : (
+        <div className="flex items-center justify-between rounded-card border border-sky-border bg-sky-surface-2 px-5 py-4 dark:border-night-border dark:bg-night-surface-2">
+          <div>
+            <p className="font-body text-[14px] font-semibold text-text-main dark:text-text-dark-main">
+              {flashcards.length} fiches générées ✨
+            </p>
+            <p className="font-body text-[13px] text-text-secondary dark:text-text-dark-secondary">
+              Score parfait au QCM = +10 Sky Coins
+            </p>
+          </div>
+          <Link href={`/courses/${courseId}/qcm`}>
+            <Button size="sm" className="gap-1.5 flex-shrink-0">
+              <Zap className="h-4 w-4" />
+              Faire le QCM
+            </Button>
+          </Link>
         </div>
-        <Link href={`/courses/${courseId}/qcm`}>
-          <Button size="sm" className="gap-1.5 flex-shrink-0">
-            <Zap className="h-4 w-4" />
-            {qcmReady ? 'Faire le QCM' : 'QCM bientôt prêt'}
-          </Button>
-        </Link>
-      </div>
+      )}
 
       <FlashcardViewer flashcards={flashcards} courseId={courseId} userId={userId} />
     </div>

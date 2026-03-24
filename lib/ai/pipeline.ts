@@ -78,8 +78,8 @@ export async function processCourse(courseId: string): Promise<void> {
     // 6. Vérifier et attribuer l'objectif "premier cours"
     await checkAndAwardObjectives(courseId, course.user_id)
 
-    // 7. Générer les QCM en arrière-plan (le cours est déjà lisible)
-    generateQcmInBackground(courseId, course.user_id, insertedFlashcards, supabase)
+    // 7. Les QCM seront générés côté client via /api/generate-qcm
+    // Le client appellera fiche par fiche sans risque de timeout
 
   } catch (error) {
     console.error(`[AI Pipeline] Erreur pour le cours ${courseId}:`, error)
