@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import { Bricolage_Grotesque, DM_Sans } from 'next/font/google'
 import { ThemeProvider } from '@/components/providers/ThemeProvider'
+import { SpeedInsights } from '@vercel/speed-insights/next'
 import './globals.css'
 
 const bricolage = Bricolage_Grotesque({
@@ -37,6 +38,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="fr" className={`${bricolage.variable} ${dmSans.variable}`} suppressHydrationWarning>
       <body>
         <ThemeProvider>{children}</ThemeProvider>
+        <SpeedInsights />
       </body>
     </html>
   )
