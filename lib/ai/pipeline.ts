@@ -69,59 +69,17 @@ export async function processCourse(courseId: string): Promise<void> {
       .update({ progress: 60 })
       .eq('id', courseId)
 
-    // 5. Générer les QCM pour chaque fiche (séquentiel pour fiabilité)
-    const qcmInserts: any[] = []
-
-    for (let i = 0; i < insertedFlashcards.length; i++) {
-      const flashcard = insertedFlashcards[i]
-      try {
-        const keyPoints = Array.isArray(flashcard.key_points)
-          ? flashcard.key_points
-          : JSON.parse(String(flashcard.key_points) || '[]')
-
-        // Petit délai pour éviter les rate limits entre les appels IA
-        if (i > 0) await new Promise(r => setTimeout(r, 500))
-        
-        const questions = await generateQcmQuestions(
-          flashcard.title,
-          flashcard.summary,
-          keyPoints
-        )
-
-        qcmInserts.push(...questions.map((q) => ({
-          flashcard_id: flashcard.id,
-          course_id: courseId,
-          user_id: course.user_id,
-          question: q.question,
-          options: q.options,
-          correct_index: q.correct_index,
-          explanation: q.explanation,
-        })))
-      } catch {
-        // On continue même si une fiche échoue
-      }
-
-      // Mettre à jour la progression
-      const progressStep = 60 + Math.round(((i + 1) / insertedFlashcards.length) * 35)
-      await supabase
-        .from('courses')
-        .update({ progress: Math.min(progressStep, 95) })
-        .eq('id', courseId)
-    }
-
-    // 6. Insérer tous les QCM
-    if (qcmInserts.length > 0) {
-      await supabase.from('qcm_questions').insert(qcmInserts)
-    }
-
-    // 7. Marquer le cours comme prêt !
+    // 5. Marquer le cours comme prêt pour les fiches (QCM en cours de génération)
     await supabase
       .from('courses')
-      .update({ status: 'ready', progress: 0 })
+      .update({ status: 'ready', progress: 0, qcm_status: 'processing' })
       .eq('id', courseId)
 
-    // 8. Vérifier et attribuer l'objectif "premier cours"
+    // 6. Vérifier et attribuer l'objectif "premier cours"
     await checkAndAwardObjectives(courseId, course.user_id)
+
+    // 7. Générer les QCM en arrière-plan (le cours est déjà lisible)
+    generateQcmInBackground(courseId, course.user_id, insertedFlashcards, supabase)
 
   } catch (error) {
     console.error(`[AI Pipeline] Erreur pour le cours ${courseId}:`, error)
@@ -202,5 +160,66 @@ async function checkAndAwardObjectives(courseId: string, userId: string): Promis
         reason: `Objectif complété : ${obj.title}`,
       })
     }
+  }
+}
+
+// ============================================================
+// GÉNÉRATION QCM EN ARRIÈRE-PLAN
+// ============================================================
+
+async function generateQcmInBackground(
+  courseId: string,
+  userId: string,
+  flashcards: any[],
+  supabase: any
+): Promise<void> {
+  try {
+    const qcmInserts: any[] = []
+
+    for (let i = 0; i < flashcards.length; i++) {
+      const flashcard = flashcards[i]
+      try {
+        const keyPoints = Array.isArray(flashcard.key_points)
+          ? flashcard.key_points
+          : JSON.parse(String(flashcard.key_points) || '[]')
+
+        if (i > 0) await new Promise(r => setTimeout(r, 500))
+
+        const questions = await generateQcmQuestions(
+          flashcard.title,
+          flashcard.summary,
+          keyPoints
+        )
+
+        qcmInserts.push(...questions.map((q) => ({
+          flashcard_id: flashcard.id,
+          course_id: courseId,
+          user_id: userId,
+          question: q.question,
+          options: q.options,
+          correct_index: q.correct_index,
+          explanation: q.explanation,
+        })))
+      } catch {
+        // Continue même si une fiche échoue
+      }
+    }
+
+    if (qcmInserts.length > 0) {
+      await supabase.from('qcm_questions').insert(qcmInserts)
+    }
+
+    // Marquer les QCM comme prêts
+    await supabase
+      .from('courses')
+      .update({ qcm_status: 'ready' })
+      .eq('id', courseId)
+
+  } catch (error) {
+    console.error('[QCM Background] Error:', error)
+    await supabase
+      .from('courses')
+      .update({ qcm_status: 'error' })
+      .eq('id', courseId)
   }
 }

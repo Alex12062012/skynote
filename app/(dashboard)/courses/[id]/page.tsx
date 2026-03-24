@@ -84,13 +84,14 @@ export default async function CourseDetailPage({ params }: Props) {
         </div>
       )}
 
-      {course.status === 'ready' && <ReadyCourse courseId={id} userId={user.id} />}
+      {course.status === 'ready' && <ReadyCourse courseId={id} userId={user.id} qcmStatus={(course as any).qcm_status} />}
     </div>
   )
 }
 
-async function ReadyCourse({ courseId, userId }: { courseId: string; userId: string }) {
+async function ReadyCourse({ courseId, userId, qcmStatus }: { courseId: string; userId: string; qcmStatus?: string }) {
   const flashcards = await getCourseFlashcards(courseId)
+  const qcmReady = qcmStatus === 'ready' || !qcmStatus
 
   if (flashcards.length === 0) {
     return (
@@ -112,13 +113,13 @@ async function ReadyCourse({ courseId, userId }: { courseId: string; userId: str
             {flashcards.length} fiches générées ✨
           </p>
           <p className="font-body text-[13px] text-text-secondary dark:text-text-dark-secondary">
-            Score parfait au QCM = +10 Sky Coins
+            {qcmReady ? 'Score parfait au QCM = +10 Sky Coins' : '⏳ QCM en cours de génération...'}
           </p>
         </div>
         <Link href={`/courses/${courseId}/qcm`}>
           <Button size="sm" className="gap-1.5 flex-shrink-0">
             <Zap className="h-4 w-4" />
-            Faire le QCM
+            {qcmReady ? 'Faire le QCM' : 'QCM bientôt prêt'}
           </Button>
         </Link>
       </div>
