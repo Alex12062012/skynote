@@ -66,7 +66,7 @@ Matière : ${subject}
 
 Contenu du cours :
 ---
-${content.slice(0, 6000)}
+${content.slice(0, 3000)}
 ---
 
 Génère entre 2 et 5 fiches de révision en JSON. MAXIMUM 5 FICHES, même si le cours est long. Fais des fiches plus denses plutôt que plus nombreuses.`
