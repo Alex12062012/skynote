@@ -42,12 +42,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: 'Cours déjà généré' }, { status: 200 })
     }
 
-    // Attendre la génération complète (nécessaire sur Vercel)
-    await processCourse(courseId)
+    // Lancer en arrière-plan sans bloquer
+    processCourse(courseId).catch((err) => {
+      console.error('[API /generate] Pipeline error:', err)
+    })
 
     return NextResponse.json(
-      { message: 'Génération terminée', courseId },
-      { status: 200 }
+      { message: 'Génération lancée', courseId },
+      { status: 202 }
     )
 
   } catch (error) {

@@ -79,6 +79,9 @@ export async function processCourse(courseId: string): Promise<void> {
           ? flashcard.key_points
           : JSON.parse(String(flashcard.key_points) || '[]')
 
+        // Petit délai pour éviter les rate limits entre les appels IA
+        if (i > 0) await new Promise(r => setTimeout(r, 500))
+        
         const questions = await generateQcmQuestions(
           flashcard.title,
           flashcard.summary,
