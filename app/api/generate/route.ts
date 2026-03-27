@@ -1,15 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { processCourse } from '@/lib/ai/pipeline'
+import { waitUntil } from '@vercel/functions'
 
-/**
- * POST /api/generate
- * Corps : { courseId: string }
- *
- * Déclenche la génération IA des fiches + QCM pour un cours.
- * Appelée depuis le client juste après la création du cours.
- * Protected : user doit être connecté ET propriétaire du cours.
- */
+export const maxDuration = 60
+
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient()
@@ -26,7 +21,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'courseId manquant' }, { status: 400 })
     }
 
-    // Vérifier que le cours appartient à l'utilisateur
     const { data: course } = await supabase
       .from('courses')
       .select('id, status, user_id')
@@ -42,10 +36,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: 'Cours déjà généré' }, { status: 200 })
     }
 
-    // Lancer en arrière-plan sans bloquer
-    processCourse(courseId).catch((err) => {
-      console.error('[API /generate] Pipeline error:', err)
-    })
+    // waitUntil maintient la fonction en vie après la réponse HTTP
+    waitUntil(
+      processCourse(courseId).catch((err) => {
+        console.error('[API /generate] Pipeline error:', err)
+      })
+    )
 
     return NextResponse.json(
       { message: 'Génération lancée', courseId },
