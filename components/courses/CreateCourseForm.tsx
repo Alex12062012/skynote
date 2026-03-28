@@ -7,6 +7,7 @@ import { SubjectSelect } from './SubjectSelect'
 import { SourceTypeTabs } from './SourceTypeTabs'
 import { FileDropzone } from './FileDropzone'
 import { VoiceRecorder } from './VoiceRecorder'
+import { getUserPlanLimits } from '@/lib/supabase/plan'
 import { createCourse } from '@/lib/supabase/course-actions'
 import { X, AlertTriangle, Camera } from 'lucide-react'
 
@@ -194,7 +195,7 @@ export function CreateCourseForm() {
         <SubjectSelect value={subject} onChange={setSubject} error={errors.subject} />
 
         <div>
-          <SourceTypeTabs value={sourceType} onChange={handleSourceTypeChange} />
+          <SourceTypeTabs value={sourceType} onChange={handleSourceTypeChange} vocalEnabled={true} />
         </div>
 
         {/* Texte */}

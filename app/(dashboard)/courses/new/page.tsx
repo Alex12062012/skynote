@@ -1,11 +1,14 @@
 import { ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
+import { getUserPlanLimits } from '@/lib/supabase/plan'
+import { createClient } from '@/lib/supabase/server'
+import { redirect } from 'next/navigation'
 import { CreateCourseForm } from '@/components/courses/CreateCourseForm'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = { title: 'Nouveau cours' }
 
-export default function NewCoursePage() {
+export default async function NewCoursePage() {
   return (
     <div className="mx-auto max-w-xl animate-fade-in">
       <Link href="/courses"

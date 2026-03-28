@@ -17,7 +17,7 @@ const PLANS = [
     description: 'Pour découvrir Skynote',
     color: 'border-slate-200 dark:border-slate-700',
     features: [
-      { text: '3 cours par semaine', ok: true },
+      { text: '1 cours par semaine', ok: true },
       { text: 'Fiches générées par l\'IA', ok: true },
       { text: '5 questions QCM par fiche', ok: true },
       { text: 'Sky Coins & objectifs', ok: true },

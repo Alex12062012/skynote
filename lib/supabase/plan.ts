@@ -1,18 +1,20 @@
-import { createClient } from './server'
+﻿import { createClient } from './server'
 
 export type PlanType = 'free' | 'plus' | 'famille'
 
 export interface PlanLimits {
-  maxCoursesPerWeek: number // -1 = illimité
+  maxCoursesPerWeek: number
   vocalEnabled: boolean
+  chatbotEnabled: boolean
   isPlus: boolean
   isFamille: boolean
   coinsForPlus: number
 }
 
 const FREE_LIMITS: PlanLimits = {
-  maxCoursesPerWeek: 3,
+  maxCoursesPerWeek: 1,
   vocalEnabled: false,
+  chatbotEnabled: false,
   isPlus: false,
   isFamille: false,
   coinsForPlus: 750,
@@ -21,6 +23,7 @@ const FREE_LIMITS: PlanLimits = {
 const PLUS_LIMITS: PlanLimits = {
   maxCoursesPerWeek: -1,
   vocalEnabled: true,
+  chatbotEnabled: true,
   isPlus: true,
   isFamille: false,
   coinsForPlus: 750,
@@ -29,14 +32,12 @@ const PLUS_LIMITS: PlanLimits = {
 const FAMILLE_LIMITS: PlanLimits = {
   maxCoursesPerWeek: -1,
   vocalEnabled: true,
+  chatbotEnabled: true,
   isPlus: true,
   isFamille: true,
   coinsForPlus: 750,
 }
 
-/**
- * Vérifie si le mode bêta est actif (tout le monde = Plus)
- */
 export async function isBetaModeActive(): Promise<boolean> {
   const supabase = await createClient()
   const { data } = await supabase
@@ -47,14 +48,9 @@ export async function isBetaModeActive(): Promise<boolean> {
   return data?.value === 'true'
 }
 
-/**
- * Récupère les limites du plan d'un utilisateur
- * Si beta mode actif → tout le monde a les limites Plus
- */
 export async function getUserPlanLimits(userId: string): Promise<PlanLimits> {
   const supabase = await createClient()
 
-  // Vérifier beta mode
   const betaActive = await isBetaModeActive()
   if (betaActive) return PLUS_LIMITS
 
@@ -66,16 +62,14 @@ export async function getUserPlanLimits(userId: string): Promise<PlanLimits> {
 
   if (!profile) return FREE_LIMITS
 
-  // Vérifier expiration
   if (profile.plan_expires_at && new Date(profile.plan_expires_at) < new Date()) {
-    // Plan expiré → free
     await supabase.from('profiles').update({ plan: 'free', plan_expires_at: null }).eq('id', userId)
     return FREE_LIMITS
   }
 
   switch (profile.plan) {
     case 'plus':
-    case 'premium': // compat
+    case 'premium':
       return PLUS_LIMITS
     case 'famille':
       return FAMILLE_LIMITS
@@ -84,9 +78,6 @@ export async function getUserPlanLimits(userId: string): Promise<PlanLimits> {
   }
 }
 
-/**
- * Vérifie si l'utilisateur peut créer un nouveau cours cette semaine
- */
 export async function canCreateCourse(userId: string): Promise<{
   allowed: boolean
   coursesUsed: number
@@ -106,9 +97,8 @@ export async function canCreateCourse(userId: string): Promise<{
     .eq('id', userId)
     .single()
 
-  if (!profile) return { allowed: false, coursesUsed: 0, coursesMax: 3, resetAt: null }
+  if (!profile) return { allowed: false, coursesUsed: 0, coursesMax: 1, resetAt: null }
 
-  // Vérifier si on doit reset (lundi)
   const now = new Date()
   const lastReset = new Date(profile.week_reset_at)
   const daysSinceReset = Math.floor((now.getTime() - lastReset.getTime()) / (1000 * 60 * 60 * 24))
@@ -117,7 +107,6 @@ export async function canCreateCourse(userId: string): Promise<{
   let weekResetAt = profile.week_reset_at
 
   if (daysSinceReset >= 7) {
-    // Reset le compteur
     coursesThisWeek = 0
     weekResetAt = now.toISOString()
     await supabase
@@ -126,7 +115,6 @@ export async function canCreateCourse(userId: string): Promise<{
       .eq('id', userId)
   }
 
-  // Calculer le prochain lundi
   const nextMonday = new Date()
   const daysUntilMonday = (8 - nextMonday.getDay()) % 7 || 7
   nextMonday.setDate(nextMonday.getDate() + daysUntilMonday)
@@ -140,9 +128,6 @@ export async function canCreateCourse(userId: string): Promise<{
   }
 }
 
-/**
- * Incrémenter le compteur de cours de la semaine
- */
 export async function incrementWeeklyCourseCount(userId: string): Promise<void> {
   const supabase = await createClient()
   const { data: profile } = await supabase
@@ -159,7 +144,6 @@ export async function incrementWeeklyCourseCount(userId: string): Promise<void> 
     .update({ courses_this_week: newCount })
     .eq('id', userId)
 
-  // Vérifier fidélité : 3 cours cette semaine → incrémenter les semaines loyales
   if (newCount >= 3) {
     const loyaltyWeeks = (profile.total_loyalty_weeks || 0) + 1
     await supabase
@@ -167,7 +151,6 @@ export async function incrementWeeklyCourseCount(userId: string): Promise<void> 
       .update({ total_loyalty_weeks: loyaltyWeeks })
       .eq('id', userId)
 
-    // Récompense : 8 semaines consécutives = +750 coins
     if (loyaltyWeeks % 8 === 0) {
       const { data: profileFull } = await supabase
         .from('profiles')
@@ -184,7 +167,7 @@ export async function incrementWeeklyCourseCount(userId: string): Promise<void> 
         await supabase.from('coin_transactions').insert({
           user_id: userId,
           amount: 750,
-          reason: '🏆 Fidélité — 8 semaines consécutives à 3 cours !',
+          reason: 'Fidelite - 8 semaines consecutives a 3 cours !',
         })
       }
     }
