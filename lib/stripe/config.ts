@@ -33,3 +33,4 @@ export const PLAN_PRICES = {
     yearly: { amount: 10.99, label: '10,99€/mois', totalLabel: '131,88€/an' },
   },
 }
+ 
