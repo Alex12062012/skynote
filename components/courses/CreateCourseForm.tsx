@@ -15,7 +15,7 @@ type SourceType = 'text' | 'pdf' | 'photo' | 'vocal'
 
 const PHOTO_WARNING_KEY = 'skynote_hide_photo_warning'
 
-export function CreateCourseForm() {
+export function CreateCourseForm({ vocalEnabled = true }: { vocalEnabled?: boolean }) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [title, setTitle] = useState('')
@@ -195,7 +195,7 @@ export function CreateCourseForm() {
         <SubjectSelect value={subject} onChange={setSubject} error={errors.subject} />
 
         <div>
-          <SourceTypeTabs value={sourceType} onChange={handleSourceTypeChange} vocalEnabled={true} />
+          <SourceTypeTabs value={sourceType} onChange={handleSourceTypeChange} vocalEnabled={vocalEnabled} />
         </div>
 
         {/* Texte */}

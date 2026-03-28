@@ -1,4 +1,4 @@
-import { cn } from '@/lib/utils'
+﻿import { cn } from '@/lib/utils'
 import { Loader2 } from 'lucide-react'
 import { type ButtonHTMLAttributes, forwardRef } from 'react'
 
@@ -10,14 +10,14 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant = 'primary', size = 'md', loading, disabled, children, ...props }, ref) => {
-    const base = 'inline-flex items-center justify-center gap-2 rounded-input font-body font-medium transition-all duration-150 disabled:pointer-events-none disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 dark:focus-visible:ring-brand-dark dark:focus-visible:ring-offset-night-bg'
+    const base = 'inline-flex items-center justify-center gap-2 rounded-input font-body font-medium transition-all duration-200 disabled:pointer-events-none disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 focus-visible:ring-offset-2 dark:focus-visible:ring-brand-dark/40 dark:focus-visible:ring-offset-night-bg active:scale-[0.97]'
     const variants = {
-      primary: 'bg-brand text-white hover:bg-brand-hover shadow-btn hover:shadow-none dark:bg-brand-dark dark:text-night-bg dark:hover:bg-brand-dark-hover',
-      secondary: 'border border-sky-border-strong bg-sky-surface text-text-main hover:bg-sky-cloud dark:border-night-border-strong dark:bg-night-surface dark:text-text-dark-main dark:hover:bg-night-border',
+      primary: 'bg-brand text-white hover:bg-brand-hover shadow-btn hover:shadow-btn-hover dark:bg-brand-dark dark:text-night-bg dark:hover:bg-brand-dark-hover',
+      secondary: 'border border-sky-border bg-sky-surface text-text-main hover:bg-sky-cloud hover:border-sky-border-strong dark:border-night-border dark:bg-night-surface dark:text-text-dark-main dark:hover:bg-night-border dark:hover:border-night-border-strong',
       ghost: 'text-text-secondary hover:bg-sky-cloud hover:text-text-main dark:text-text-dark-secondary dark:hover:bg-night-surface dark:hover:text-text-dark-main',
       danger: 'bg-error/10 text-error hover:bg-error/20 border border-error/20',
     }
-    const sizes = { sm: 'h-8 px-3 text-[13px]', md: 'h-10 px-4 text-[14px]', lg: 'h-12 px-6 text-[15px]' }
+    const sizes = { sm: 'h-8 px-3 text-[13px]', md: 'h-10 px-4 text-[14px]', lg: 'h-11 px-6 text-[15px]' }
 
     return (
       <button ref={ref} className={cn(base, variants[variant], sizes[size], className)} disabled={disabled || loading} {...props}>
