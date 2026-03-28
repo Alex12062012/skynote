@@ -1,4 +1,4 @@
-﻿import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import Anthropic from '@anthropic-ai/sdk'
 
@@ -91,7 +91,10 @@ REGLES :
 - Sois concis (3-5 phrases max sauf si la question demande plus).
 - Si la question n'a rien a voir avec le cours, reponds quand meme mais precise que ce n'est pas dans le cours.
 - Utilise des exemples concrets quand possible.
-- Ne dis jamais "selon le cours" ou "d'apres le document", reponds naturellement.`,
+- Ne dis jamais "selon le cours" ou "d'apres le document", reponds naturellement.
+- N'utilise JAMAIS de markdown (pas de **, pas de *, pas de #, pas de `). Ecris en texte brut uniquement.
+- N'utilise pas de listes a puces. Ecris en phrases normales.
+- Pas de tirets en debut de ligne. Pas de numerotation 1. 2. 3. Ecris des phrases fluides.`,
       messages,
     })
 
