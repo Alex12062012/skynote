@@ -1,63 +1,29 @@
-﻿@tailwind base;
+@tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
-  body {
-    @apply font-body bg-sky-bg text-text-main antialiased dark:bg-night-bg dark:text-text-dark-main;
-    transition: background-color 0.3s ease, color 0.2s ease;
-  }
-  ::selection { @apply bg-brand/20 text-brand dark:bg-brand-dark/20 dark:text-brand-dark; }
-  ::-webkit-scrollbar { width: 5px; height: 5px; }
-  ::-webkit-scrollbar-track { @apply bg-transparent; }
-  ::-webkit-scrollbar-thumb { @apply rounded-full bg-sky-border/60 hover:bg-sky-border dark:bg-night-border/60 dark:hover:bg-night-border; }
-  :focus-visible { @apply outline-none ring-2 ring-brand/40 ring-offset-2 dark:ring-brand-dark/40 dark:ring-offset-night-bg; }
-
-  /* Smooth page transitions */
-  main { animation: page-enter 0.35s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
-  @keyframes page-enter {
-    from { opacity: 0; transform: translateY(8px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
+  body { @apply font-body bg-sky-bg text-text-main antialiased dark:bg-night-bg dark:text-text-dark-main; transition: background-color 0.3s ease, color 0.2s ease; }
+  ::selection { @apply bg-brand-soft text-brand dark:bg-brand-dark-soft dark:text-brand-dark; }
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { @apply bg-sky-bg dark:bg-night-bg; }
+  ::-webkit-scrollbar-thumb { @apply rounded-full bg-sky-border dark:bg-night-border; }
+  :focus-visible { @apply outline-none ring-2 ring-brand ring-offset-2 dark:ring-brand-dark dark:ring-offset-night-bg; }
 }
 
 @layer components {
-  .text-h1 { @apply font-display text-[48px] font-bold leading-tight tracking-[-0.03em]; }
-  .text-h2 { @apply font-display text-[32px] font-bold leading-tight tracking-[-0.02em]; }
-  .text-h3 { @apply font-display text-[22px] font-semibold leading-snug tracking-[-0.01em]; }
+  .text-h1 { @apply font-display text-[48px] font-bold leading-tight tracking-[-0.02em]; }
+  .text-h2 { @apply font-display text-[32px] font-bold leading-tight tracking-[-0.01em]; }
+  .text-h3 { @apply font-display text-[22px] font-semibold leading-snug; }
   .text-h4 { @apply font-body text-[17px] font-semibold leading-snug; }
-  .text-label-caps { @apply font-body text-[11px] font-semibold uppercase tracking-[0.08em]; }
-
-  .card {
-    @apply rounded-card bg-sky-surface border border-sky-border shadow-card dark:bg-night-surface dark:border-night-border dark:shadow-card-dark;
-    @apply hover:shadow-md hover:border-sky-border-strong dark:hover:border-night-border-strong;
-    transition: all 0.2s cubic-bezier(0.22, 1, 0.36, 1);
-  }
-
+  .text-label-caps { @apply font-body text-[12px] font-medium uppercase tracking-[0.06em]; }
+  .card { @apply rounded-card bg-sky-surface border border-sky-border shadow-card dark:bg-night-surface dark:border-night-border dark:shadow-card-dark; }
   .badge-primary { @apply rounded-pill px-3 py-1 font-body text-[12px] font-medium bg-brand-soft text-brand dark:bg-brand-dark-soft dark:text-brand-dark; }
-
-  .skeleton {
-    @apply rounded-input bg-gradient-to-r from-sky-cloud via-sky-border/50 to-sky-cloud bg-[length:200%_100%] animate-shimmer dark:from-night-border dark:via-night-surface dark:to-night-border;
-  }
-
-  /* Glass effect for overlays */
-  .glass-panel {
-    @apply bg-sky-surface/70 border border-sky-border/50 dark:bg-night-surface/70 dark:border-night-border/50;
-    backdrop-filter: blur(20px) saturate(1.8);
-    -webkit-backdrop-filter: blur(20px) saturate(1.8);
-  }
+  .skeleton { @apply rounded-input bg-gradient-to-r from-sky-cloud via-sky-border to-sky-cloud bg-[length:200%_100%] animate-shimmer dark:from-night-border dark:via-night-surface dark:to-night-border; }
 }
 
 @layer utilities {
-  @media (prefers-reduced-motion: reduce) {
-    *, *::before, *::after {
-      animation-duration: 0.01ms !important;
-      animation-iteration-count: 1 !important;
-      transition-duration: 0.01ms !important;
-    }
-  }
-  .text-gradient-sky {
-    @apply bg-gradient-to-r from-brand via-blue-400 to-brand-dark bg-clip-text text-transparent;
-    background-size: 200% auto;
-  }
+  @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; } }
+  .text-gradient-sky { @apply bg-gradient-to-r from-brand to-brand-dark bg-clip-text text-transparent; }
+  .glass { backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
 }

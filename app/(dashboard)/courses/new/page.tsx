@@ -1,20 +1,14 @@
-﻿import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
-import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
 import { getUserPlanLimits } from '@/lib/supabase/plan'
+import { createClient } from '@/lib/supabase/server'
+import { redirect } from 'next/navigation'
 import { CreateCourseForm } from '@/components/courses/CreateCourseForm'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = { title: 'Nouveau cours' }
 
 export default async function NewCoursePage() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
-
-  const limits = await getUserPlanLimits(user.id)
-
   return (
     <div className="mx-auto max-w-xl animate-fade-in">
       <Link href="/courses"
@@ -27,11 +21,11 @@ export default async function NewCoursePage() {
           Nouveau cours
         </h1>
         <p className="mt-1 font-body text-[15px] text-text-secondary dark:text-text-dark-secondary">
-          L'IA genere tes fiches de revision et ton QCM automatiquement
+          L'IA génère tes fiches de révision et ton QCM automatiquement ✨
         </p>
       </div>
       <div className="rounded-card-login bg-sky-surface p-6 shadow-card dark:bg-night-surface dark:shadow-card-dark">
-        <CreateCourseForm vocalEnabled={limits.vocalEnabled} />
+        <CreateCourseForm />
       </div>
     </div>
   )
