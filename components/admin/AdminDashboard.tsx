@@ -510,7 +510,7 @@ export function AdminDashboard({ onLogout }: { onLogout: () => void }) {
               <div className="flex items-center justify-between">
                 <div><h3 className="font-semibold text-[15px] text-white">Mode Bêta Testing</h3><p className="text-[13px] text-slate-400 mt-1">{betaEnabled ? '🟢 Activé' : '🔴 Désactivé'}</p></div>
                 <button onClick={toggleBeta} disabled={betaLoading} className={`relative h-7 w-12 rounded-full transition-colors duration-200 ${betaEnabled ? 'bg-blue-600' : 'bg-slate-600'}`}>
-                  <span className={`absolute top-0.5 h-6 w-6 rounded-full bg-white shadow transition-transform duration-200 ${betaEnabled ? 'translate-x-5' : 'translate-x-0.5'}`} />
+                  <span className={`absolute top-0.5 h-6 w-6 rounded-full bg-white shadow transition-transform duration-200 ${betaEnabled ? 'translate-x-5' : 'translate-x-0'}`} />
                 </button>
               </div>
             </div>
