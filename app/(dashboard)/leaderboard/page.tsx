@@ -28,8 +28,18 @@ export default async function LeaderboardPage() {
   // Rang = position dans le top100 (index + 1)
   const myRankInTop100 = (top100 || []).findIndex(p => p.id === user.id)
   const myRank = myRankInTop100 >= 0 ? myRankInTop100 + 1 : null
-  const myProfile = top100?.find(p => p.id === user.id)
   const isInTop100 = myRankInTop100 >= 0
+
+  // Si pas dans le top 100, récupérer les coins de l'utilisateur
+  let myCoins = 0
+  if (!isInTop100) {
+    const { data: myProfile } = await supabase
+      .from('profiles')
+      .select('sky_coins')
+      .eq('id', user.id)
+      .single()
+    myCoins = myProfile?.sky_coins ?? 0
+  }
 
   const MEDALS = ['🥇', '🥈', '🥉']
 
@@ -48,17 +58,18 @@ export default async function LeaderboardPage() {
       {!isInTop100 && (
         <div className="mb-6 flex items-center gap-4 rounded-card border border-brand/20 bg-brand-soft px-5 py-4 dark:border-brand-dark/20 dark:bg-brand-dark-soft">
           <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-brand/10 font-display text-[16px] font-bold text-brand dark:text-brand-dark">
-            #{myRank.toLocaleString('fr-FR')}
+            ?
           </div>
           <div className="flex-1">
             <p className="font-body text-[14px] font-semibold text-text-main dark:text-text-dark-main">
-              Ta position
+              Tu n'es pas encore dans le top 100
             </p>
             <p className="font-body text-[13px] text-text-secondary dark:text-text-dark-secondary">
-              Tu es #{myRank.toLocaleString('fr-FR')} avec{' '}
+              Tu as{' '}
               <span className="font-bold text-brand dark:text-brand-dark">
-                {top100?.find(p => p.id === user.id)?.sky_coins ?? 0} coins
+                {myCoins} coins
               </span>
+              {' '}— continue de réviser pour monter !
             </p>
           </div>
           <SkyCoin size={32} />

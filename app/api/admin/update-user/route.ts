@@ -1,13 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { createClient } from '@/lib/supabase/server'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
+
+const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || '').split(',').map(e => e.trim().toLowerCase()).filter(Boolean)
 
 export async function POST(request: NextRequest) {
   try {
+    // Auth check
+    const authClient = await createClient()
+    const { data: { user } } = await authClient.auth.getUser()
+    if (!user) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
+    if (ADMIN_EMAILS.length > 0 && !ADMIN_EMAILS.includes(user.email?.toLowerCase() || '')) {
+      return NextResponse.json({ error: 'Accès refusé' }, { status: 403 })
+    }
+
     const { userId, action, value } = await request.json()
     const supabase = createServiceClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  )
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    )
 
     switch (action) {
       case 'add_coins': {
@@ -22,8 +33,15 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ ok: true, newCoins })
       }
 
+      case 'set_name': {
+        const name = String(value).trim()
+        if (!name) return NextResponse.json({ error: 'Nom vide' }, { status: 400 })
+        await supabase.from('profiles').update({ full_name: name }).eq('id', userId)
+        return NextResponse.json({ ok: true })
+      }
+
       case 'set_plan': {
-        const planExpiry = value === 'premium'
+        const planExpiry = value !== 'free'
           ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
           : null
         await supabase.from('profiles').update({ plan: value, plan_expires_at: planExpiry }).eq('id', userId)
@@ -31,7 +49,6 @@ export async function POST(request: NextRequest) {
       }
 
       case 'delete_user': {
-        // Supprimer toutes les données
         await supabase.from('qcm_attempts').delete().eq('user_id', userId)
         await supabase.from('qcm_questions').delete().eq('user_id', userId)
         await supabase.from('flashcards').delete().eq('user_id', userId)

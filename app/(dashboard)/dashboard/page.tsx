@@ -36,12 +36,11 @@ export default async function DashboardPage() {
   const firstName = profile?.full_name?.split(' ')[0] ?? 'toi'
   const coins = profile?.sky_coins ?? 0
   const streak = profile?.streak_days ?? 0
-  const isPremium = profile?.plan === 'premium'
+  const isPremium = profile?.plan === 'plus' || profile?.plan === 'premium' || profile?.plan === 'famille'
 
   // Message d'accueil selon l'heure
   const hour = new Date().getHours()
   const greeting = hour < 12 ? 'Bonjour' : hour < 18 ? 'Bon après-midi' : 'Bonsoir'
-  // Pas d'emoji dans le greeting
 
   return (
     <div className="flex flex-col gap-8 animate-fade-in">

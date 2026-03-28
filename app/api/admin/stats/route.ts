@@ -3,6 +3,18 @@ export const dynamic = 'force-dynamic'
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
 
+const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || '').split(',').map(e => e.trim().toLowerCase()).filter(Boolean)
+
+async function verifyAdmin(): Promise<{ isAdmin: boolean; error?: NextResponse }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { isAdmin: false, error: NextResponse.json({ error: 'Non autorisé' }, { status: 401 }) }
+  if (ADMIN_EMAILS.length > 0 && !ADMIN_EMAILS.includes(user.email?.toLowerCase() || '')) {
+    return { isAdmin: false, error: NextResponse.json({ error: 'Accès refusé' }, { status: 403 }) }
+  }
+  return { isAdmin: true }
+}
+
 function getDaysArray(days: number): string[] {
   return Array.from({ length: days }, (_, i) => {
     const d = new Date()
@@ -22,16 +34,17 @@ function buildTimeSeries(days: string[], data: any[], dateField: string): { date
 }
 
 export async function GET(request: NextRequest) {
+  const { isAdmin, error } = await verifyAdmin()
+  if (!isAdmin) return error!
+
   try {
-    // Utiliser le service role pour bypasser le RLS
     const supabase = createServiceClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     )
     const { searchParams } = new URL(request.url)
-    const period = searchParams.get('period') || '7' // '7', '30', 'all'
+    const period = searchParams.get('period') || '7'
 
-    // Pour "all" on prend 365 jours max
     const daysCount = period === 'all' ? 365 : parseInt(period)
     const days = getDaysArray(daysCount)
     const since = new Date()
@@ -66,12 +79,10 @@ export async function GET(request: NextRequest) {
       supabase.from('qcm_attempts').select('user_id,created_at').gte('created_at', sinceISO),
     ])
 
-    // Time series
     const signupsSeries = buildTimeSeries(days, allSignups || [], 'created_at')
     const qcmSeries = buildTimeSeries(days, allQcm || [], 'created_at')
     const coursesSeries = buildTimeSeries(days, allCourses || [], 'created_at')
 
-    // Coins distribués par jour
     const coinsMap: Record<string, number> = {}
     days.forEach(d => { coinsMap[d] = 0 })
     ;(coinTransactions || []).forEach((tx: any) => {
@@ -80,7 +91,6 @@ export async function GET(request: NextRequest) {
     })
     const coinsSeries = days.map(date => ({ date, count: coinsMap[date] }))
 
-    // Moyenne QCM par élève par jour
     const qcmPerUserMap: Record<string, Set<string>> = {}
     days.forEach(d => { qcmPerUserMap[d] = new Set() })
     const qcmCountMap: Record<string, number> = {}
@@ -99,22 +109,18 @@ export async function GET(request: NextRequest) {
         : 0,
     }))
 
-    // Coût API estimé
     const estimatedApiCost = totalCourses
       ? (((totalCourses * 2000) / 1_000_000) * 3 + ((totalCourses * 1500) / 1_000_000) * 15).toFixed(2)
       : '0.00'
 
-    // Total coins distribués
     const totalCoinsDistributed = (coinTransactions || [])
       .filter((t: any) => t.amount > 0)
       .reduce((sum: number, t: any) => sum + t.amount, 0)
 
-    // Moyenne QCM par élève globale
     const avgQcmPerUser = totalUsers && totalQcm
       ? ((totalQcm ?? 0) / totalUsers).toFixed(1)
       : '0'
 
-    // Listes détaillées pour chaque stat cliquable
     const [
       { data: activeUsersToday },
       { data: usersWithCourses },
@@ -131,7 +137,6 @@ export async function GET(request: NextRequest) {
       supabase.from('profiles').select('id, full_name, email, streak_days, plan').gte('streak_days', 3).order('streak_days', { ascending: false }),
     ])
 
-    // Dédupliquer par user_id
     function dedup(rows: any[]) {
       const seen = new Set()
       return rows.filter((r: any) => {

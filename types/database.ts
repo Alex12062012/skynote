@@ -2,13 +2,18 @@ export type Json = string | number | boolean | null | { [key: string]: Json | un
 
 export interface Profile {
   id: string; email: string; full_name: string | null; avatar_url: string | null
-  plan: 'free' | 'premium'; plan_expires_at: string | null; sky_coins: number
+  plan: 'free' | 'plus' | 'premium' | 'famille'; plan_expires_at: string | null; sky_coins: number
   streak_days: number; last_login_at: string | null; created_at: string; updated_at: string
+  referral_code: string | null; referred_by: string | null
+  courses_this_week: number; week_reset_at: string; total_loyalty_weeks: number
+  stripe_customer_id: string | null; stripe_subscription_id: string | null
+  is_beta_tester: boolean; feedback_shown_5: boolean; feedback_shown_25: boolean
 }
 export interface Course {
   id: string; user_id: string; title: string; subject: string; color: string
   source_type: 'text' | 'pdf' | 'photo' | 'vocal'; source_content: string | null
   file_url: string | null; status: 'processing' | 'ready' | 'error'; progress: number
+  qcm_status: 'pending' | 'processing' | 'ready' | 'error'
   created_at: string; updated_at: string
 }
 export interface Flashcard {
@@ -29,7 +34,8 @@ export interface Objective {
 }
 export interface UserObjective {
   id: string; user_id: string; objective_id: string; current_value: number
-  completed: boolean; completed_at: string | null; created_at: string
+  completed: boolean; completed_at: string | null; claimed: boolean; claimed_at: string | null
+  created_at: string
 }
 export interface CoinTransaction {
   id: string; user_id: string; amount: number; reason: string; created_at: string
