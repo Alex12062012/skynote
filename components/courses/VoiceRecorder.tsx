@@ -1,33 +1,43 @@
-'use client'
-import { useState, useRef, useEffect } from 'react'
-import { Mic, MicOff, Square } from 'lucide-react'
+﻿'use client'
+import { useState, useRef } from 'react'
+import { Mic, Square, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
-interface VoiceRecorderProps { onTranscript: (t: string) => void; transcript: string }
+interface VoiceRecorderProps {
+  onTranscript?: (t: string) => void
+  onChange?: (t: string) => void
+  transcript?: string
+  value?: string
+  error?: string
+}
 
-export function VoiceRecorder({ onTranscript, transcript }: VoiceRecorderProps) {
+export function VoiceRecorder({ onTranscript, onChange, transcript, value, error }: VoiceRecorderProps) {
   const [recording, setRecording] = useState(false)
-  const [error, setError] = useState('')
+  const [recError, setRecError] = useState('')
   const recognitionRef = useRef<any>(null)
+  const finalRef = useRef('')
+
+  const currentTranscript = transcript ?? value ?? ''
+  const handleChange = onTranscript ?? onChange ?? (() => {})
 
   function start() {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
-    if (!SpeechRecognition) { setError("La reconnaissance vocale n'est pas supportée par ce navigateur."); return }
+    if (!SpeechRecognition) { setRecError("La reconnaissance vocale n'est pas supportee par ce navigateur."); return }
     const recognition = new SpeechRecognition()
     recognition.lang = 'fr-FR'; recognition.continuous = true; recognition.interimResults = true
-    let finalTranscript = transcript
+    finalRef.current = currentTranscript
     recognition.onresult = (e: any) => {
-      let interimTranscript = ''
+      let interim = ''
       for (let i = e.resultIndex; i < e.results.length; i++) {
-        if (e.results[i].isFinal) finalTranscript += e.results[i][0].transcript + ' '
-        else interimTranscript += e.results[i][0].transcript
+        if (e.results[i].isFinal) finalRef.current += e.results[i][0].transcript + ' '
+        else interim += e.results[i][0].transcript
       }
-      onTranscript(finalTranscript + interimTranscript)
+      handleChange(finalRef.current + interim)
     }
-    recognition.onerror = () => { setRecording(false); setError('Erreur microphone.') }
+    recognition.onerror = () => { setRecording(false); setRecError('Erreur microphone.') }
     recognition.onend = () => setRecording(false)
     recognitionRef.current = recognition
-    recognition.start(); setRecording(true); setError('')
+    recognition.start(); setRecording(true); setRecError('')
   }
 
   function stop() { recognitionRef.current?.stop(); setRecording(false) }
@@ -40,13 +50,33 @@ export function VoiceRecorder({ onTranscript, transcript }: VoiceRecorderProps) 
           {recording ? <Square className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
         </button>
         <span className="font-body text-[14px] text-text-secondary dark:text-text-dark-secondary">
-          {recording ? '🔴 Enregistrement en cours...' : transcript ? 'Clique pour continuer' : 'Clique pour dicter ton cours'}
+          {recording ? 'Enregistrement en cours...' : currentTranscript ? 'Clique pour continuer ou modifie le texte' : 'Clique pour dicter ton cours'}
         </span>
       </div>
+      {recError && <p className="font-body text-[13px] text-error">{recError}</p>}
       {error && <p className="font-body text-[13px] text-error">{error}</p>}
-      {transcript && (
-        <div className="rounded-input border border-sky-border bg-sky-surface-2 p-4 dark:border-night-border dark:bg-night-surface-2 max-h-48 overflow-y-auto">
-          <p className="font-body text-[14px] text-text-main dark:text-text-dark-main whitespace-pre-wrap">{transcript}</p>
+      {currentTranscript && !recording && (
+        <div>
+          <div className="mb-1.5 flex items-center justify-between">
+            <label className="font-body text-[13px] font-medium text-text-main dark:text-text-dark-main">
+              Transcription — tu peux la modifier
+            </label>
+            <button type="button" onClick={() => handleChange('')}
+              className="flex items-center gap-1 font-body text-[12px] text-text-tertiary hover:text-error transition-colors">
+              <X className="h-3.5 w-3.5" /> Effacer
+            </button>
+          </div>
+          <textarea
+            value={currentTranscript}
+            onChange={(e) => handleChange(e.target.value)}
+            rows={8}
+            className="w-full resize-none rounded-input border border-sky-border bg-sky-surface px-4 py-3 font-body text-[14px] text-text-main placeholder:text-text-tertiary focus:border-brand focus:outline-none dark:border-night-border dark:bg-night-surface dark:text-text-dark-main dark:focus:border-brand-dark"
+          />
+        </div>
+      )}
+      {recording && currentTranscript && (
+        <div className="rounded-input border border-brand/30 bg-brand-soft p-4 dark:border-brand-dark/30 dark:bg-brand-dark-soft max-h-48 overflow-y-auto">
+          <p className="font-body text-[14px] text-text-main dark:text-text-dark-main whitespace-pre-wrap">{currentTranscript}</p>
         </div>
       )}
     </div>
