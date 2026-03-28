@@ -120,8 +120,8 @@ export default function PrivacyPage() {
         </div>
 
         <div className="mt-12 border-t border-sky-border dark:border-night-border pt-6 flex gap-4">
-          <Link href="/terms" className="font-body text-[14px] text-brand hover:underline dark:text-brand-dark">
-            Conditions d'utilisation →
+          <Link href="/mentions-legales" className="font-body text-[14px] text-brand hover:underline dark:text-brand-dark">Mentions legales</Link>`n          <Link href="/terms" className="font-body text-[14px] text-brand hover:underline dark:text-brand-dark">
+            Conditions d''utilisation →
           </Link>
           <Link href="/dashboard" className="font-body text-[14px] text-text-secondary hover:text-text-main dark:text-text-dark-secondary">
             Retour à l'app
