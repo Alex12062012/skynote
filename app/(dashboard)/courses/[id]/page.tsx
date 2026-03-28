@@ -7,6 +7,8 @@ import { ProcessingLoader } from '@/components/courses/ProcessingLoader'
 import { GenerationTrigger } from '@/components/courses/GenerationTrigger'
 import { FlashcardViewer } from '@/components/courses/FlashcardViewer'
 import { QcmGenerator } from '@/components/courses/QcmGenerator'
+import { CourseChat } from '@/components/courses/CourseChat'
+import { getUserPlanLimits } from '@/lib/supabase/plan'
 import { DeleteCourseButton } from '@/components/courses/DeleteCourseButton'
 import { SubjectBadge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
@@ -85,12 +87,12 @@ export default async function CourseDetailPage({ params }: Props) {
         </div>
       )}
 
-      {course.status === 'ready' && <ReadyCourse courseId={id} userId={user.id} qcmStatus={(course as any).qcm_status} />}
+      {course.status === 'ready' && <ReadyCourse courseId={id} userId={user.id} courseTitle={course.title} qcmStatus={(course as any).qcm_status} />}
     </div>
   )
 }
 
-async function ReadyCourse({ courseId, userId, qcmStatus }: { courseId: string; userId: string; qcmStatus?: string }) {
+async function ReadyCourse({ courseId, userId, courseTitle, qcmStatus }: { courseId: string; userId: string; courseTitle: string; qcmStatus?: string }) {
   const flashcards = await getCourseFlashcards(courseId)
   const qcmReady = qcmStatus === 'ready' || !qcmStatus
 
@@ -131,6 +133,9 @@ async function ReadyCourse({ courseId, userId, qcmStatus }: { courseId: string; 
           </Link>
         </div>
       )}
+
+      {/* Chatbot IA */}
+      <CourseChat courseId={courseId} courseTitle={courseTitle} isPremium={(await getUserPlanLimits(userId)).isPlus} />
 
       <FlashcardViewer flashcards={flashcards} courseId={courseId} userId={userId} />
     </div>
