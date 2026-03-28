@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 import { useState } from 'react'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
@@ -13,10 +13,31 @@ export function LoginForm() {
   const supabase = createClient()
 
   async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault(); setError(''); setLoading(true)
-    const { error } = await supabase.auth.signInWithOtp({ email, options: { shouldCreateUser: false } })
-    if (error) { setError('Email introuvable ou erreur. Crée un compte d\'abord.'); setLoading(false); return }
-    setOtpSent(true); setLoading(false)
+    e.preventDefault()
+    setError('')
+    setLoading(true)
+
+    const { error } = await supabase.auth.signInWithOtp({
+      email: email.trim().toLowerCase(),
+      options: { shouldCreateUser: false },
+    })
+
+    if (error) {
+      if (error.message.includes('Email rate limit exceeded')) {
+        setError('Trop de tentatives. Attends quelques minutes avant de reessayer.')
+      } else if (error.message.includes('Unable to validate') || error.message.includes('User not found') || error.message.includes('Signups not allowed')) {
+        setError('Aucun compte avec cet email. Cree un compte d\'abord.')
+      } else if (error.message.includes('SMTP') || error.message.includes('email') || error.message.includes('send')) {
+        setError('Erreur d\'envoi du mail. Reessaie dans quelques instants.')
+      } else {
+        setError(error.message)
+      }
+      setLoading(false)
+      return
+    }
+
+    setOtpSent(true)
+    setLoading(false)
   }
 
   if (otpSent) return <OtpForm email={email} onBack={() => setOtpSent(false)} />
