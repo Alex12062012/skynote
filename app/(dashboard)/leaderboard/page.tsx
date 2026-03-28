@@ -1,4 +1,4 @@
-﻿import { redirect } from 'next/navigation'
+import { redirect } from 'next/navigation'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { SkyCoin } from '@/components/ui/SkyCoin'
 import { cn } from '@/lib/utils'
@@ -12,6 +12,7 @@ export default async function LeaderboardPage() {
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
 
+  // Auth check with regular client
   const { createClient } = await import('@/lib/supabase/server')
   const authClient = await createClient()
   const { data: { user } } = await authClient.auth.getUser()
@@ -20,43 +21,24 @@ export default async function LeaderboardPage() {
   // Top 100
   const { data: top100 } = await supabase
     .from('profiles')
-    .select('id, full_name, pseudo, user_number, sky_coins, plan, streak_days')
+    .select('id, full_name, sky_coins, plan, streak_days')
     .order('sky_coins', { ascending: false })
     .limit(100)
 
+  // Rang = position dans le top100 (index + 1)
   const myRankInTop100 = (top100 || []).findIndex(p => p.id === user.id)
   const myRank = myRankInTop100 >= 0 ? myRankInTop100 + 1 : null
   const isInTop100 = myRankInTop100 >= 0
-  const myProfile = (top100 || []).find(p => p.id === user.id)
 
-  // Si pas dans le top 100, chercher les infos de l'utilisateur
+  // Si pas dans le top 100, récupérer les coins de l'utilisateur
   let myCoins = 0
-  let myPseudo = null
-  let myUserNumber = 0
-  let needsPseudo = false
   if (!isInTop100) {
-    const { data: mp } = await supabase
+    const { data: myProfile } = await supabase
       .from('profiles')
-      .select('sky_coins, pseudo, user_number')
+      .select('sky_coins')
       .eq('id', user.id)
       .single()
-    myCoins = mp?.sky_coins ?? 0
-    myPseudo = mp?.pseudo
-    myUserNumber = mp?.user_number ?? 0
-  } else {
-    needsPseudo = !myProfile?.pseudo
-    myPseudo = myProfile?.pseudo
-    myUserNumber = myProfile?.user_number ?? 0
-  }
-
-  function getDisplayName(profile: any, isMe: boolean): string {
-    if (isMe) {
-      if (profile.pseudo) return profile.pseudo + ' (toi)'
-      const name = profile.full_name?.split(' ')[0] || 'Anonyme'
-      return name + ' (toi)'
-    }
-    if (profile.pseudo) return profile.pseudo
-    return 'user_' + (profile.user_number || '?')
+    myCoins = myProfile?.sky_coins ?? 0
   }
 
   const MEDALS = ['🥇', '🥈', '🥉']
@@ -65,17 +47,12 @@ export default async function LeaderboardPage() {
     <div className="mx-auto max-w-2xl animate-fade-in">
       <div className="mb-8">
         <h1 className="font-display text-h2 text-text-main dark:text-text-dark-main">
-          Classement
+          Classement 🏆
         </h1>
         <p className="mt-1 font-body text-[14px] text-text-secondary dark:text-text-dark-secondary">
           Top 100 des meilleurs collecteurs de Sky Coins
         </p>
       </div>
-
-      {/* Demande de pseudo si dans le top 100 sans pseudo */}
-      {isInTop100 && needsPseudo && (
-        <PseudoForm userId={user.id} />
-      )}
 
       {/* Ma position si pas dans le top 100 */}
       {!isInTop100 && (
@@ -92,7 +69,7 @@ export default async function LeaderboardPage() {
               <span className="font-bold text-brand dark:text-brand-dark">
                 {myCoins} coins
               </span>
-              {' '}— continue de reviser pour monter !
+              {' '}— continue de réviser pour monter !
             </p>
           </div>
           <SkyCoin size={32} />
@@ -105,7 +82,6 @@ export default async function LeaderboardPage() {
           const rank = index + 1
           const isMe = profile.id === user.id
           const medal = MEDALS[index]
-          const displayName = getDisplayName(profile, isMe)
 
           return (
             <div key={profile.id}
@@ -114,6 +90,8 @@ export default async function LeaderboardPage() {
                 index > 0 && 'border-t border-sky-border dark:border-night-border',
                 isMe && 'bg-brand-soft dark:bg-brand-dark-soft'
               )}>
+
+              {/* Rang */}
               <div className="flex w-10 flex-shrink-0 items-center justify-center">
                 {medal ? (
                   <span className="text-[20px]">{medal}</span>
@@ -126,29 +104,45 @@ export default async function LeaderboardPage() {
                   </span>
                 )}
               </div>
+
+              {/* Avatar initial */}
               <div className={cn(
                 'flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full font-display text-[14px] font-bold',
                 isMe
                   ? 'bg-brand text-white dark:bg-brand-dark dark:text-night-bg'
                   : 'bg-sky-cloud text-text-secondary dark:bg-night-border dark:text-text-dark-secondary'
               )}>
-                {(displayName)[0].toUpperCase()}
+                {(profile.full_name || '?')[0].toUpperCase()}
               </div>
+
+              {/* Prénom + badges */}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
                   <p className={cn(
                     'font-body text-[14px] font-semibold truncate',
                     isMe ? 'text-brand dark:text-brand-dark' : 'text-text-main dark:text-text-dark-main'
                   )}>
-                    {displayName}
+                    {isMe
+                      ? ((profile.full_name?.split(' ')[0] || 'Anonyme') + ' (toi)')
+                      : (() => {
+                          const name = profile.full_name?.split(' ')[0] || 'Anonyme'
+                          return name.length <= 2 ? name : name[0].toUpperCase() + name.slice(1, 3).toLowerCase() + '...'
+                        })()
+                    }
                   </p>
                   {profile.streak_days >= 7 && (
-                    <span className="text-[12px]" title={profile.streak_days + ' jours de streak'}>🔥</span>
+                    <span className="text-[12px]" title={`${profile.streak_days} jours de streak`}>🔥</span>
                   )}
-                  {(profile.plan === 'plus' || profile.plan === 'premium') && <span className="text-[11px]">⭐</span>}
-                  {profile.plan === 'famille' && <span className="text-[11px]">👨‍👩‍👧</span>}
+                  {(profile.plan === 'plus' || profile.plan === 'premium') && (
+                    <span className="text-[11px]">⭐</span>
+                  )}
+                  {profile.plan === 'famille' && (
+                    <span className="text-[11px]">👨‍👩‍👧</span>
+                  )}
                 </div>
               </div>
+
+              {/* Coins */}
               <div className="flex items-center gap-1.5 flex-shrink-0">
                 <SkyCoin size={18} />
                 <span className={cn(
@@ -163,44 +157,20 @@ export default async function LeaderboardPage() {
         })}
       </div>
 
+      {/* Ma position en bas si dans le top 100 */}
       {isInTop100 && myRank && (
         <p className="mt-4 text-center font-body text-[13px] text-text-secondary dark:text-text-dark-secondary">
-          {myRank === 1 ? 'Tu es 1er du classement !' :
-           myRank === 2 ? 'Tu es 2eme du classement !' :
-           myRank === 3 ? 'Tu es 3eme du classement !' :
-           myRank <= 10 ? 'Tu es #' + myRank + ' du classement — dans le top 10 !' :
-           'Tu es #' + myRank + ' du classement'}
+          {myRank === 1 ? '🥇 Tu es 1er du classement !' :
+           myRank === 2 ? '🥈 Tu es 2ème du classement !' :
+           myRank === 3 ? '🥉 Tu es 3ème du classement !' :
+           myRank <= 10 ? `Tu es #${myRank} du classement — dans le top 10 !` :
+           `Tu es #${myRank} du classement`}
         </p>
       )}
 
       <p className="mt-6 text-center font-body text-[12px] text-text-tertiary dark:text-text-dark-tertiary">
-        Mis a jour en temps reel · Seul le pseudo est affiche
+        Mis à jour en temps réel · Seul le prénom est affiché
       </p>
-    </div>
-  )
-}
-
-function PseudoForm({ userId }: { userId: string }) {
-  return (
-    <div className="mb-6 rounded-card border border-amber-200 bg-amber-50 p-5 dark:border-amber-800/30 dark:bg-amber-950/20">
-      <p className="font-body text-[14px] font-semibold text-amber-800 dark:text-amber-300 mb-2">
-        Tu es dans le top 100 ! Choisis un pseudo
-      </p>
-      <p className="font-body text-[13px] text-amber-700 dark:text-amber-400 mb-3">
-        Les autres joueurs verront ton pseudo dans le classement. Sans pseudo, tu apparais comme "user_X".
-      </p>
-      <form action="/api/set-pseudo" method="POST" className="flex gap-2">
-        <input type="hidden" name="userId" value={userId} />
-        <input
-          type="text" name="pseudo" maxLength={20} required
-          placeholder="Ton pseudo (max 20 car.)"
-          className="flex-1 h-10 rounded-input border border-amber-300 bg-white px-3 font-body text-[14px] text-text-main placeholder:text-text-tertiary focus:border-brand focus:outline-none dark:border-amber-700 dark:bg-night-surface dark:text-text-dark-main"
-        />
-        <button type="submit"
-          className="h-10 px-4 rounded-input bg-brand font-body text-[13px] font-semibold text-white hover:bg-brand-hover dark:bg-brand-dark dark:text-night-bg">
-          Valider
-        </button>
-      </form>
     </div>
   )
 }
