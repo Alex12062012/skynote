@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+﻿import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { processCourse } from '@/lib/ai/pipeline'
 import { waitUntil } from '@vercel/functions'
@@ -11,7 +11,7 @@ export async function POST(request: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) {
-      return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
+      return NextResponse.json({ error: 'Non autorise' }, { status: 401 })
     }
 
     const body = await request.json()
@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
 
     const { data: course } = await supabase
       .from('courses')
-      .select('id, status, user_id')
+      .select('id, status, user_id, progress')
       .eq('id', courseId)
       .eq('user_id', user.id)
       .single()
@@ -33,10 +33,20 @@ export async function POST(request: NextRequest) {
     }
 
     if (course.status === 'ready') {
-      return NextResponse.json({ message: 'Cours déjà généré' }, { status: 200 })
+      return NextResponse.json({ message: 'Cours deja genere' }, { status: 200 })
     }
 
-    // waitUntil maintient la fonction en vie après la réponse HTTP
+    // ANTI-DOUBLON : si progress > 0, la generation est deja en cours
+    if (course.status === 'processing' && course.progress > 0) {
+      return NextResponse.json({ message: 'Generation deja en cours' }, { status: 200 })
+    }
+
+    // Marquer immediatement progress > 0 pour bloquer les appels suivants
+    await supabase
+      .from('courses')
+      .update({ progress: 1 })
+      .eq('id', courseId)
+
     waitUntil(
       processCourse(courseId).catch((err) => {
         console.error('[API /generate] Pipeline error:', err)
@@ -44,7 +54,7 @@ export async function POST(request: NextRequest) {
     )
 
     return NextResponse.json(
-      { message: 'Génération lancée', courseId },
+      { message: 'Generation lancee', courseId },
       { status: 202 }
     )
 
