@@ -100,7 +100,7 @@ export default function TermsPage() {
         </div>
 
         <div className="mt-12 border-t border-sky-border dark:border-night-border pt-6 flex gap-4">
-          <Link href="/privacy" className="font-body text-[14px] text-brand hover:underline dark:text-brand-dark">
+          <Link href="/mentions-legales" className="font-body text-[14px] text-brand hover:underline dark:text-brand-dark">Mentions legales</Link>`n          <Link href="/privacy" className="font-body text-[14px] text-brand hover:underline dark:text-brand-dark">
             Politique de confidentialité →
           </Link>
           <Link href="/dashboard" className="font-body text-[14px] text-text-secondary hover:text-text-main dark:text-text-dark-secondary">
