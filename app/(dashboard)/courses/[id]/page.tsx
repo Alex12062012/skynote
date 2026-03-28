@@ -81,7 +81,7 @@ export default async function CourseDetailPage({ params }: Props) {
             </p>
           </div>
           <GenerationTrigger courseId={id} />
-          <Button onClick={() => window.location.reload()} variant="secondary">Réessayer</Button>
+          <a href=""><Button variant="secondary">Réessayer</Button></a>
         </div>
       )}
 
