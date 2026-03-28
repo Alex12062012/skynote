@@ -1,4 +1,4 @@
-import Anthropic from '@anthropic-ai/sdk'
+﻿import Anthropic from '@anthropic-ai/sdk'
 import {
   FLASHCARD_SYSTEM_PROMPT,
   QCM_SYSTEM_PROMPT,
@@ -9,10 +9,6 @@ import {
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY!,
 })
-
-// ============================================================
-// TYPES
-// ============================================================
 
 export interface GeneratedFlashcard {
   title: string
@@ -27,51 +23,44 @@ export interface GeneratedQuestion {
   explanation: string
 }
 
-// ============================================================
-// UTILITAIRE — Parser JSON Claude en toute sécurité
-// ============================================================
-
 function parseClaudeJSON<T>(raw: string): T | null {
   try {
-    // Supprimer les éventuels backticks markdown
-    const cleaned = raw
-      .replace(/```json\s*/gi, '')
-      .replace(/```\s*/g, '')
-      .trim()
+    const cleaned = raw.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim()
     return JSON.parse(cleaned) as T
   } catch {
-    // Tenter d'extraire le JSON avec regex
     const match = raw.match(/\{[\s\S]*\}/)
     if (match) {
-      try {
-        return JSON.parse(match[0]) as T
-      } catch {
-        return null
-      }
+      try { return JSON.parse(match[0]) as T } catch { return null }
     }
     return null
   }
 }
 
-// ============================================================
-// GÉNÉRATION DES FICHES DE RÉVISION
-// ============================================================
+function deduplicateFlashcards(flashcards: GeneratedFlashcard[]): GeneratedFlashcard[] {
+  const seen = new Set<string>()
+  return flashcards.filter((f) => {
+    const normalized = f.title.toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9\s]/g, '').replace(/\s+/g, ' ').trim()
+    const prefix = normalized.slice(0, 20)
+    if (seen.has(normalized) || [...seen].some(s => s.startsWith(prefix) && prefix.length > 8)) {
+      return false
+    }
+    seen.add(normalized)
+    return true
+  })
+}
+
+const MAX_FLASHCARDS = 4
 
 export async function generateFlashcards(
-  courseTitle: string,
-  subject: string,
-  content: string
+  courseTitle: string, subject: string, content: string
 ): Promise<GeneratedFlashcard[]> {
   const message = await anthropic.messages.create({
     model: 'claude-sonnet-4-20250514',
     max_tokens: 4096,
     system: FLASHCARD_SYSTEM_PROMPT,
-    messages: [
-      {
-        role: 'user',
-        content: buildFlashcardPrompt(courseTitle, subject, content),
-      },
-    ],
+    messages: [{ role: 'user', content: buildFlashcardPrompt(courseTitle, subject, content) }],
   })
 
   const raw = message.content
@@ -80,13 +69,11 @@ export async function generateFlashcards(
     .join('')
 
   const parsed = parseClaudeJSON<{ flashcards: GeneratedFlashcard[] }>(raw)
-
   if (!parsed?.flashcards || !Array.isArray(parsed.flashcards)) {
-    throw new Error('Réponse IA invalide pour les fiches')
+    throw new Error('Reponse IA invalide pour les fiches')
   }
 
-  // Valider et nettoyer chaque fiche
-  return parsed.flashcards
+  const cleaned = parsed.flashcards
     .filter((f) => f.title && f.summary && Array.isArray(f.key_points))
     .map((f) => ({
       title: String(f.title).trim(),
@@ -94,30 +81,27 @@ export async function generateFlashcards(
       key_points: f.key_points
         .filter((p) => typeof p === 'string' && p.trim())
         .map((p) => String(p).trim())
-        .slice(0, 5),
+        .slice(0, 3),
     }))
-    .slice(0, 6)
+
+  const deduped = deduplicateFlashcards(cleaned)
+  const limited = deduped.slice(0, MAX_FLASHCARDS)
+
+  if (limited.length === 0) {
+    throw new Error('Aucune fiche valide generee par l IA')
+  }
+
+  return limited
 }
 
-// ============================================================
-// GÉNÉRATION DES QUESTIONS QCM
-// ============================================================
-
 export async function generateQcmQuestions(
-  flashcardTitle: string,
-  summary: string,
-  keyPoints: string[]
+  flashcardTitle: string, summary: string, keyPoints: string[]
 ): Promise<GeneratedQuestion[]> {
   const message = await anthropic.messages.create({
     model: 'claude-sonnet-4-20250514',
     max_tokens: 2048,
     system: QCM_SYSTEM_PROMPT,
-    messages: [
-      {
-        role: 'user',
-        content: buildQcmPrompt(flashcardTitle, summary, keyPoints),
-      },
-    ],
+    messages: [{ role: 'user', content: buildQcmPrompt(flashcardTitle, summary, keyPoints) }],
   })
 
   const raw = message.content
@@ -126,22 +110,15 @@ export async function generateQcmQuestions(
     .join('')
 
   const parsed = parseClaudeJSON<{ questions: GeneratedQuestion[] }>(raw)
-
   if (!parsed?.questions || !Array.isArray(parsed.questions)) {
-    throw new Error('Réponse IA invalide pour le QCM')
+    throw new Error('Reponse IA invalide pour le QCM')
   }
 
-  // Valider chaque question
   return parsed.questions
-    .filter(
-      (q) =>
-        q.question &&
-        Array.isArray(q.options) &&
-        q.options.length === 4 &&
-        typeof q.correct_index === 'number' &&
-        q.correct_index >= 0 &&
-        q.correct_index <= 3 &&
-        q.explanation
+    .filter((q) =>
+      q.question && Array.isArray(q.options) && q.options.length === 4 &&
+      typeof q.correct_index === 'number' && q.correct_index >= 0 &&
+      q.correct_index <= 3 && q.explanation
     )
     .map((q) => ({
       question: String(q.question).trim(),
