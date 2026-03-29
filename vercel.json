@@ -1,4 +1,3 @@
 ﻿{
-  "regions": ["cdg1"],
-  "framework": "nextjs"
+  "regions": ["cdg1"]
 }
