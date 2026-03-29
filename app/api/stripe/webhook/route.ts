@@ -1,10 +1,10 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+﻿import { NextRequest, NextResponse } from 'next/server'
+import { createClient } from '@supabase/supabase-js'
 import { STRIPE_CONFIG } from '@/lib/stripe/config'
 
 export async function POST(request: NextRequest) {
   if (!STRIPE_CONFIG.secretKey || !STRIPE_CONFIG.webhookSecret) {
-    return NextResponse.json({ error: 'Stripe non configuré' }, { status: 503 })
+    return NextResponse.json({ error: 'Stripe non configure' }, { status: 503 })
   }
 
   const Stripe = (await import('stripe')).default
@@ -20,7 +20,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Signature invalide' }, { status: 400 })
   }
 
-  const supabase = await createClient()
+  // Service role pour bypasser RLS — le webhook n a pas de cookies utilisateur
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
 
   switch (event.type) {
     case 'checkout.session.completed': {
@@ -31,7 +35,6 @@ export async function POST(request: NextRequest) {
 
       if (!userId || !plan) break
 
-      // Calculer la date d'expiration
       const expiresAt = new Date()
       if (billing === 'yearly') {
         expiresAt.setFullYear(expiresAt.getFullYear() + 1)
@@ -52,14 +55,13 @@ export async function POST(request: NextRequest) {
       await supabase.from('coin_transactions').insert({
         user_id: userId,
         amount: 0,
-        reason: `🎉 Abonnement ${plan === 'plus' ? 'Plus ⭐' : 'Famille 👨‍👩‍👧'} activé`,
+        reason: 'Abonnement ' + (plan === 'plus' ? 'Plus' : 'Famille') + ' active',
       })
       break
     }
 
     case 'customer.subscription.deleted': {
       const subscription = event.data.object as any
-      // Trouver l'utilisateur par son subscription_id
       const { data: profile } = await supabase
         .from('profiles')
         .select('id')
@@ -76,7 +78,6 @@ export async function POST(request: NextRequest) {
     }
 
     case 'invoice.payment_succeeded': {
-      // Renouvellement automatique → prolonger l'abonnement
       const invoice = event.data.object as any
       const { data: profile } = await supabase
         .from('profiles')
