@@ -8,6 +8,17 @@ import { createClient } from '@/lib/supabase/server'
 export async function processCourse(courseId: string): Promise<void> {
   const supabase = await createClient()
 
+  // 0. Anti-doublon: verifier si des fiches existent deja
+  const { count: existingFlashcards } = await supabase
+    .from('flashcards')
+    .select('id', { count: 'exact' })
+    .eq('course_id', courseId)
+
+  if ((existingFlashcards ?? 0) > 0) {
+    console.log('[AI Pipeline] Fiches deja existantes pour', courseId)
+    return
+  }
+
   // 1. Récupérer le cours
   const { data: course, error: courseError } = await supabase
     .from('courses')
