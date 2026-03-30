@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { 
-  Mail, Coins, Flame, Target, Trophy, BookOpen, 
+  Mail, Flame, Target, Trophy, BookOpen, 
   Zap, Star, ArrowRight, LogOut, Crown 
 } from 'lucide-react'
 import { redirect } from 'next/navigation'
@@ -102,7 +102,7 @@ export default async function ProfilePage() {
       <div className="rounded-card border border-sky-border bg-sky-surface p-5 shadow-card dark:border-night-border dark:bg-night-surface dark:shadow-card-dark">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Coins className="h-6 w-6 text-amber-500" />
+            <SkyCoin size={32} />
             <div>
               <p className="font-body text-sm text-text-tertiary dark:text-text-dark-tertiary">Sky Coins</p>
               <p className="font-display text-h3 text-text-main dark:text-text-dark-main">{coins}</p>
