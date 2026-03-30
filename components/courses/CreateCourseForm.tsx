@@ -5,12 +5,12 @@ import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
 import { SubjectSelect } from './SubjectSelect'
 import { SourceTypeTabs } from './SourceTypeTabs'
-import { FileDropzone } from './FileDropzone'
 import { VoiceRecorder } from './VoiceRecorder'
+import { FileDropzone } from './FileDropzone'
 import { createCourse } from '@/lib/supabase/course-actions'
 import { X, AlertTriangle, Camera, List } from 'lucide-react'
 
-type SourceType = 'text' | 'pdf' | 'photo' | 'list' | 'vocal'
+type SourceType = 'text' | 'photo' | 'list' | 'vocal'
 
 const PHOTO_WARNING_KEY = 'skynote_hide_photo_warning'
 
@@ -71,7 +71,6 @@ export function CreateCourseForm() {
     if (!subject) e.subject = 'La matiere est requise'
     if (sourceType === 'text' && !textContent.trim()) e.content = 'Le contenu est requis'
     if (sourceType === 'photo' && !extractedText.trim()) e.file = 'Uploade une photo et attends la transcription'
-    if (sourceType === 'pdf' && !file) e.file = 'Le fichier est requis'
     if (sourceType === 'vocal' && !voiceTranscript.trim()) e.content = 'Enregistre du contenu vocal'
     setErrors(e)
     return Object.keys(e).length === 0
@@ -90,7 +89,6 @@ export function CreateCourseForm() {
       if (sourceType === 'text') formData.set('content', textContent)
       else if (sourceType === 'vocal') formData.set('content', voiceTranscript)
       else if (sourceType === 'photo') formData.set('content', extractedText)
-      else if (file) formData.set('content', `[Fichier: ${file.name} - ${Math.round(file.size / 1024)} Ko]\n\nTraitement en cours...`)
 
       const { courseId, error } = await createCourse(formData)
 
@@ -113,9 +111,6 @@ export function CreateCourseForm() {
       router.push(`/courses/${courseId}`)
     })
   }
-
-  // ── Cas Liste : pas de formulaire IA, on redirige direct ──────────────────
-  const handleGoToList = () => router.push('/list-quiz/new')
 
   return (
     <>
@@ -186,11 +181,9 @@ export function CreateCourseForm() {
 
         <SubjectSelect value={subject} onChange={setSubject} error={errors.subject} />
 
-        <div>
-          <SourceTypeTabs value={sourceType} onChange={handleSourceTypeChange} vocalEnabled={true} />
-        </div>
+        <SourceTypeTabs value={sourceType} onChange={handleSourceTypeChange} vocalEnabled={true} />
 
-        {/* ── Mode Liste : pas d'IA, redirection directe ── */}
+        {/* Mode Liste */}
         {sourceType === 'list' && (
           <div className="rounded-input border border-sky-border bg-sky-surface p-5 dark:border-night-border dark:bg-night-surface">
             <div className="mb-3 flex items-center gap-3">
@@ -202,16 +195,16 @@ export function CreateCourseForm() {
                   Quiz liste — sans IA
                 </p>
                 <p className="font-body text-[12px] text-text-tertiary dark:text-text-dark-tertiary">
-                  Pas d'IA, pas de limite de regeneration
+                  Pas d'IA, regeneration infinie
                 </p>
               </div>
             </div>
             <p className="font-body text-[13px] text-text-secondary dark:text-text-dark-secondary mb-4 leading-relaxed">
-              Saisis tes paires <strong>Question / Reponse</strong> — par exemple les pays et leurs capitales —
+              Saisis tes paires <strong>Question / Reponse</strong> — pays et capitales, vocabulaire, dates —
               et Skynote genere un questionnaire de 20 questions tirees au hasard.
               Score parfait = <strong className="text-brand dark:text-brand-dark">+10 Sky Coins</strong>.
             </p>
-            <Button type="button" className="w-full" onClick={handleGoToList}>
+            <Button type="button" className="w-full" onClick={() => router.push('/list-quiz/new')}>
               Creer mon quiz liste →
             </Button>
           </div>
@@ -233,7 +226,7 @@ export function CreateCourseForm() {
           </div>
         )}
 
-        {/* Photo — dropzone puis texte extrait */}
+        {/* Photo — dropzone */}
         {sourceType === 'photo' && !showExtracted && (
           <FileDropzone
             accept="image/*" label="Photo du cours"
@@ -243,6 +236,7 @@ export function CreateCourseForm() {
           />
         )}
 
+        {/* Photo — texte extrait */}
         {sourceType === 'photo' && showExtracted && (
           <div>
             <div className="mb-2 flex items-center justify-between">
@@ -271,11 +265,6 @@ export function CreateCourseForm() {
           </div>
         )}
 
-        {/* PDF */}
-        {sourceType === 'pdf' && (
-          <FileDropzone accept=".pdf" label="PDF du cours" value={file} onChange={setFile} error={errors.file} />
-        )}
-
         {/* Vocal */}
         {sourceType === 'vocal' && (
           <VoiceRecorder value={voiceTranscript} onChange={setVoiceTranscript} error={errors.content} />
@@ -295,7 +284,6 @@ export function CreateCourseForm() {
           <p className="font-body text-[13px] text-error">{errors.form}</p>
         )}
 
-        {/* Bouton submit — masque en mode liste (redirection separee) */}
         {sourceType !== 'list' && (
           <Button type="submit" loading={isPending} size="lg" className="w-full"
             disabled={sourceType === 'photo' && !showExtracted}>
