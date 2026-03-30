@@ -1,5 +1,5 @@
-'use client'
-import { useState, useTransition, useRef } from 'react'
+﻿'use client'
+import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
@@ -7,11 +7,10 @@ import { SubjectSelect } from './SubjectSelect'
 import { SourceTypeTabs } from './SourceTypeTabs'
 import { FileDropzone } from './FileDropzone'
 import { VoiceRecorder } from './VoiceRecorder'
-import { getUserPlanLimits } from '@/lib/supabase/plan'
 import { createCourse } from '@/lib/supabase/course-actions'
-import { X, AlertTriangle, Camera } from 'lucide-react'
+import { X, AlertTriangle, Camera, List } from 'lucide-react'
 
-type SourceType = 'text' | 'pdf' | 'photo' | 'vocal'
+type SourceType = 'text' | 'pdf' | 'photo' | 'list' | 'vocal'
 
 const PHOTO_WARNING_KEY = 'skynote_hide_photo_warning'
 
@@ -41,7 +40,6 @@ export function CreateCourseForm() {
     setFile(null)
     setErrors({})
 
-    // Afficher le popup dès la sélection de Photo
     if (type === 'photo') {
       const hideWarning = localStorage.getItem(PHOTO_WARNING_KEY) === 'true'
       if (!hideWarning) setShowPhotoWarning(true)
@@ -59,7 +57,7 @@ export function CreateCourseForm() {
         setExtractedText(data.text)
         setShowExtracted(true)
       } else {
-        setErrors({ file: 'Impossible de lire la photo. Essaie avec une meilleure qualité ou saisis le texte manuellement.' })
+        setErrors({ file: 'Impossible de lire la photo. Essaie avec une meilleure qualite ou saisis le texte manuellement.' })
       }
     } catch {
       setErrors({ file: 'Erreur lors de la lecture de la photo.' })
@@ -70,7 +68,7 @@ export function CreateCourseForm() {
   function validate(): boolean {
     const e: Record<string, string> = {}
     if (!title.trim()) e.title = 'Le titre est requis'
-    if (!subject) e.subject = 'La matière est requise'
+    if (!subject) e.subject = 'La matiere est requise'
     if (sourceType === 'text' && !textContent.trim()) e.content = 'Le contenu est requis'
     if (sourceType === 'photo' && !extractedText.trim()) e.file = 'Uploade une photo et attends la transcription'
     if (sourceType === 'pdf' && !file) e.file = 'Le fichier est requis'
@@ -92,7 +90,7 @@ export function CreateCourseForm() {
       if (sourceType === 'text') formData.set('content', textContent)
       else if (sourceType === 'vocal') formData.set('content', voiceTranscript)
       else if (sourceType === 'photo') formData.set('content', extractedText)
-      else if (file) formData.set('content', `[Fichier: ${file.name} — ${Math.round(file.size / 1024)} Ko]\n\nTraitement en cours...`)
+      else if (file) formData.set('content', `[Fichier: ${file.name} - ${Math.round(file.size / 1024)} Ko]\n\nTraitement en cours...`)
 
       const { courseId, error } = await createCourse(formData)
 
@@ -101,31 +99,31 @@ export function CreateCourseForm() {
           setErrors({ form: error.replace('LIMIT:', '') })
           setLimitReached(true)
         } else {
-          setErrors({ form: error ?? 'Erreur lors de la création' })
+          setErrors({ form: error ?? 'Erreur lors de la creation' })
         }
         return
       }
 
-      // Lancer la génération sans attendre (fire and forget)
       fetch('/api/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ courseId }),
       }).catch(console.error)
 
-      // Rediriger immédiatement vers la page de chargement
       router.push(`/courses/${courseId}`)
     })
   }
 
+  // ── Cas Liste : pas de formulaire IA, on redirige direct ──────────────────
+  const handleGoToList = () => router.push('/list-quiz/new')
+
   return (
     <>
-      {/* ── Pop-up conseil photo ── */}
+      {/* Pop-up conseil photo */}
       {showPhotoWarning && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
           <div className="relative z-10 w-full max-w-md rounded-card-login border border-sky-border bg-sky-surface p-6 shadow-2xl dark:border-night-border dark:bg-night-surface">
-
             <div className="mb-4 flex items-start gap-3">
               <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-amber-100 dark:bg-amber-950/30">
                 <Camera className="h-5 w-5 text-amber-600 dark:text-amber-400" />
@@ -134,19 +132,14 @@ export function CreateCourseForm() {
                 Conseil pour les photos 📸
               </h3>
             </div>
-
             <div className="mb-4 rounded-input border border-amber-200 bg-amber-50 p-4 dark:border-amber-800/30 dark:bg-amber-950/20">
               <p className="font-body text-[13px] text-amber-800 dark:text-amber-300 leading-relaxed">
-                Pour les photos, <strong>privilégie les cours imprimés</strong> car l'IA a du mal à lire les cours manuscrits
-                — surtout les cours d'espagnol écrits à Larache à la dernière minute 😉
+                Pour les photos, <strong>privilegie les cours imprimes</strong> car l'IA a du mal a lire les cours manuscrits.
               </p>
             </div>
-
             <p className="font-body text-[13px] text-text-secondary dark:text-text-dark-secondary mb-5 leading-relaxed">
-              Si l'IA n'arrive pas à lire ta photo, tu pourras modifier le texte détecté avant de valider.
-              Tu peux aussi supprimer ce cours et le dicter en vocal — ça marche souvent mieux !
+              Si l'IA n'arrive pas a lire ta photo, tu pourras modifier le texte detecte avant de valider.
             </p>
-
             <div className="flex gap-3">
               <Button variant="secondary" className="flex-1"
                 onClick={() => { setShowPhotoWarning(false); setSourceType('text') }}>
@@ -156,7 +149,6 @@ export function CreateCourseForm() {
                 OK, continuer
               </Button>
             </div>
-
             <button
               onClick={() => { localStorage.setItem(PHOTO_WARNING_KEY, 'true'); setShowPhotoWarning(false) }}
               className="mt-3 w-full text-center font-body text-[12px] text-text-tertiary hover:text-text-secondary transition-colors"
@@ -167,7 +159,7 @@ export function CreateCourseForm() {
         </div>
       )}
 
-      {/* ── Extraction en cours ── */}
+      {/* Extraction en cours */}
       {extracting && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" />
@@ -183,11 +175,11 @@ export function CreateCourseForm() {
         </div>
       )}
 
-      {/* ── Formulaire ── */}
+      {/* Formulaire */}
       <form onSubmit={handleSubmit} className="flex flex-col gap-5">
         <Input
           id="title" label="Titre du cours"
-          placeholder="Ex: Les fonctions — Mathématiques"
+          placeholder="Ex: Les fonctions — Mathematiques"
           value={title} onChange={(e) => setTitle(e.target.value)}
           error={errors.title} required
         />
@@ -197,6 +189,33 @@ export function CreateCourseForm() {
         <div>
           <SourceTypeTabs value={sourceType} onChange={handleSourceTypeChange} vocalEnabled={true} />
         </div>
+
+        {/* ── Mode Liste : pas d'IA, redirection directe ── */}
+        {sourceType === 'list' && (
+          <div className="rounded-input border border-sky-border bg-sky-surface p-5 dark:border-night-border dark:bg-night-surface">
+            <div className="mb-3 flex items-center gap-3">
+              <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-brand/10 dark:bg-brand-dark/10">
+                <List className="h-4 w-4 text-brand dark:text-brand-dark" />
+              </div>
+              <div>
+                <p className="font-display text-[15px] font-bold text-text-main dark:text-text-dark-main">
+                  Quiz liste — sans IA
+                </p>
+                <p className="font-body text-[12px] text-text-tertiary dark:text-text-dark-tertiary">
+                  Pas d'IA, pas de limite de regeneration
+                </p>
+              </div>
+            </div>
+            <p className="font-body text-[13px] text-text-secondary dark:text-text-dark-secondary mb-4 leading-relaxed">
+              Saisis tes paires <strong>Question / Reponse</strong> — par exemple les pays et leurs capitales —
+              et Skynote genere un questionnaire de 20 questions tirees au hasard.
+              Score parfait = <strong className="text-brand dark:text-brand-dark">+10 Sky Coins</strong>.
+            </p>
+            <Button type="button" className="w-full" onClick={handleGoToList}>
+              Creer mon quiz liste →
+            </Button>
+          </div>
+        )}
 
         {/* Texte */}
         {sourceType === 'text' && (
@@ -216,21 +235,19 @@ export function CreateCourseForm() {
 
         {/* Photo — dropzone puis texte extrait */}
         {sourceType === 'photo' && !showExtracted && (
-          <div>
-            <FileDropzone
-              accept="image/*" label="Photo du cours"
-              value={file}
-              onChange={(f) => { setFile(f); if (f) extractTextFromPhoto(f) }}
-              error={errors.file}
-            />
-          </div>
+          <FileDropzone
+            accept="image/*" label="Photo du cours"
+            value={file}
+            onChange={(f) => { setFile(f); if (f) extractTextFromPhoto(f) }}
+            error={errors.file}
+          />
         )}
 
         {sourceType === 'photo' && showExtracted && (
           <div>
             <div className="mb-2 flex items-center justify-between">
               <label className="font-body text-[13px] font-medium text-text-main dark:text-text-dark-main">
-                ✅ Texte détecté — tu peux le modifier
+                ✅ Texte detecte — tu peux le modifier
               </label>
               <button type="button"
                 onClick={() => { setShowExtracted(false); setExtractedText(''); setFile(null) }}
@@ -247,7 +264,7 @@ export function CreateCourseForm() {
               <div className="mt-2 flex items-start gap-2 rounded-input border border-amber-200 bg-amber-50 p-3 dark:border-amber-800/30 dark:bg-amber-950/20">
                 <AlertTriangle className="h-4 w-4 flex-shrink-0 text-amber-600 mt-0.5" />
                 <p className="font-body text-[12px] text-amber-700 dark:text-amber-400">
-                  Certaines parties sont marquées [illisible]. Tu peux les corriger avant de valider.
+                  Certaines parties sont marquees [illisible]. Tu peux les corriger avant de valider.
                 </p>
               </div>
             )}
@@ -269,7 +286,7 @@ export function CreateCourseForm() {
           <div className="rounded-input border border-amber-200 bg-amber-50 p-4 dark:border-amber-800/30 dark:bg-amber-950/20">
             <p className="font-body text-[13px] text-amber-800 dark:text-amber-300">{errors.form}</p>
             <a href="/pricing" className="mt-2 inline-block font-body text-[13px] font-semibold text-brand hover:underline dark:text-brand-dark">
-              Passer au plan Plus pour des cours illimités →
+              Passer au plan Plus pour des cours illimites →
             </a>
           </div>
         )}
@@ -278,10 +295,13 @@ export function CreateCourseForm() {
           <p className="font-body text-[13px] text-error">{errors.form}</p>
         )}
 
-        <Button type="submit" loading={isPending} size="lg" className="w-full"
-          disabled={sourceType === 'photo' && !showExtracted}>
-          {isPending ? 'Génération en cours...' : 'Créer le cours ✨'}
-        </Button>
+        {/* Bouton submit — masque en mode liste (redirection separee) */}
+        {sourceType !== 'list' && (
+          <Button type="submit" loading={isPending} size="lg" className="w-full"
+            disabled={sourceType === 'photo' && !showExtracted}>
+            {isPending ? 'Generation en cours...' : 'Creer le cours ✨'}
+          </Button>
+        )}
       </form>
     </>
   )
