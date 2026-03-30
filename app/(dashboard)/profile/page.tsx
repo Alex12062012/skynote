@@ -1,4 +1,4 @@
-﻿import { redirect } from 'next/navigation'
+import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { signOut } from '@/lib/supabase/actions'
 import { PlanBadge, BetaBadge } from '@/components/ui/Badge'
@@ -76,10 +76,10 @@ export default async function ProfilePage() {
         </div>
         <div className="flex gap-2">
           <Link href="/objectives" className="flex-1 flex items-center justify-center h-9 rounded-input border border-sky-border font-body text-[13px] font-medium text-text-secondary hover:bg-sky-cloud dark:border-night-border dark:text-text-dark-secondary transition-colors">
-            ðŸŽ¯ Objectifs
+            🎯 Objectifs
           </Link>
           <Link href="/leaderboard" className="flex-1 flex items-center justify-center h-9 rounded-input border border-sky-border font-body text-[13px] font-medium text-text-secondary hover:bg-sky-cloud dark:border-night-border dark:text-text-dark-secondary transition-colors">
-            ðŸ† Classement
+            🏆 Classement
           </Link>
         </div>
       </div>
@@ -87,9 +87,9 @@ export default async function ProfilePage() {
       {/* Stats */}
       <div className="grid grid-cols-3 gap-3">
         {[
-          { label: 'Cours', value: coursesCount ?? 0, icon: 'ðŸ“š' },
-          { label: 'QCM faits', value: qcmCount ?? 0, icon: 'âš¡' },
-          { label: 'Score parfaits', value: perfectCount ?? 0, icon: 'ðŸ†' },
+          { label: 'Cours', value: coursesCount ?? 0, icon: '📚' },
+          { label: 'QCM faits', value: qcmCount ?? 0, icon: '⚡' },
+          { label: 'Score parfaits', value: perfectCount ?? 0, icon: '🏆' },
         ].map((s) => (
           <div key={s.label} className="rounded-card border border-sky-border bg-sky-surface p-4 text-center dark:border-night-border dark:bg-night-surface">
             <p className="text-2xl mb-1">{s.icon}</p>
@@ -101,10 +101,10 @@ export default async function ProfilePage() {
 
       {/* Streak */}
       <div className="flex items-center gap-3 rounded-card border border-sky-border bg-sky-surface p-4 dark:border-night-border dark:bg-night-surface">
-        <span className="text-3xl">ðŸ”¥</span>
+        <span className="text-3xl">🔥</span>
         <div>
           <p className="font-display text-[20px] font-bold text-text-main dark:text-text-dark-main">
-            {profile?.streak_days ?? 0} jours consÃ©cutifs
+            {profile?.streak_days ?? 0} jours consecutifs
           </p>
           <p className="font-body text-[13px] text-text-secondary dark:text-text-dark-secondary">
             Connecte-toi chaque jour pour garder ton streak !
@@ -113,35 +113,34 @@ export default async function ProfilePage() {
       </div>
 
       <p className="text-center font-body text-[13px] text-text-tertiary dark:text-text-dark-tertiary">
-        Membre depuis {profile?.created_at ? formatDate(profile.created_at) : 'â€”'}
+        Membre depuis {profile?.created_at ? formatDate(profile.created_at) : '\u2014'}
       </p>
 
-      {/* Mise Ã  niveau â€” seulement pour les gratuits */}
+      {/* Mise a niveau - seulement pour les gratuits */}
       {isFree && (
         <Link href="/pricing"
           className="flex items-center justify-between rounded-card border border-brand/30 bg-brand-soft p-5 hover:bg-brand/10 transition-colors dark:border-brand-dark/30 dark:bg-brand-dark-soft">
           <div>
             <p className="font-display text-[16px] font-bold text-brand dark:text-brand-dark">
-              â­ Passer au plan Plus
+              ⭐ Passer au plan Plus
             </p>
             <p className="font-body text-[13px] text-brand/70 dark:text-brand-dark/70 mt-0.5">
-              Cours illimitÃ©s, vocal, et plus encore
+              Cours illimites, vocal, et plus encore
             </p>
           </div>
-          <span className="font-body text-[14px] font-bold text-brand dark:text-brand-dark">4,99â‚¬/mois â†’</span>
+          <span className="font-body text-[14px] font-bold text-brand dark:text-brand-dark">{`4,99\u20AC/mois \u2192`}</span>
         </Link>
       )}
 
       <form action={signOut}>
         <Button type="submit" variant="ghost" className="w-full text-error hover:bg-error/10">
-          Se dÃ©connecter
+          Se deconnecter
         </Button>
       </form>
 
       <p className="text-center font-body text-[12px] text-text-tertiary dark:text-text-dark-tertiary">
-        Skynote respecte ta vie privÃ©e. Tes donnÃ©es ne sont jamais vendues.
+        Skynote respecte ta vie privee. Tes donnees ne sont jamais vendues.
       </p>
     </div>
   )
 }
-
