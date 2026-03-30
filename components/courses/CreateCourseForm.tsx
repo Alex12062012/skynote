@@ -1,4 +1,4 @@
-﻿'use client'
+﻿﻿'use client'
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { Input } from '@/components/ui/Input'
@@ -8,7 +8,7 @@ import { SourceTypeTabs } from './SourceTypeTabs'
 import { VoiceRecorder } from './VoiceRecorder'
 import { FileDropzone } from './FileDropzone'
 import { createCourse } from '@/lib/supabase/course-actions'
-import { X, AlertTriangle, Camera, List } from 'lucide-react'
+import { X, AlertTriangle, Camera, List, Plus } from 'lucide-react'
 
 type SourceType = 'text' | 'photo' | 'list' | 'vocal'
 
@@ -31,6 +31,7 @@ export function CreateCourseForm() {
   const [extracting, setExtracting] = useState(false)
   const [extractedText, setExtractedText] = useState('')
   const [showExtracted, setShowExtracted] = useState(false)
+  const [photoCount, setPhotoCount] = useState(0)
 
   function handleSourceTypeChange(v: string) {
     const type = v as SourceType
@@ -38,6 +39,7 @@ export function CreateCourseForm() {
     setExtractedText('')
     setShowExtracted(false)
     setFile(null)
+    setPhotoCount(0)
     setErrors({})
 
     if (type === 'photo') {
@@ -54,7 +56,16 @@ export function CreateCourseForm() {
       const res = await fetch('/api/extract-photo', { method: 'POST', body: formData })
       const data = await res.json()
       if (data.success && data.text) {
-        setExtractedText(data.text)
+        setPhotoCount((c) => {
+          const newCount = c + 1
+          setExtractedText((prev) => {
+            if (prev.trim()) {
+              return prev.trim() + '\n\n--- Photo ' + newCount + ' ---\n\n' + data.text
+            }
+            return data.text
+          })
+          return newCount
+        })
         setShowExtracted(true)
       } else {
         setErrors({ file: 'Impossible de lire la photo. Essaie avec une meilleure qualite ou saisis le texte manuellement.' })
@@ -108,7 +119,7 @@ export function CreateCourseForm() {
         body: JSON.stringify({ courseId }),
       }).catch(console.error)
 
-      router.push(`/courses/${courseId}`)
+      router.push(/courses/${courseId})
     })
   }
 
@@ -241,12 +252,12 @@ export function CreateCourseForm() {
           <div>
             <div className="mb-2 flex items-center justify-between">
               <label className="font-body text-[13px] font-medium text-text-main dark:text-text-dark-main">
-                ✅ Texte detecte — tu peux le modifier
+                ✅ Texte detecte ({photoCount} photo{photoCount > 1 ? 's' : ''}) — tu peux le modifier
               </label>
               <button type="button"
-                onClick={() => { setShowExtracted(false); setExtractedText(''); setFile(null) }}
+                onClick={() => { setShowExtracted(false); setExtractedText(''); setFile(null); setPhotoCount(0) }}
                 className="flex items-center gap-1 font-body text-[12px] text-text-tertiary hover:text-error transition-colors">
-                <X className="h-3.5 w-3.5" /> Changer la photo
+                <X className="h-3.5 w-3.5" /> Tout effacer
               </button>
             </div>
             <textarea
@@ -262,6 +273,18 @@ export function CreateCourseForm() {
                 </p>
               </div>
             )}
+            {/* Bouton ajouter une autre photo */}
+            <button
+              type="button"
+              onClick={() => { setFile(null); setShowExtracted(false) }}
+              className="mt-3 flex w-full items-center justify-center gap-2 rounded-input border-2 border-dashed border-brand/30 py-3 font-body text-[13px] font-medium text-brand transition-all hover:border-brand hover:bg-brand-soft dark:border-brand-dark/30 dark:text-brand-dark dark:hover:border-brand-dark dark:hover:bg-brand-dark-soft"
+            >
+              <Plus className="h-4 w-4" />
+              Ajouter une autre photo
+            </button>
+            <p className="mt-1.5 text-center font-body text-[11px] text-text-tertiary dark:text-text-dark-tertiary">
+              Le texte sera ajoute a la suite du texte existant
+            </p>
           </div>
         )}
 
