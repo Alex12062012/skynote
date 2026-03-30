@@ -1,4 +1,4 @@
-﻿import Anthropic from '@anthropic-ai/sdk'
+import Anthropic from '@anthropic-ai/sdk'
 import {
   FLASHCARD_SYSTEM_PROMPT,
   QCM_SYSTEM_PROMPT,
@@ -25,7 +25,7 @@ export interface GeneratedQuestion {
 
 function parseClaudeJSON<T>(raw: string): T | null {
   try {
-    const cleaned = raw.replace(/`json\s*/gi, '').replace(/`\s*/g, '').trim()
+    const cleaned = raw.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim()
     return JSON.parse(cleaned) as T
   } catch {
     const match = raw.match(/\{[\s\S]*\}/)

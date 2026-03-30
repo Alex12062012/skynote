@@ -1,9 +1,9 @@
-﻿﻿/**
+﻿/**
  * SKYNOTE — Prompts IA
  * Tous les prompts utilises pour la generation de fiches et QCM
  */
 
-export const FLASHCARD_SYSTEM_PROMPT = Tu es un assistant pedagogique pour eleves de college et lycee (10-17 ans).
+export const FLASHCARD_SYSTEM_PROMPT = `Tu es un assistant pedagogique pour eleves de college et lycee (10-17 ans).
 Tu transformes un cours en fiches de revision.
 
 CONTRAINTES STRICTES — toute violation rend la reponse invalide :
@@ -30,9 +30,9 @@ FORMAT JSON EXACT :
   ]
 }
 
-RAPPEL : Idealement 4 fiches, jusqu'a 6 si vraiment necessaire. 3 key_points par fiche, pas plus. Aucun doublon.
+RAPPEL : Idealement 4 fiches, jusqu'a 6 si vraiment necessaire. 3 key_points par fiche, pas plus. Aucun doublon.`
 
-export const QCM_SYSTEM_PROMPT = Tu es un assistant pedagogique qui cree des QCM pour des eleves de college et lycee.
+export const QCM_SYSTEM_PROMPT = `Tu es un assistant pedagogique qui cree des QCM pour des eleves de college et lycee.
 
 CONTRAINTES STRICTES :
 1. Reponds UNIQUEMENT en JSON valide. Pas de markdown, pas de backticks.
@@ -53,12 +53,12 @@ FORMAT JSON EXACT :
       "explanation": "Explication courte."
     }
   ]
-}
+}`
 
 export function buildFlashcardPrompt(courseTitle: string, subject: string, content: string): string {
   const truncated = content.length > 6000 ? content.slice(0, 6000) + '\n[...]' : content
 
-  return Cours a transformer en fiches de revision.
+  return `Cours a transformer en fiches de revision.
 
 Titre : ${courseTitle}
 Matiere : ${subject}
@@ -68,16 +68,16 @@ Contenu :
 ${truncated}
 ---
 
-IMPORTANT : Genere idealement 4 fiches. Si le contenu est tres dense avec beaucoup de sous-themes distincts, tu peux aller jusqu'a 6 fiches maximum. Fusionne les sous-themes proches en une seule fiche dense plutot que de faire des fiches separees. Chaque fiche a exactement 3 key_points. Aucun doublon de titre. Reponds en JSON uniquement.
+IMPORTANT : Genere idealement 4 fiches. Si le contenu est tres dense avec beaucoup de sous-themes distincts, tu peux aller jusqu'a 6 fiches maximum. Fusionne les sous-themes proches en une seule fiche dense plutot que de faire des fiches separees. Chaque fiche a exactement 3 key_points. Aucun doublon de titre. Reponds en JSON uniquement.`
 }
 
 export function buildQcmPrompt(flashcardTitle: string, summary: string, keyPoints: string[]): string {
-  return Cree 5 questions QCM pour cette fiche.
+  return `Cree 5 questions QCM pour cette fiche.
 
 Fiche : ${flashcardTitle}
 Resume : ${summary}
 Points cles :
-${keyPoints.map((p, i) => `. ${p}).join('\n')}
+${keyPoints.map((p, i) => `${i + 1}. ${p}`).join('\n')}
 
-Reponds avec EXACTEMENT 5 questions en JSON. Pas de texte autour.
+Reponds avec EXACTEMENT 5 questions en JSON. Pas de texte autour.`
 }

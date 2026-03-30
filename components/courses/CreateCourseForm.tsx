@@ -1,4 +1,4 @@
-﻿﻿'use client'
+﻿'use client'
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { Input } from '@/components/ui/Input'
@@ -119,7 +119,7 @@ export function CreateCourseForm() {
         body: JSON.stringify({ courseId }),
       }).catch(console.error)
 
-      router.push(/courses/${courseId})
+      router.push(`/courses/${courseId}`)
     })
   }
 
