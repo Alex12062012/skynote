@@ -413,3 +413,4 @@ export function LandingPage({ isBeta = true }: { isBeta?: boolean }) {
     </div>
   )
 }
+
