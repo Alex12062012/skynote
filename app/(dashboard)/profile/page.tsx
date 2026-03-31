@@ -10,6 +10,7 @@ import { signOut } from '@/lib/supabase/actions'
 import { Button } from '@/components/ui/Button'
 import { SkyCoin } from '@/components/ui/SkyCoin'
 import { ProgressBar } from '@/components/ui/ProgressBar'
+import { LanguageSection } from '@/components/profile/LanguageSection'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = { title: 'Mon profil' }
@@ -199,6 +200,9 @@ export default async function ProfilePage() {
           <div className="flex items-center justify-between py-2">
             <span className="text-sm text-text-tertiary dark:text-text-dark-tertiary">Email</span>
             <span className="text-sm font-medium text-text-main dark:text-text-dark-main">{email}</span>
+          </div>
+          <div className="border-t border-sky-border/50 dark:border-night-border/50 pt-3">
+            <LanguageSection />
           </div>
         </div>
       </div>

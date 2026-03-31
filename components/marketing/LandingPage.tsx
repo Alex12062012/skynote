@@ -1,8 +1,10 @@
-﻿"use client"
+"use client"
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import Image from "next/image"
+import { useI18n } from "@/lib/i18n/context"
+import { LanguagePicker } from "@/components/ui/LanguagePicker"
 
 // ---------------------------------------------------------------------------
 // Donnees statiques — pas de generation a la volee
@@ -170,6 +172,7 @@ function useScrollReveal() {
 // ---------------------------------------------------------------------------
 
 function NavBar() {
+  const { t } = useI18n()
   return (
     <nav style={{ position: "relative", zIndex: 10, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "20px 24px", maxWidth: 1100, margin: "0 auto" }}>
       <Link href="/" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none" }}>
@@ -177,8 +180,9 @@ function NavBar() {
         <span style={{ fontWeight: 700, fontSize: 18, letterSpacing: "-0.02em", color: "#F0F6FF" }}>Skynote</span>
       </Link>
       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <LanguagePicker variant="landing" />
         <Link href="/login"  style={{ fontSize: 13, color: "#64748B", textDecoration: "none", padding: "8px 12px" }}>Connexion</Link>
-        <Link href="/signup" className="sky-btn-primary" style={{ fontSize: 13, padding: "10px 20px" }}>Commencer gratuitement</Link>
+        <Link href="/signup" className="sky-btn-primary" style={{ fontSize: 13, padding: "10px 20px" }}>{t('landing.hero.ctaBeta')}</Link>
       </div>
     </nav>
   )
@@ -227,6 +231,7 @@ function PricingFamily() {
 
 export function LandingPage({ isBeta = true }: { isBeta?: boolean }) {
   const [glowPulse, setGlowPulse] = useState(false)
+  const { t } = useI18n()
   useScrollReveal()
 
   useEffect(() => {
@@ -252,32 +257,36 @@ export function LandingPage({ isBeta = true }: { isBeta?: boolean }) {
         </div>
 
         <h1 className="fade-up-2" style={{ fontSize: "clamp(36px, 6vw, 64px)", fontWeight: 800, lineHeight: 1.05, letterSpacing: "-0.03em", margin: "0 0 24px" }}>
-          <span style={{ color: "#F0F6FF" }}>Tes cours deviennent</span><br />
-          <span className="sky-gradient-text">des fiches de revision</span>
+          <span style={{ color: "#F0F6FF" }}>{t('landing.hero.title1')} {t('landing.hero.title2')}</span><br />
+          <span className="sky-gradient-text">{t('landing.hero.title3')}</span>
         </h1>
 
         <p className="fade-up-3" style={{ fontSize: 17, color: "#94A3B8", maxWidth: 480, margin: "0 auto 40px", lineHeight: 1.65 }}>
-          C'est pas un complement qui fait perdre du temps.<br />C'est un nouveau moyen de travailler.
+          {t('landing.hero.subtitle')}
         </p>
 
         <div className="fade-up-4" style={{ animation: "float 4s ease-in-out infinite", marginBottom: 40 }}>
           <span className={`sky-glow ${glowPulse ? "sky-glow-pulse" : ""}`} style={{ fontSize: "clamp(72px, 12vw, 120px)", fontWeight: 800, letterSpacing: "-0.04em", color: "#60A5FA", fontFamily: "inherit" }}>
             18/20
           </span>
-          <p style={{ color: "#334155", fontSize: 13, marginTop: 6 }}>La note moyenne de ceux qui revisent avec Skynote</p>
+          <p style={{ color: "#334155", fontSize: 13, marginTop: 6 }}>{t('landing.hero.avgGrade')}</p>
         </div>
 
         <div className="fade-up-5">
           <Link href="/signup" className="sky-btn-primary" style={{ fontSize: 15, padding: "14px 32px" }}>
-            {isBeta ? "Commencer gratuitement" : "Creer mon compte"}
+            {isBeta ? t('landing.hero.ctaBeta') : t('landing.hero.cta')}
           </Link>
         </div>
 
         <div className="fade-up-6" style={{ display: "flex", justifyContent: "center", gap: 48, marginTop: 56 }}>
-          {STATS.map((s, i) => (
+          {[
+            { value: '15s', key: 'landing.stats.fiches' },
+            { value: '4x', key: 'landing.stats.faster' },
+            { value: '100%', key: 'landing.stats.adapted' },
+          ].map((s, i) => (
             <div key={i} style={{ textAlign: "center" }}>
               <p style={{ fontSize: 28, fontWeight: 700, color: "#F0F6FF", margin: "0 0 4px" }}>{s.value}</p>
-              <p style={{ fontSize: 12, color: "#475569" }}>{s.label}</p>
+              <p style={{ fontSize: 12, color: "#475569" }}>{t(s.key)}</p>
             </div>
           ))}
         </div>
@@ -286,14 +295,13 @@ export function LandingPage({ isBeta = true }: { isBeta?: boolean }) {
       {/* ── PROBLEME ── */}
       <section style={{ position: "relative", zIndex: 10, maxWidth: 760, margin: "0 auto", padding: "40px 24px 60px", textAlign: "center" }}>
         <div className="scroll-reveal">
-          <p style={{ fontSize: 11, fontWeight: 700, color: "#60A5FA", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 16 }}>Le probleme</p>
+          <p style={{ fontSize: 11, fontWeight: 700, color: "#60A5FA", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 16 }}>{t('landing.problem.label')}</p>
           <h2 style={{ fontSize: "clamp(22px, 4vw, 34px)", fontWeight: 700, lineHeight: 1.25, margin: "0 0 20px" }}>
-            <span style={{ color: "#F0F6FF" }}>Tu passes 2h a recopier tes cours</span><br />
-            <span style={{ color: "#334155" }}>pour 15 minutes de vraie revision.</span>
+            <span style={{ color: "#F0F6FF" }}>{t('landing.problem.title1')}</span><br />
+            <span style={{ color: "#334155" }}>{t('landing.problem.title2')}</span>
           </h2>
           <p style={{ fontSize: 15, color: "#64748B", maxWidth: 520, margin: "0 auto", lineHeight: 1.65 }}>
-            Reecrire c'est pas reviser. Ton cerveau retient quand il est actif — pas quand il recopie.
-            Skynote fait le travail de mise en forme pour que toi, tu te concentres sur ce qui compte.
+            {t('landing.problem.desc')}
           </p>
         </div>
       </section>
@@ -301,11 +309,16 @@ export function LandingPage({ isBeta = true }: { isBeta?: boolean }) {
       {/* ── FEATURES ── */}
       <section style={{ position: "relative", zIndex: 10, maxWidth: 1000, margin: "0 auto", padding: "0 24px 80px" }}>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 14 }}>
-          {FEATURES.map((f, i) => (
+          {[
+            { icon: "\uD83D\uDCF8", titleKey: 'landing.features.photo', descKey: 'landing.features.photoDesc' },
+            { icon: "\u26A1", titleKey: 'landing.features.fiches', descKey: 'landing.features.fichesDesc' },
+            { icon: "\uD83E\uDDE0", titleKey: 'landing.features.qcm', descKey: 'landing.features.qcmDesc' },
+            { icon: "\uD83D\uDCAC", titleKey: 'landing.features.chatbot', descKey: 'landing.features.chatbotDesc' },
+          ].map((f, i) => (
             <div key={i} className="sky-card scroll-reveal" style={{ padding: 24, transitionDelay: `${i * 0.08}s` }}>
               <span style={{ fontSize: 28, display: "block", marginBottom: 12 }}>{f.icon}</span>
-              <h3 style={{ fontSize: 15, fontWeight: 700, color: "#F0F6FF", margin: "0 0 8px" }}>{f.title}</h3>
-              <p style={{ fontSize: 13, color: "#94A3B8", lineHeight: 1.55, margin: 0 }}>{f.desc}</p>
+              <h3 style={{ fontSize: 15, fontWeight: 700, color: "#F0F6FF", margin: "0 0 8px" }}>{t(f.titleKey)}</h3>
+              <p style={{ fontSize: 13, color: "#94A3B8", lineHeight: 1.55, margin: 0 }}>{t(f.descKey)}</p>
             </div>
           ))}
         </div>
@@ -314,8 +327,8 @@ export function LandingPage({ isBeta = true }: { isBeta?: boolean }) {
       {/* ── TEMOIGNAGES ── */}
       <section style={{ position: "relative", zIndex: 10, maxWidth: 1000, margin: "0 auto", padding: "0 24px 80px" }}>
         <div className="scroll-reveal" style={{ textAlign: "center", marginBottom: 40 }}>
-          <p style={{ fontSize: 11, fontWeight: 700, color: "#60A5FA", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 12 }}>Ils revisent avec Skynote</p>
-          <h2 style={{ fontSize: "clamp(22px, 4vw, 34px)", fontWeight: 700, color: "#F0F6FF", margin: 0 }}>Les notes parlent d'elles-memes.</h2>
+          <p style={{ fontSize: 11, fontWeight: 700, color: "#60A5FA", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 12 }}>{t('landing.testimonials.label')}</p>
+          <h2 style={{ fontSize: "clamp(22px, 4vw, 34px)", fontWeight: 700, color: "#F0F6FF", margin: 0 }}>{t('landing.testimonials.title')}</h2>
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 14 }}>
           {TESTIMONIALS.map((t, i) => (
@@ -335,59 +348,59 @@ export function LandingPage({ isBeta = true }: { isBeta?: boolean }) {
         <div className="scroll-reveal">
           {isBeta ? (
             <>
-              <p style={{ fontSize: 11, fontWeight: 700, color: "#60A5FA", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 16 }}>Pendant la beta</p>
-              <h2 style={{ fontSize: "clamp(36px, 6vw, 56px)", fontWeight: 800, color: "#F0F6FF", margin: "0 0 12px" }}>Gratuit.</h2>
+              <p style={{ fontSize: 11, fontWeight: 700, color: "#60A5FA", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 16 }}>{t('landing.beta.label')}</p>
+              <h2 style={{ fontSize: "clamp(36px, 6vw, 56px)", fontWeight: 800, color: "#F0F6FF", margin: "0 0 12px" }}>{t('landing.beta.title')}</h2>
               <p style={{ fontSize: 15, color: "#64748B", maxWidth: 400, margin: "0 auto 32px", lineHeight: 1.6 }}>
-                Toutes les fonctionnalites. Aucune carte bancaire. Tu revises, tu progresses, c'est tout.
+                {t('landing.beta.desc')}
               </p>
               <Link href="/signup" className="sky-btn-primary" style={{ fontSize: 15, padding: "14px 40px" }}>
-                Creer mon compte gratuitement
+                {t('landing.beta.cta')}
               </Link>
             </>
           ) : (
             <>
-              <p style={{ fontSize: 11, fontWeight: 700, color: "#60A5FA", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 12 }}>Nos forfaits</p>
-              <h2 style={{ fontSize: "clamp(26px, 4vw, 38px)", fontWeight: 800, color: "#F0F6FF", margin: "0 0 8px" }}>Choisis ton plan</h2>
-              <p style={{ fontSize: 14, color: "#64748B", maxWidth: 380, margin: "0 auto 40px" }}>Commence gratuitement, evolue quand tu veux.</p>
+              <p style={{ fontSize: 11, fontWeight: 700, color: "#60A5FA", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 12 }}>{t('landing.pricing.label')}</p>
+              <h2 style={{ fontSize: "clamp(26px, 4vw, 38px)", fontWeight: 800, color: "#F0F6FF", margin: "0 0 8px" }}>{t('landing.pricing.title')}</h2>
+              <p style={{ fontSize: 14, color: "#64748B", maxWidth: 380, margin: "0 auto 40px" }}>{t('landing.pricing.subtitle')}</p>
 
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 14, textAlign: "left" }}>
                 {/* Gratuit */}
                 <div className="sky-card" style={{ padding: 24 }}>
-                  <p style={{ fontSize: 13, color: "#64748B", fontWeight: 500, margin: "0 0 4px" }}>Gratuit</p>
-                  <p style={{ fontSize: 32, fontWeight: 800, color: "#F0F6FF", margin: "0 0 20px" }}>0€</p>
+                  <p style={{ fontSize: 13, color: "#64748B", fontWeight: 500, margin: "0 0 4px" }}>{t('landing.pricing.free')}</p>
+                  <p style={{ fontSize: 32, fontWeight: 800, color: "#F0F6FF", margin: "0 0 20px" }}>0\u20AC</p>
                   <div style={{ fontSize: 13, color: "#94A3B8", display: "flex", flexDirection: "column", gap: 8 }}>
-                    <span>1 cours par semaine</span>
-                    <span>Fiches IA + QCM</span>
-                    <span>Sky Coins & objectifs</span>
+                    <span>{t('landing.pricing.free1')}</span>
+                    <span>{t('landing.pricing.free2')}</span>
+                    <span>{t('landing.pricing.free3')}</span>
                   </div>
                   <PricingFree />
                 </div>
 
                 {/* Plus */}
                 <div style={{ background: "linear-gradient(145deg, rgba(30,58,95,0.6), rgba(13,27,46,0.9))", border: "2px solid rgba(96,165,250,0.5)", borderRadius: 16, padding: 24, position: "relative" }}>
-                  <div style={{ position: "absolute", top: -12, left: "50%", transform: "translateX(-50%)", background: "linear-gradient(135deg, #2563EB, #1D4ED8)", padding: "4px 14px", borderRadius: 100, fontSize: 11, fontWeight: 700, color: "#fff", whiteSpace: "nowrap" }}>Populaire</div>
+                  <div style={{ position: "absolute", top: -12, left: "50%", transform: "translateX(-50%)", background: "linear-gradient(135deg, #2563EB, #1D4ED8)", padding: "4px 14px", borderRadius: 100, fontSize: 11, fontWeight: 700, color: "#fff", whiteSpace: "nowrap" }}>{t('landing.pricing.popular')}</div>
                   <p style={{ fontSize: 13, color: "#60A5FA", fontWeight: 500, margin: "0 0 4px" }}>Plus</p>
-                  <p style={{ fontSize: 32, fontWeight: 800, color: "#F0F6FF", margin: "0 0 2px" }}>4,99€<span style={{ fontSize: 14, fontWeight: 400, color: "#64748B" }}>/mois</span></p>
-                  <p style={{ fontSize: 12, color: "#475569", margin: "0 0 20px" }}>ou 3,99€/mois en annuel</p>
+                  <p style={{ fontSize: 32, fontWeight: 800, color: "#F0F6FF", margin: "0 0 2px" }}>4,99\u20AC<span style={{ fontSize: 14, fontWeight: 400, color: "#64748B" }}>{t('landing.pricing.perMonth')}</span></p>
+                  <p style={{ fontSize: 12, color: "#475569", margin: "0 0 20px" }}>ou 3,99\u20AC{t('landing.pricing.perMonth')} {t('landing.pricing.yearly')}</p>
                   <div style={{ fontSize: 13, color: "#94A3B8", display: "flex", flexDirection: "column", gap: 8 }}>
-                    <span>Cours illimites</span>
-                    <span>Dictee vocale</span>
-                    <span>Chatbot IA par cours</span>
-                    <span>Tout le plan Gratuit</span>
+                    <span>{t('landing.pricing.plus1')}</span>
+                    <span>{t('landing.pricing.plus2')}</span>
+                    <span>{t('landing.pricing.plus3')}</span>
+                    <span>{t('landing.pricing.plus4')}</span>
                   </div>
                   <PricingPlus />
                 </div>
 
                 {/* Famille */}
                 <div style={{ background: "linear-gradient(145deg, rgba(30,58,95,0.5), rgba(13,27,46,0.85))", border: "1px solid rgba(167,139,250,0.2)", borderRadius: 16, padding: 24 }}>
-                  <p style={{ fontSize: 13, color: "#C4B5FD", fontWeight: 500, margin: "0 0 4px" }}>Famille</p>
-                  <p style={{ fontSize: 32, fontWeight: 800, color: "#F0F6FF", margin: "0 0 2px" }}>11,99€<span style={{ fontSize: 14, fontWeight: 400, color: "#64748B" }}>/mois</span></p>
-                  <p style={{ fontSize: 12, color: "#475569", margin: "0 0 20px" }}>ou 10,99€/mois en annuel</p>
+                  <p style={{ fontSize: 13, color: "#C4B5FD", fontWeight: 500, margin: "0 0 4px" }}>{t('landing.pricing.famille')}</p>
+                  <p style={{ fontSize: 32, fontWeight: 800, color: "#F0F6FF", margin: "0 0 2px" }}>11,99\u20AC<span style={{ fontSize: 14, fontWeight: 400, color: "#64748B" }}>{t('landing.pricing.perMonth')}</span></p>
+                  <p style={{ fontSize: 12, color: "#475569", margin: "0 0 20px" }}>ou 10,99\u20AC{t('landing.pricing.perMonth')} {t('landing.pricing.yearly')}</p>
                   <div style={{ fontSize: 13, color: "#94A3B8", display: "flex", flexDirection: "column", gap: 8 }}>
-                    <span>Tout le plan Plus</span>
-                    <span>Jusqu'a 6 enfants</span>
-                    <span>Dashboard parent</span>
-                    <span>Support prioritaire</span>
+                    <span>{t('landing.pricing.fam1')}</span>
+                    <span>{t('landing.pricing.fam2')}</span>
+                    <span>{t('landing.pricing.fam3')}</span>
+                    <span>{t('landing.pricing.fam4')}</span>
                   </div>
                   <PricingFamily />
                 </div>
@@ -399,13 +412,13 @@ export function LandingPage({ isBeta = true }: { isBeta?: boolean }) {
 
       {/* ── FOOTER ── */}
       <footer style={{ position: "relative", zIndex: 10, maxWidth: 900, margin: "0 auto", padding: "0 24px 40px", textAlign: "center" }}>
-        <p style={{ color: "#1E293B", fontSize: 13, marginBottom: 20 }}>Tu perds rien a essayer. Tu perds du temps a ne pas le faire.</p>
+        <p style={{ color: "#1E293B", fontSize: 13, marginBottom: 20 }}>{t('landing.footer')}</p>
         <div style={{ display: "flex", justifyContent: "center", flexWrap: "wrap", gap: 16, alignItems: "center", fontSize: 13, color: "#334155" }}>
-          <Link href="/privacy"         style={{ color: "#334155", textDecoration: "none" }}>Confidentialite</Link>
+          <Link href="/privacy"         style={{ color: "#334155", textDecoration: "none" }}>{t('landing.footer.privacy')}</Link>
           <span>·</span>
-          <Link href="/terms"           style={{ color: "#334155", textDecoration: "none" }}>CGU</Link>
+          <Link href="/terms"           style={{ color: "#334155", textDecoration: "none" }}>{t('landing.footer.terms')}</Link>
           <span>·</span>
-          <Link href="/mentions-legales" style={{ color: "#334155", textDecoration: "none" }}>Mentions legales</Link>
+          <Link href="/mentions-legales" style={{ color: "#334155", textDecoration: "none" }}>{t('landing.footer.legal')}</Link>
           <span>·</span>
           <span>© 2026 Skynote</span>
         </div>
