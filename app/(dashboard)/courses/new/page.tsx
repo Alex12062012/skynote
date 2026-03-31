@@ -9,6 +9,14 @@ import type { Metadata } from 'next'
 export const metadata: Metadata = { title: 'Nouveau cours' }
 
 export default async function NewCoursePage() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
+
+  // Les élèves ne peuvent pas créer de cours
+  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+  if (profile?.role === 'student') redirect('/dashboard')
+
   return (
     <div className="mx-auto max-w-xl animate-fade-in">
       <Link href="/courses"

@@ -8,6 +8,18 @@ export interface Profile {
   courses_this_week: number; week_reset_at: string; total_loyalty_weeks: number
   stripe_customer_id: string | null; stripe_subscription_id: string | null
   is_beta_tester: boolean; feedback_shown_5: boolean; feedback_shown_25: boolean
+  role: 'user' | 'teacher' | 'student'
+  classroom_id: string | null
+  classroom_student_id: string | null
+}
+
+export interface Classroom {
+  id: string; teacher_id: string; class_code: string; created_at: string
+}
+
+export interface ClassroomStudent {
+  id: string; classroom_id: string; first_name: string; last_name: string
+  login_code: string; created_at: string
 }
 export interface Course {
   id: string; user_id: string; title: string; subject: string; color: string

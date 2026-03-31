@@ -41,6 +41,7 @@ export async function GET(request: NextRequest) {
           streak_days: 0,
           last_login_at: new Date().toISOString(),
           is_beta_tester: isBeta,
+          role: user.user_metadata?.role === 'teacher' ? 'teacher' : 'user',
         }, { onConflict: 'id', ignoreDuplicates: true })
       }
       return NextResponse.redirect(`${origin}${next}`)

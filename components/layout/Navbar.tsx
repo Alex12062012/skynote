@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState } from 'react'
-import { Target, LayoutDashboard, Users, Menu, X, Tag } from 'lucide-react'
+import { Target, LayoutDashboard, Users, Menu, X, Tag, School } from 'lucide-react'
 import { SkyCoin } from '@/components/ui/SkyCoin'
 import { CoinCounter } from '@/components/ui/CoinCounter'
 import { ThemeToggle } from '@/components/ui/ThemeToggle'
@@ -11,14 +11,24 @@ import { cn } from '@/lib/utils'
 import { getInitials } from '@/lib/utils'
 import type { Profile } from '@/types/database'
 
-const navLinks = [
-  { href: '/dashboard', label: 'Accueil', icon: LayoutDashboard },
-  { href: '/objectives', label: 'Objectifs', icon: Target },
-  { href: '/pricing', label: 'Forfaits', icon: Tag },
-]
+function getNavLinks(role: string) {
+  const links = [
+    { href: '/dashboard', label: 'Accueil', icon: LayoutDashboard },
+    { href: '/objectives', label: 'Objectifs', icon: Target },
+  ]
+  if (role === 'teacher') {
+    links.push({ href: '/dashboard#classroom', label: 'Code de classe', icon: School })
+  } else if (role !== 'student') {
+    // Les utilisateurs normaux voient Forfaits, les élèves non
+    links.push({ href: '/pricing', label: 'Forfaits', icon: Tag })
+  }
+  return links
+}
 
 export function Navbar({ profile }: { profile: Profile | null }) {
   const isFamille = profile?.plan === 'famille'
+  const role = profile?.role ?? 'user'
+  const navLinks = getNavLinks(role)
   const pathname = usePathname()
   const [open, setOpen] = useState(false)
   const [coinSpinning, setCoinSpinning] = useState(false)

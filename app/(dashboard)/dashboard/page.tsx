@@ -9,6 +9,8 @@ import { Button } from '@/components/ui/Button'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { SkyCoin } from '@/components/ui/SkyCoin'
 import { ProgressBar } from '@/components/ui/ProgressBar'
+import { ClassroomSetup } from '@/components/classroom/ClassroomSetup'
+import { ClassroomPanel } from '@/components/classroom/ClassroomPanel'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = { title: 'Tableau de bord' }
@@ -37,6 +39,52 @@ export default async function DashboardPage() {
   const coins = profile?.sky_coins ?? 0
   const streak = profile?.streak_days ?? 0
   const isPremium = profile?.plan === 'plus' || profile?.plan === 'premium' || profile?.plan === 'famille'
+  const isTeacher = (profile as any)?.role === 'teacher'
+  const isStudent = (profile as any)?.role === 'student'
+
+  // Données classroom pour les profs
+  let classroom: any = null
+  let classroomStudents: any[] = []
+  if (isTeacher) {
+    const { data: cls } = await supabase
+      .from('classrooms')
+      .select('*')
+      .eq('teacher_id', user.id)
+      .single()
+    classroom = cls
+    if (cls) {
+      const { data: sts } = await supabase
+        .from('classroom_students')
+        .select('*')
+        .eq('classroom_id', cls.id)
+        .order('last_name')
+      classroomStudents = (sts || []).map((s: any) => ({
+        firstName: s.first_name,
+        lastName: s.last_name,
+        loginCode: s.login_code,
+      }))
+    }
+  }
+
+  // Pour les élèves : récupérer les cours du prof
+  let teacherCourses: any[] = []
+  if (isStudent && (profile as any)?.classroom_id) {
+    const { data: cls } = await supabase
+      .from('classrooms')
+      .select('teacher_id')
+      .eq('id', (profile as any).classroom_id)
+      .single()
+    if (cls) {
+      const { data: courses } = await supabase
+        .from('courses')
+        .select('*')
+        .eq('user_id', cls.teacher_id)
+        .eq('status', 'ready')
+        .order('created_at', { ascending: false })
+        .limit(6)
+      teacherCourses = courses || []
+    }
+  }
 
   // Message d'accueil selon l'heure
   const hour = new Date().getHours()
@@ -57,13 +105,38 @@ export default async function DashboardPage() {
               : 'Prêt à réviser aujourd\'hui ?'}
           </p>
         </div>
-        <Link href="/courses/new">
-          <Button size="lg" className="gap-2 w-full sm:w-auto">
-            <Plus className="h-5 w-5" />
-            Nouveau cours
-          </Button>
-        </Link>
+        {/* Les élèves ne peuvent pas créer de cours */}
+        {!isStudent && (
+          <Link href="/courses/new">
+            <Button size="lg" className="gap-2 w-full sm:w-auto">
+              <Plus className="h-5 w-5" />
+              Nouveau cours
+            </Button>
+          </Link>
+        )}
       </div>
+
+      {/* Setup classroom pour prof sans classe */}
+      {isTeacher && !classroom && <ClassroomSetup />}
+
+      {/* Panel classroom pour prof avec classe */}
+      {isTeacher && classroom && (
+        <ClassroomPanel classCode={classroom.class_code} students={classroomStudents} />
+      )}
+
+      {/* Cours du prof pour les élèves */}
+      {isStudent && teacherCourses.length > 0 && (
+        <div>
+          <h2 className="mb-4 font-display text-h3 text-text-main dark:text-text-dark-main">
+            Cours de la classe
+          </h2>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {teacherCourses.map((course: any) => (
+              <CourseCard key={course.id} {...course} />
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Stats */}
       <StatsBar

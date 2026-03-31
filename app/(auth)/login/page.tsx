@@ -36,6 +36,12 @@ export default function LoginPage({ searchParams }: { searchParams: { error?: st
               Créer un compte
             </Link>
           </p>
+          <p className="mt-3 text-center font-body text-[13px] text-text-secondary dark:text-text-dark-secondary">
+            Élève en classe virtuelle ?{' '}
+            <Link href="/classroom-login" className="font-medium text-brand hover:underline dark:text-brand-dark">
+              Entrer avec mon code
+            </Link>
+          </p>
         </div>
       </div>
     </div>
