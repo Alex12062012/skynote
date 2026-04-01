@@ -6,10 +6,37 @@ export async function getUserCourses(userId: string): Promise<Course[]> {
   const { data } = await supabase.from('courses').select('*').eq('user_id', userId).order('created_at', { ascending: false })
   return data || []
 }
+
+/** Récupère le teacher_id à partir du profil d'un élève */
+export async function getTeacherIdForStudent(userId: string): Promise<string | null> {
+  const supabase = await createClient()
+  const { data: profile } = await supabase.from('profiles').select('role, classroom_id').eq('id', userId).single()
+  if (profile?.role !== 'student' || !profile.classroom_id) return null
+  const { data: classroom } = await supabase.from('classrooms').select('teacher_id').eq('id', profile.classroom_id).single()
+  return classroom?.teacher_id ?? null
+}
+
+/** Récupère les cours du prof pour un élève */
+export async function getTeacherCourses(studentUserId: string): Promise<Course[]> {
+  const teacherId = await getTeacherIdForStudent(studentUserId)
+  if (!teacherId) return []
+  const supabase = await createClient()
+  const { data } = await supabase.from('courses').select('*').eq('user_id', teacherId).eq('status', 'ready').order('created_at', { ascending: false })
+  return data || []
+}
+
 export async function getCourse(courseId: string, userId: string): Promise<Course | null> {
   const supabase = await createClient()
+  // D'abord essayer en tant que propriétaire
   const { data } = await supabase.from('courses').select('*').eq('id', courseId).eq('user_id', userId).single()
-  return data ?? null
+  if (data) return data
+  // Sinon, vérifier si c'est un élève qui accède au cours de son prof
+  const teacherId = await getTeacherIdForStudent(userId)
+  if (teacherId) {
+    const { data: teacherCourse } = await supabase.from('courses').select('*').eq('id', courseId).eq('user_id', teacherId).single()
+    return teacherCourse ?? null
+  }
+  return null
 }
 export async function getCourseFlashcards(courseId: string): Promise<Flashcard[]> {
   const supabase = await createClient()

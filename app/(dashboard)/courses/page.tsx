@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { Plus } from 'lucide-react'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { getUserCourses } from '@/lib/supabase/queries'
+import { getUserCourses, getTeacherCourses } from '@/lib/supabase/queries'
 import { CourseCard } from '@/components/dashboard/CourseCard'
 import { Button } from '@/components/ui/Button'
 import { EmptyState } from '@/components/ui/EmptyState'
@@ -17,7 +17,12 @@ export default async function CoursesPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const courses = await getUserCourses(user.id)
+  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+  const isStudent = profile?.role === 'student'
+
+  const courses = isStudent
+    ? await getTeacherCourses(user.id)
+    : await getUserCourses(user.id)
 
   // Grouper par matière
   const grouped = courses.reduce<Record<string, Course[]>>((acc, c) => {
@@ -30,14 +35,18 @@ export default async function CoursesPage() {
     <div className="flex flex-col gap-8 animate-fade-in">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="font-display text-h2 text-text-main dark:text-text-dark-main">Mes cours</h1>
+          <h1 className="font-display text-h2 text-text-main dark:text-text-dark-main">
+            {isStudent ? 'Cours de la classe' : 'Mes cours'}
+          </h1>
           <p className="mt-1 font-body text-[14px] text-text-secondary dark:text-text-dark-secondary">
             {courses.length} cours
           </p>
         </div>
-        <Link href="/courses/new">
-          <Button className="gap-2"><Plus className="h-4 w-4" />Nouveau cours</Button>
-        </Link>
+        {!isStudent && (
+          <Link href="/courses/new">
+            <Button className="gap-2"><Plus className="h-4 w-4" />Nouveau cours</Button>
+          </Link>
+        )}
       </div>
 
       {courses.length === 0 ? (

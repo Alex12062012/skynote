@@ -69,12 +69,13 @@ export default async function QcmPage({ params }: Props) {
   }
 
   // Récupérer toutes les questions pour toutes les fiches
+  // Pour les élèves, les questions sont celles du prof (user_id = course.user_id)
   const flashcardIds = flashcards.map((f) => f.id)
   const { data: allQuestions } = await supabase
     .from('qcm_questions')
     .select('*')
     .in('flashcard_id', flashcardIds)
-    .eq('user_id', user.id)
+    .eq('user_id', course.user_id)
 
   // Grouper par fiche
   const questions = (allQuestions ?? []) as QcmQuestion[]

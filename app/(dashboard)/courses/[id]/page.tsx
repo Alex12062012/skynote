@@ -35,6 +35,9 @@ export default async function CourseDetailPage({ params }: Props) {
   const course = await getCourse(id, user.id)
   if (!course) notFound()
 
+  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+  const isStudent = profile?.role === 'student'
+
   const SOURCE_LABELS: Record<string, string> = { text: 'Texte', pdf: 'PDF', photo: 'Photo', vocal: 'Vocal' }
 
   return (
@@ -43,7 +46,7 @@ export default async function CourseDetailPage({ params }: Props) {
       <Link href="/courses"
         className="mb-6 inline-flex items-center gap-2 font-body text-[14px] text-text-secondary hover:text-text-main dark:text-text-dark-secondary dark:hover:text-text-dark-main transition-colors">
         <ArrowLeft className="h-4 w-4" />
-        Mes cours
+        {isStudent ? 'Cours de la classe' : 'Mes cours'}
       </Link>
 
       {/* Header */}
@@ -62,7 +65,7 @@ export default async function CourseDetailPage({ params }: Props) {
             {course.title}
           </h1>
         </div>
-        <DeleteCourseButton courseId={id} courseTitle={course.title} />
+        {!isStudent && <DeleteCourseButton courseId={id} courseTitle={course.title} />}
       </div>
 
       {/* Contenu selon status */}
