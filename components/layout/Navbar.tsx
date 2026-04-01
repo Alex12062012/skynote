@@ -17,7 +17,7 @@ function getNavLinks(role: string) {
     { href: '/objectives', label: 'Objectifs', icon: Target },
   ]
   if (role === 'teacher') {
-    links.push({ href: '/dashboard#classroom', label: 'Code de classe', icon: School })
+    links.push({ href: '/dashboard', label: 'Code de classe', icon: School })
   } else if (role !== 'student') {
     // Les utilisateurs normaux voient Forfaits, les élèves non
     links.push({ href: '/pricing', label: 'Forfaits', icon: Tag })

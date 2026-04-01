@@ -58,11 +58,44 @@ export default async function DashboardPage() {
         .select('*')
         .eq('classroom_id', cls.id)
         .order('last_name')
-      classroomStudents = (sts || []).map((s: any) => ({
-        firstName: s.first_name,
-        lastName: s.last_name,
-        loginCode: s.login_code,
-      }))
+
+      // Récupérer les profils élèves liés à cette classe
+      const { data: studentProfiles } = await supabase
+        .from('profiles')
+        .select('id, full_name, classroom_student_id')
+        .eq('classroom_id', cls.id)
+        .eq('role', 'student')
+
+      // Récupérer les tentatives QCM de tous les élèves
+      const studentIds = (studentProfiles || []).map((p: any) => p.id)
+      let allAttempts: any[] = []
+      if (studentIds.length > 0) {
+        const { data: att } = await supabase
+          .from('qcm_attempts')
+          .select('user_id, score, total, perfect')
+          .in('user_id', studentIds)
+        allAttempts = att || []
+      }
+
+      classroomStudents = (sts || []).map((s: any) => {
+        const sp = (studentProfiles || []).find(
+          (p: any) => p.classroom_student_id === s.id || p.full_name === `${s.first_name} ${s.last_name}`
+        )
+        const userAttempts = sp ? allAttempts.filter((a: any) => a.user_id === sp.id) : []
+        const best = userAttempts.reduce((b: any, a: any) => {
+          if (!b || a.score / a.total > b.score / b.total) return a
+          return b
+        }, null)
+
+        return {
+          firstName: s.first_name,
+          lastName: s.last_name,
+          loginCode: s.login_code,
+          qcmCount: userAttempts.length,
+          bestScore: best ? `${best.score}/${best.total}` : null,
+          hasPerfect: userAttempts.some((a: any) => a.perfect),
+        }
+      })
     }
   }
 
@@ -121,7 +154,7 @@ export default async function DashboardPage() {
 
       {/* Panel classroom pour prof avec classe */}
       {isTeacher && classroom && (
-        <ClassroomPanel classCode={classroom.class_code} students={classroomStudents} />
+        <ClassroomPanel classCode={classroom.class_code} students={classroomStudents} siteUrl={process.env.NEXT_PUBLIC_SITE_URL || 'https://skynote.vercel.app'} />
       )}
 
       {/* Cours du prof pour les élèves */}
@@ -164,7 +197,8 @@ export default async function DashboardPage() {
         </div>
       )}
 
-      {/* Cours récents */}
+      {/* Cours récents — masqué pour les élèves qui voient déjà les cours du prof au-dessus */}
+      {!isStudent && (
       <div>
         <div className="mb-4 flex items-center justify-between">
           <h2 className="font-display text-h3 text-text-main dark:text-text-dark-main">
@@ -195,6 +229,7 @@ export default async function DashboardPage() {
           </div>
         )}
       </div>
+      )}
 
       {/* Objectifs en cours */}
       <ObjectivesSummary userId={user.id} />
