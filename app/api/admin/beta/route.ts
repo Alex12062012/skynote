@@ -8,7 +8,7 @@ async function verifyAdmin(): Promise<{ isAdmin: boolean; error?: NextResponse }
   const authClient = await createClient()
   const { data: { user } } = await authClient.auth.getUser()
   if (!user) return { isAdmin: false, error: NextResponse.json({ error: 'Non autorise' }, { status: 401 }) }
-  if (ADMIN_EMAILS.length > 0 && !ADMIN_EMAILS.includes(user.email?.toLowerCase() || '')) {
+  if (ADMIN_EMAILS.length === 0 || !ADMIN_EMAILS.includes(user.email?.toLowerCase() || '')) {
     return { isAdmin: false, error: NextResponse.json({ error: 'Acces refuse' }, { status: 403 }) }
   }
   return { isAdmin: true }

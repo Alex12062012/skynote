@@ -75,11 +75,8 @@ export async function applyReferralCode(
 
   const REWARD = 15
 
-  // Attribuer les coins au parrain
-  await supabase
-    .from('profiles')
-    .update({ sky_coins: referrer.sky_coins + REWARD })
-    .eq('id', referrer.id)
+  // Attribuer les coins au parrain (increment atomique)
+  await supabase.rpc('increment_coins', { p_user_id: referrer.id, p_amount: REWARD })
 
   await supabase.from('coin_transactions').insert({
     user_id: referrer.id,
@@ -87,11 +84,11 @@ export async function applyReferralCode(
     reason: `Parrainage réussi ! Un ami a rejoint Skynote 🤝`,
   })
 
-  // Attribuer les coins au filleul + noter le parrain
-  const newCoins = (newUser?.sky_coins ?? 0) + REWARD
+  // Attribuer les coins au filleul + noter le parrain (increment atomique)
+  await supabase.rpc('increment_coins', { p_user_id: newUserId, p_amount: REWARD })
   await supabase
     .from('profiles')
-    .update({ sky_coins: newCoins, referred_by: referrer.id })
+    .update({ referred_by: referrer.id })
     .eq('id', newUserId)
 
   await supabase.from('coin_transactions').insert({

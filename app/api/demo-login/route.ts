@@ -109,7 +109,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    return NextResponse.json({ success: true, role: account.role })
+    return NextResponse.json({ success: true, role: account.role, email: account.email, password: account.password })
   } catch (err) {
     return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 })
   }

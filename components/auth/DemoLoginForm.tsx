@@ -5,10 +5,7 @@ import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
 import { createClient } from '@/lib/supabase/client'
 
-const DEMO_ACCOUNTS: Record<string, { email: string; password: string }> = {
-  mdubois253912: { email: 'demo-teacher@skynote.app', password: 'DemoTeacher253912!' },
-  aroudaut253912: { email: 'demo-student@skynote.app', password: 'DemoStudent253912!' },
-}
+// Les credentials demo sont geres cote serveur uniquement
 
 export function DemoLoginForm() {
   const [code, setCode] = useState('')

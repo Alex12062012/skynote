@@ -1,14 +1,9 @@
 import { generateFlashcards, generateQcmQuestions } from './generate'
 import { createClient } from '@/lib/supabase/server'
 
-// ============================================================
-// PIPELINE PRINCIPAL : Course → Fiches + QCM
-// ============================================================
-
 export async function processCourse(courseId: string): Promise<void> {
   const supabase = await createClient()
 
-  // 0. Anti-doublon: verifier si des fiches existent deja
   const { count: existingFlashcards } = await supabase
     .from('flashcards')
     .select('id', { count: 'exact' })
@@ -19,7 +14,6 @@ export async function processCourse(courseId: string): Promise<void> {
     return
   }
 
-  // 1. Récupérer le cours
   const { data: course, error: courseError } = await supabase
     .from('courses')
     .select('*')
@@ -30,7 +24,6 @@ export async function processCourse(courseId: string): Promise<void> {
     throw new Error(`Cours introuvable : ${courseId}`)
   }
 
-  // S'assurer qu'il y a du contenu à traiter
   const content = course.source_content
   if (!content || content.trim().length < 20) {
     await supabase
@@ -41,13 +34,11 @@ export async function processCourse(courseId: string): Promise<void> {
   }
 
   try {
-    // 2. Mettre à jour la progression — génération fiches
     await supabase
       .from('courses')
       .update({ status: 'processing', progress: 10 })
       .eq('id', courseId)
 
-    // 3. Générer les fiches avec l'IA
     const flashcardsData = await generateFlashcards(course.title, course.subject, content)
 
     await supabase
@@ -55,7 +46,6 @@ export async function processCourse(courseId: string): Promise<void> {
       .update({ progress: 40 })
       .eq('id', courseId)
 
-    // 4. Insérer les fiches en BDD
     const flashcardInserts = flashcardsData.map((f, index) => ({
       course_id: courseId,
       user_id: course.user_id,
@@ -80,22 +70,16 @@ export async function processCourse(courseId: string): Promise<void> {
       .update({ progress: 60 })
       .eq('id', courseId)
 
-    // 5. Marquer le cours comme prêt pour les fiches (QCM en cours de génération)
     await supabase
       .from('courses')
       .update({ status: 'ready', progress: 0, qcm_status: 'processing' })
       .eq('id', courseId)
 
-    // 6. Vérifier et attribuer l'objectif "premier cours"
     await checkAndAwardObjectives(courseId, course.user_id)
-
-    // 7. Les QCM seront générés côté client via /api/generate-qcm
-    // Le client appellera fiche par fiche sans risque de timeout
 
   } catch (error) {
     console.error(`[AI Pipeline] Erreur pour le cours ${courseId}:`, error)
 
-    // Marquer le cours en erreur
     await supabase
       .from('courses')
       .update({ status: 'error', progress: 0 })
@@ -105,21 +89,15 @@ export async function processCourse(courseId: string): Promise<void> {
   }
 }
 
-// ============================================================
-// OBJECTIFS — Vérifier et attribuer après génération
-// ============================================================
-
 async function checkAndAwardObjectives(courseId: string, userId: string): Promise<void> {
   const supabase = await createClient()
 
-  // Compter le nombre de cours de l'utilisateur
   const { count: courseCount } = await supabase
     .from('courses')
     .select('id', { count: 'exact' })
     .eq('user_id', userId)
     .eq('status', 'ready')
 
-  // Récupérer tous les objectifs liés aux cours
   const { data: objectives } = await supabase
     .from('objectives')
     .select('*')
@@ -159,78 +137,14 @@ async function checkAndAwardObjectives(courseId: string, userId: string): Promis
       })
     }
 
-    // Attribuer les Sky Coins si complété
     if (isCompleted) {
-      await supabase.from('profiles').update({
-        sky_coins: supabase.rpc('increment_coins', { user_id: userId, amount: obj.reward_coins }),
-      })
+      await supabase.rpc('increment_coins', { p_user_id: userId, p_amount: obj.reward_coins })
 
       await supabase.from('coin_transactions').insert({
         user_id: userId,
         amount: obj.reward_coins,
-        reason: `Objectif complété : ${obj.title}`,
+        reason: `Objectif complete : ${obj.title}`,
       })
     }
-  }
-}
-
-// ============================================================
-// GÉNÉRATION QCM EN ARRIÈRE-PLAN
-// ============================================================
-
-async function generateQcmInBackground(
-  courseId: string,
-  userId: string,
-  flashcards: any[],
-  supabase: any
-): Promise<void> {
-  try {
-    const qcmInserts: any[] = []
-
-    for (let i = 0; i < flashcards.length; i++) {
-      const flashcard = flashcards[i]
-      try {
-        const keyPoints = Array.isArray(flashcard.key_points)
-          ? flashcard.key_points
-          : JSON.parse(String(flashcard.key_points) || '[]')
-
-        if (i > 0) await new Promise(r => setTimeout(r, 500))
-
-        const questions = await generateQcmQuestions(
-          flashcard.title,
-          flashcard.summary,
-          keyPoints
-        )
-
-        qcmInserts.push(...questions.map((q) => ({
-          flashcard_id: flashcard.id,
-          course_id: courseId,
-          user_id: userId,
-          question: q.question,
-          options: q.options,
-          correct_index: q.correct_index,
-          explanation: q.explanation,
-        })))
-      } catch {
-        // Continue même si une fiche échoue
-      }
-    }
-
-    if (qcmInserts.length > 0) {
-      await supabase.from('qcm_questions').insert(qcmInserts)
-    }
-
-    // Marquer les QCM comme prêts
-    await supabase
-      .from('courses')
-      .update({ qcm_status: 'ready' })
-      .eq('id', courseId)
-
-  } catch (error) {
-    console.error('[QCM Background] Error:', error)
-    await supabase
-      .from('courses')
-      .update({ qcm_status: 'error' })
-      .eq('id', courseId)
   }
 }

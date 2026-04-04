@@ -1,4 +1,4 @@
-﻿import { createClient } from './server'
+import { createClient } from './server'
 
 export type PlanType = 'free' | 'plus' | 'famille'
 
@@ -69,7 +69,6 @@ export async function getUserPlanLimits(userId: string): Promise<PlanLimits> {
 
   switch (profile.plan) {
     case 'plus':
-    case 'premium':
       return PLUS_LIMITS
     case 'famille':
       return FAMILLE_LIMITS
@@ -152,24 +151,13 @@ export async function incrementWeeklyCourseCount(userId: string): Promise<void> 
       .eq('id', userId)
 
     if (loyaltyWeeks % 8 === 0) {
-      const { data: profileFull } = await supabase
-        .from('profiles')
-        .select('sky_coins')
-        .eq('id', userId)
-        .single()
+      await supabase.rpc('increment_coins', { p_user_id: userId, p_amount: 750 })
 
-      if (profileFull) {
-        await supabase
-          .from('profiles')
-          .update({ sky_coins: profileFull.sky_coins + 750 })
-          .eq('id', userId)
-
-        await supabase.from('coin_transactions').insert({
-          user_id: userId,
-          amount: 750,
-          reason: 'Fidelite - 8 semaines consecutives a 3 cours !',
-        })
-      }
+      await supabase.from('coin_transactions').insert({
+        user_id: userId,
+        amount: 750,
+        reason: 'Fidelite - 8 semaines consecutives a 3 cours !',
+      })
     }
   }
 }

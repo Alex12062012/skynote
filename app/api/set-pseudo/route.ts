@@ -1,33 +1,33 @@
-﻿import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { redirect } from 'next/navigation'
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.redirect(new URL('/login', request.url))
+  if (!user) return NextResponse.json({ error: 'Non autorise' }, { status: 401 })
 
-  const formData = await request.formData()
-  const pseudo = (formData.get('pseudo') as string || '').trim().slice(0, 20)
+  const body = await request.json().catch(() => null)
+  const pseudo = (body?.pseudo || '').trim().slice(0, 20)
 
-  if (!pseudo) return NextResponse.redirect(new URL('/leaderboard', request.url))
+  if (!pseudo) return NextResponse.json({ error: 'Pseudo requis' }, { status: 400 })
 
-  // Verifier unicite
+  const sanitized = pseudo.replace(/[^a-zA-Z0-9\u00C0-\u024F_-]/g, '').slice(0, 20)
+  if (!sanitized || sanitized.length < 2) {
+    return NextResponse.json({ error: 'Pseudo invalide (2-20 caracteres)' }, { status: 400 })
+  }
+
   const { data: existing } = await supabase
     .from('profiles')
     .select('id')
-    .eq('pseudo', pseudo)
+    .eq('pseudo', sanitized)
     .neq('id', user.id)
     .maybeSingle()
 
   if (existing) {
-    return NextResponse.redirect(new URL('/leaderboard?error=pseudo_taken', request.url))
+    return NextResponse.json({ error: 'Ce pseudo est deja pris' }, { status: 409 })
   }
 
-  await supabase
-    .from('profiles')
-    .update({ pseudo })
-    .eq('id', user.id)
+  await supabase.from('profiles').update({ pseudo: sanitized }).eq('id', user.id)
 
-  return NextResponse.redirect(new URL('/leaderboard', request.url))
+  return NextResponse.json({ ok: true, pseudo: sanitized })
 }

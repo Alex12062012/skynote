@@ -1,4 +1,4 @@
-﻿import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import Anthropic from '@anthropic-ai/sdk'
 
@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
       .eq('id', user.id)
       .single()
 
-    const isPremium = profile?.plan === 'plus' || profile?.plan === 'premium' || profile?.plan === 'famille'
+    const isPremium = profile?.plan === 'plus' || profile?.plan === 'famille'
 
     const { data: beta } = await supabase
       .from('admin_settings')

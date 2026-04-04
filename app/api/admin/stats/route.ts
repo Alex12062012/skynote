@@ -9,7 +9,7 @@ async function verifyAdmin(): Promise<{ isAdmin: boolean; error?: NextResponse }
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { isAdmin: false, error: NextResponse.json({ error: 'Non autorisé' }, { status: 401 }) }
-  if (ADMIN_EMAILS.length > 0 && !ADMIN_EMAILS.includes(user.email?.toLowerCase() || '')) {
+  if (ADMIN_EMAILS.length === 0 || !ADMIN_EMAILS.includes(user.email?.toLowerCase() || '')) {
     return { isAdmin: false, error: NextResponse.json({ error: 'Accès refusé' }, { status: 403 }) }
   }
   return { isAdmin: true }

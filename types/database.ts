@@ -2,7 +2,7 @@ export type Json = string | number | boolean | null | { [key: string]: Json | un
 
 export interface Profile {
   id: string; email: string; full_name: string | null; avatar_url: string | null
-  plan: 'free' | 'plus' | 'premium' | 'famille'; plan_expires_at: string | null; sky_coins: number
+  plan: 'free' | 'plus' | 'famille'; plan_expires_at: string | null; sky_coins: number
   streak_days: number; last_login_at: string | null; created_at: string; updated_at: string
   referral_code: string | null; referred_by: string | null
   courses_this_week: number; week_reset_at: string; total_loyalty_weeks: number

@@ -161,18 +161,8 @@ export async function checkMasteryObjective(courseId: string, userId: string): P
 export async function awardCoins(userId: string, amount: number, reason: string): Promise<void> {
   const supabase = await createClient()
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('sky_coins')
-    .eq('id', userId)
-    .single()
-
-  if (!profile) return
-
-  await supabase
-    .from('profiles')
-    .update({ sky_coins: profile.sky_coins + amount })
-    .eq('id', userId)
+  // Increment atomique pour eviter les race conditions
+  await supabase.rpc('increment_coins', { p_user_id: userId, p_amount: amount })
 
   await supabase.from('coin_transactions').insert({
     user_id: userId,
@@ -201,10 +191,8 @@ export async function spendCoins(
   if (!profile) return { success: false, error: 'Profil introuvable' }
   if (profile.sky_coins < amount) return { success: false, error: 'Coins insuffisants' }
 
-  await supabase
-    .from('profiles')
-    .update({ sky_coins: profile.sky_coins - amount })
-    .eq('id', userId)
+  // Decrement atomique
+  await supabase.rpc('increment_coins', { p_user_id: userId, p_amount: -amount })
 
   await supabase.from('coin_transactions').insert({
     user_id: userId,

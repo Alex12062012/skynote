@@ -1,4 +1,4 @@
-﻿import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { processCourse } from '@/lib/ai/pipeline'
 import { waitUntil } from '@vercel/functions'
@@ -19,6 +19,10 @@ export async function POST(request: NextRequest) {
 
     if (!courseId || typeof courseId !== 'string') {
       return NextResponse.json({ error: 'courseId manquant' }, { status: 400 })
+    }
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+    if (!uuidRegex.test(courseId)) {
+      return NextResponse.json({ error: 'courseId invalide' }, { status: 400 })
     }
 
     const { data: course } = await supabase
