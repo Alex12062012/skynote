@@ -11,6 +11,8 @@ export interface Profile {
   role: 'user' | 'teacher' | 'student'
   classroom_id: string | null
   classroom_student_id: string | null
+  pseudo: string | null
+  user_number: number | null
 }
 
 export interface Classroom {
@@ -21,6 +23,7 @@ export interface ClassroomStudent {
   id: string; classroom_id: string; first_name: string; last_name: string
   login_code: string; created_at: string
 }
+
 export interface Course {
   id: string; user_id: string; title: string; subject: string; color: string
   source_type: 'text' | 'pdf' | 'photo' | 'vocal'; source_content: string | null
@@ -28,29 +31,67 @@ export interface Course {
   qcm_status: 'pending' | 'processing' | 'ready' | 'error'
   created_at: string; updated_at: string
 }
+
 export interface Flashcard {
   id: string; course_id: string; user_id: string; title: string; summary: string
   key_points: string[]; is_mastered: boolean; order_index: number; created_at: string
 }
+
 export interface QcmQuestion {
   id: string; flashcard_id: string; course_id: string; user_id: string
   question: string; options: string[]; correct_index: number; explanation: string; created_at: string
 }
+
 export interface QcmAttempt {
   id: string; user_id: string; flashcard_id: string; score: number; total: number
   perfect: boolean; coins_earned: number; created_at: string
 }
+
 export interface Objective {
   id: string; key: string; title: string; description: string
   icon: string; reward_coins: number; target_value: number
 }
+
 export interface UserObjective {
   id: string; user_id: string; objective_id: string; current_value: number
   completed: boolean; completed_at: string | null; claimed: boolean; claimed_at: string | null
   created_at: string
 }
+
 export interface CoinTransaction {
   id: string; user_id: string; amount: number; reason: string; created_at: string
+}
+
+export interface AdminSetting {
+  key: string; value: string; updated_at: string
+}
+
+export interface Feedback {
+  id: string; user_id: string; score: number; love: string | null; missing: string | null
+  milestone: number | null; created_at: string
+}
+
+export interface FamilleGroup {
+  id: string; parent_id: string; family_code: string; name: string; created_at: string
+}
+
+export interface ChildAccount {
+  id: string; famille_id: string; parent_id: string; pseudo: string
+  access_code: string; sky_coins: number; streak_days: number; created_at: string
+}
+
+export interface ChildStat {
+  id: string; child_id: string; subject: string; courses_count: number
+  qcm_count: number; qcm_perfect: number
+}
+
+export interface ListQuiz {
+  id: string; user_id: string; title: string; pairs: Json; created_at: string
+}
+
+export interface ListQuizSession {
+  id: string; quiz_id: string; user_id: string; score: number; total: number
+  coins_earned: number; completed_at: string
 }
 
 export interface Database {
@@ -64,7 +105,20 @@ export interface Database {
       objectives: { Row: Objective; Insert: Omit<Objective,'id'>; Update: Partial<Objective> }
       user_objectives: { Row: UserObjective; Insert: Omit<UserObjective,'id'|'created_at'>; Update: Partial<UserObjective> }
       coin_transactions: { Row: CoinTransaction; Insert: Omit<CoinTransaction,'id'|'created_at'>; Update: never }
+      admin_settings: { Row: AdminSetting; Insert: AdminSetting; Update: Partial<AdminSetting> }
+      feedbacks: { Row: Feedback; Insert: Omit<Feedback,'id'|'created_at'>; Update: never }
+      classrooms: { Row: Classroom; Insert: Omit<Classroom,'id'|'created_at'>; Update: Partial<Classroom> }
+      classroom_students: { Row: ClassroomStudent; Insert: Omit<ClassroomStudent,'id'|'created_at'>; Update: Partial<ClassroomStudent> }
+      famille_groups: { Row: FamilleGroup; Insert: Omit<FamilleGroup,'id'|'created_at'>; Update: Partial<FamilleGroup> }
+      child_accounts: { Row: ChildAccount; Insert: Omit<ChildAccount,'id'|'created_at'>; Update: Partial<ChildAccount> }
+      child_stats: { Row: ChildStat; Insert: Omit<ChildStat,'id'>; Update: Partial<ChildStat> }
+      list_quizzes: { Row: ListQuiz; Insert: Omit<ListQuiz,'id'|'created_at'>; Update: Partial<ListQuiz> }
+      list_quiz_sessions: { Row: ListQuizSession; Insert: Omit<ListQuizSession,'id'|'completed_at'>; Update: never }
     }
-    Views: {}; Functions: {}; Enums: {}
+    Views: {}
+    Functions: {
+      increment_coins: { Args: { p_user_id: string; p_amount: number }; Returns: void }
+    }
+    Enums: {}
   }
 }
