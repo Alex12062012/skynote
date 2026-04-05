@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+﻿import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 
 function generateClassCode(): string {
@@ -16,26 +16,26 @@ export async function POST(req: NextRequest) {
   try {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
+    if (!user) return NextResponse.json({ error: 'Non authentifie' }, { status: 401 })
 
     const { students } = await req.json() as { students: { firstName: string; lastName: string }[] }
     if (!students || !Array.isArray(students) || students.length === 0) {
-      return NextResponse.json({ error: 'Liste d\'élèves requise' }, { status: 400 })
+      return NextResponse.json({ error: 'Liste d\'eleves requise' }, { status: 400 })
     }
 
-    // Vérifier que l'utilisateur est bien un professeur
+    // Verifier que l'utilisateur est bien un professeur
     const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
     if (profile?.role !== 'teacher') {
-      return NextResponse.json({ error: 'Seuls les professeurs peuvent créer une classe' }, { status: 403 })
+      return NextResponse.json({ error: 'Seuls les professeurs peuvent creer une classe' }, { status: 403 })
     }
 
-    // Vérifier si le prof a déjà une classe
+    // Verifier si le prof a deja une classe
     const { data: existingClass } = await supabase.from('classrooms').select('id').eq('teacher_id', user.id).single()
     if (existingClass) {
-      return NextResponse.json({ error: 'Vous avez déjà une classe. Gérez-la depuis votre tableau de bord.' }, { status: 409 })
+      return NextResponse.json({ error: 'Vous avez deja une classe. Gerez-la depuis votre tableau de bord.' }, { status: 409 })
     }
 
-    // Générer un code de classe unique
+    // Generer un code de classe unique (avec protection contre boucle infinie)
     let classCode = generateClassCode()
     let attempts = 0
     while (attempts < 10) {
@@ -44,8 +44,11 @@ export async function POST(req: NextRequest) {
       classCode = generateClassCode()
       attempts++
     }
+    if (attempts >= 10) {
+      return NextResponse.json({ error: 'Impossible de generer un code unique. Reessayez.' }, { status: 500 })
+    }
 
-    // Créer la classe
+    // Creer la classe
     const { data: classroom, error: classError } = await supabase
       .from('classrooms')
       .insert({ teacher_id: user.id, class_code: classCode })
@@ -53,10 +56,10 @@ export async function POST(req: NextRequest) {
       .single()
 
     if (classError || !classroom) {
-      return NextResponse.json({ error: 'Erreur lors de la création de la classe' }, { status: 500 })
+      return NextResponse.json({ error: 'Erreur lors de la creation de la classe' }, { status: 500 })
     }
 
-    // Créer les élèves avec leurs codes de connexion
+    // Creer les eleves avec leurs codes de connexion
     const studentRecords = students.map((s) => ({
       classroom_id: classroom.id,
       first_name: s.firstName.trim(),
@@ -64,19 +67,16 @@ export async function POST(req: NextRequest) {
       login_code: generateLoginCode(s.firstName, s.lastName, classCode),
     }))
 
-    // Vérifier les doublons de login_code
-    const codes = studentRecords.map(s => s.login_code)
-    const uniqueCodes = new Set(codes)
-    if (uniqueCodes.size !== codes.length) {
-      // Ajouter un suffixe numérique pour les doublons
-      const seen = new Map<string, number>()
-      for (const record of studentRecords) {
-        const count = seen.get(record.login_code) || 0
-        if (count > 0) {
-          record.login_code = `${record.login_code}${count}`
-        }
-        seen.set(record.login_code, count + 1)
+    // Deduplication robuste des login_code
+    const seen = new Map<string, number>()
+    for (const record of studentRecords) {
+      const base = record.login_code
+      const count = seen.get(base) || 0
+      if (count > 0) {
+        // Suffixe clair : prenom2, prenom3, etc.
+        record.login_code = `${base}x${count + 1}`
       }
+      seen.set(base, count + 1)
     }
 
     const { error: studentsError } = await supabase
@@ -86,7 +86,7 @@ export async function POST(req: NextRequest) {
     if (studentsError) {
       // Rollback : supprimer la classe
       await supabase.from('classrooms').delete().eq('id', classroom.id)
-      return NextResponse.json({ error: 'Erreur lors de l\'ajout des élèves' }, { status: 500 })
+      return NextResponse.json({ error: 'Erreur lors de l\'ajout des eleves' }, { status: 500 })
     }
 
     return NextResponse.json({

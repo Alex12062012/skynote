@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+﻿import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
 
@@ -9,9 +9,9 @@ export async function POST(request: NextRequest) {
     // Auth check
     const authClient = await createClient()
     const { data: { user } } = await authClient.auth.getUser()
-    if (!user) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
+    if (!user) return NextResponse.json({ error: 'Non autorise' }, { status: 401 })
     if (ADMIN_EMAILS.length === 0 || !ADMIN_EMAILS.includes(user.email?.toLowerCase() || '')) {
-      return NextResponse.json({ error: 'Accès refusé' }, { status: 403 })
+      return NextResponse.json({ error: 'Acces refuse' }, { status: 403 })
     }
 
     const { userId, action, value } = await request.json()
@@ -49,13 +49,28 @@ export async function POST(request: NextRequest) {
       }
 
       case 'delete_user': {
+        // Supprimer les donnees applicatives
+        await supabase.from('list_quiz_sessions').delete().eq('user_id', userId)
+        await supabase.from('list_quizzes').delete().eq('user_id', userId)
         await supabase.from('qcm_attempts').delete().eq('user_id', userId)
         await supabase.from('qcm_questions').delete().eq('user_id', userId)
         await supabase.from('flashcards').delete().eq('user_id', userId)
         await supabase.from('courses').delete().eq('user_id', userId)
         await supabase.from('user_objectives').delete().eq('user_id', userId)
         await supabase.from('coin_transactions').delete().eq('user_id', userId)
+        // Supprimer les donnees classroom si c'est un prof
+        const { data: classroom } = await supabase.from('classrooms').select('id').eq('teacher_id', userId).maybeSingle()
+        if (classroom) {
+          await supabase.from('classroom_students').delete().eq('classroom_id', classroom.id)
+          await supabase.from('classrooms').delete().eq('id', classroom.id)
+        }
+        // Supprimer le profil
         await supabase.from('profiles').delete().eq('id', userId)
+        // Supprimer le user de Supabase Auth
+        const { error: authDeleteError } = await supabase.auth.admin.deleteUser(userId)
+        if (authDeleteError) {
+          return NextResponse.json({ error: `Profil supprime mais erreur auth: ${authDeleteError.message}` }, { status: 500 })
+        }
         return NextResponse.json({ ok: true })
       }
 
@@ -67,7 +82,7 @@ export async function POST(request: NextRequest) {
         if (diff !== 0) {
           await supabase.from('coin_transactions').insert({
             user_id: userId, amount: diff,
-            reason: `Définition admin → ${coins} coins`,
+            reason: `Definition admin -> ${coins} coins`,
           })
         }
         return NextResponse.json({ ok: true, newCoins: coins })

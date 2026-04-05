@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+﻿import { NextRequest, NextResponse } from 'next/server'
 import { createClient as createAdminClient } from '@supabase/supabase-js'
 
 const DEMO_ACCOUNTS: Record<string, {
@@ -34,14 +34,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'SUPABASE_SERVICE_ROLE_KEY manquante dans les env' }, { status: 500 })
     }
 
-    // Client admin = bypass RLS + peut créer des users confirmés
+    // Client admin = bypass RLS + peut creer des users confirmes
     const admin = createAdminClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       serviceRoleKey,
       { auth: { autoRefreshToken: false, persistSession: false } }
     )
 
-    // Chercher si le user existe déjà
+    // Chercher si le user existe deja (par email directement)
     const { data: existingUsers } = await admin.auth.admin.listUsers()
     const existingUser = existingUsers?.users?.find((u: any) => u.email === account.email)
 
@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
     if (existingUser) {
       userId = existingUser.id
     } else {
-      // Créer le user CONFIRMÉ via admin API
+      // Creer le user CONFIRME via admin API
       const { data: newUser, error: createError } = await admin.auth.admin.createUser({
         email: account.email,
         password: account.password,
@@ -59,12 +59,12 @@ export async function POST(req: NextRequest) {
       })
 
       if (createError || !newUser.user) {
-        return NextResponse.json({ error: createError?.message || 'Erreur création' }, { status: 500 })
+        return NextResponse.json({ error: createError?.message || 'Erreur creation' }, { status: 500 })
       }
       userId = newUser.user.id
     }
 
-    // Upsert profil avec le bon rôle (bypass RLS via service role)
+    // Upsert profil avec le bon role (bypass RLS via service role)
     await admin.from('profiles').upsert({
       id: userId,
       email: account.email,
@@ -73,7 +73,6 @@ export async function POST(req: NextRequest) {
       plan: 'free',
       sky_coins: 50,
       streak_days: 3,
-      is_beta_tester: true,
     }, { onConflict: 'id' })
 
     // Setup classe pour le prof
@@ -97,14 +96,24 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Lier l'élève à la classe du prof
+    // Lier l'eleve a la classe du prof + lier le classroom_student_id
     if (account.role === 'student') {
       const { data: classroom } = await admin
         .from('classrooms').select('id').eq('class_code', account.classCode).maybeSingle()
 
       if (classroom) {
+        // Trouver le classroom_student correspondant
+        const { data: classStudent } = await admin
+          .from('classroom_students')
+          .select('id')
+          .eq('classroom_id', classroom.id)
+          .eq('first_name', account.name.split(' ')[0])
+          .eq('last_name', account.name.split(' ').slice(1).join(' '))
+          .maybeSingle()
+
         await admin.from('profiles').update({
           classroom_id: classroom.id,
+          classroom_student_id: classStudent?.id || null,
         }).eq('id', userId)
       }
     }

@@ -1,9 +1,19 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+﻿import { NextRequest, NextResponse } from 'next/server'
+import { createClient as createServiceClient } from '@supabase/supabase-js'
 
 export async function POST(req: NextRequest) {
   try {
-    const supabase = await createClient()
+    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+    if (!serviceRoleKey) {
+      return NextResponse.json({ error: 'Configuration serveur manquante' }, { status: 500 })
+    }
+
+    const admin = createServiceClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      serviceRoleKey,
+      { auth: { autoRefreshToken: false, persistSession: false } }
+    )
+
     const { loginCode } = await req.json() as { loginCode: string }
 
     if (!loginCode || typeof loginCode !== 'string') {
@@ -12,55 +22,54 @@ export async function POST(req: NextRequest) {
 
     const code = loginCode.trim().toLowerCase()
 
-    // Trouver l'élève
-    const { data: student, error: studentError } = await supabase
+    // Trouver l'eleve (avec admin pour bypass RLS)
+    const { data: student, error: studentError } = await admin
       .from('classroom_students')
       .select('*, classrooms(*)')
       .eq('login_code', code)
       .single()
 
     if (studentError || !student) {
-      return NextResponse.json({ error: 'Code invalide. Vérifie ton identifiant.' }, { status: 404 })
+      return NextResponse.json({ error: 'Code invalide. Verifie ton identifiant.' }, { status: 404 })
     }
 
-    // Créer un compte Supabase anonyme pour l'élève ou se connecter
-    // On utilise un email fictif déterministe basé sur le login_code
+    // Email/password deterministes pour l'eleve
     const fakeEmail = `${code}@classroom.skynote.app`
     const fakePassword = `sk_${code}_${student.classroom_id}`
 
-    // Essayer de se connecter d'abord
-    const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-      email: fakeEmail,
-      password: fakePassword,
-    })
+    // Chercher si le user existe deja
+    const { data: existingUserData } = await admin.auth.admin.listUsers()
+    const existingUser = existingUserData?.users?.find((u: any) => u.email === fakeEmail)
 
-    if (signInData?.user) {
+    if (existingUser) {
+      // Le compte existe, renvoyer les credentials pour login cote client
       return NextResponse.json({
         success: true,
+        email: fakeEmail,
+        password: fakePassword,
         studentName: `${student.first_name} ${student.last_name}`,
         classCode: (student as any).classrooms?.class_code,
       })
     }
 
-    // Si pas de compte, en créer un
-    const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+    // Creer le user confirme via admin API
+    const { data: newUser, error: createError } = await admin.auth.admin.createUser({
       email: fakeEmail,
       password: fakePassword,
-      options: {
-        data: {
-          full_name: `${student.first_name} ${student.last_name}`,
-          role: 'student',
-        },
+      email_confirm: true,
+      user_metadata: {
+        full_name: `${student.first_name} ${student.last_name}`,
+        role: 'student',
       },
     })
 
-    if (signUpError || !signUpData.user) {
-      return NextResponse.json({ error: 'Erreur lors de la connexion' }, { status: 500 })
+    if (createError || !newUser.user) {
+      return NextResponse.json({ error: 'Erreur lors de la creation du compte' }, { status: 500 })
     }
 
-    // Mettre à jour le profil avec les infos de classe
-    await supabase.from('profiles').upsert({
-      id: signUpData.user.id,
+    // Mettre a jour le profil avec les infos de classe
+    await admin.from('profiles').upsert({
+      id: newUser.user.id,
       email: fakeEmail,
       full_name: `${student.first_name} ${student.last_name}`,
       role: 'student',
@@ -69,11 +78,12 @@ export async function POST(req: NextRequest) {
       plan: 'free',
       sky_coins: 0,
       streak_days: 0,
-      is_beta_tester: true,
     }, { onConflict: 'id' })
 
     return NextResponse.json({
       success: true,
+      email: fakeEmail,
+      password: fakePassword,
       studentName: `${student.first_name} ${student.last_name}`,
       classCode: (student as any).classrooms?.class_code,
     })
