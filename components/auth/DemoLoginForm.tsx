@@ -5,8 +5,6 @@ import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
 import { createClient } from '@/lib/supabase/client'
 
-// Les credentials demo sont geres cote serveur uniquement
-
 export function DemoLoginForm() {
   const [code, setCode] = useState('')
   const [error, setError] = useState('')
@@ -17,34 +15,32 @@ export function DemoLoginForm() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     const trimmed = code.trim().toLowerCase()
-    const account = DEMO_ACCOUNTS[trimmed]
-    if (!account) { setError('Code invalide. Essaie mdubois253912 ou aroudaut253912'); return }
+    if (!trimmed) { setError('Code invalide'); return }
     setError(''); setLoading(true)
 
     try {
-      // 1. Appeler l'API pour créer le compte + la classe si besoin
       const res = await fetch('/api/demo-login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ code: trimmed }),
       })
       const data = await res.json()
-      if (!res.ok && data.error !== 'already_exists') {
-        setError(data.error || 'Erreur')
+      if (!res.ok) {
+        setError(data.error || 'Code invalide')
         setLoading(false)
         return
       }
 
-      // 2. Se connecter côté CLIENT (cookie navigateur)
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: account.email,
-        password: account.password,
-      })
-
-      if (signInError) {
-        setError('Erreur connexion : ' + signInError.message)
-        setLoading(false)
-        return
+      if (data.email && data.password) {
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email: data.email,
+          password: data.password,
+        })
+        if (signInError) {
+          setError('Erreur connexion : ' + signInError.message)
+          setLoading(false)
+          return
+        }
       }
 
       router.push('/dashboard')
