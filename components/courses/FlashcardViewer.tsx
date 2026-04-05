@@ -39,7 +39,7 @@ export function FlashcardViewer({ flashcards, courseId, userId }: FlashcardViewe
     startTransition(async () => {
       await toggleFlashcardMastered(card.id, newVal)
 
-      // VÃ©rifier si toutes les fiches sont maintenant maÃ®trisÃ©es
+      // Vérifier si toutes les fiches sont maintenant maîtrisées
       const allMastered = newCards.every((f) => f.is_mastered)
       if (allMastered && newVal) {
         await checkMasteryObjective(courseId, userId)
@@ -51,21 +51,21 @@ export function FlashcardViewer({ flashcards, courseId, userId }: FlashcardViewe
   return (
     <>
       <ObjectiveBadge
-        title="MaÃ®trise totale !"
-        icon="ðŸŽ“"
+        title="Maîtrise totale !"
+        icon="🎓"
         coins={15}
         visible={showMasteryBadge}
         onHide={() => setShowMasteryBadge(false)}
       />
 
       <div className="flex flex-col gap-6">
-        {/* Barre de maÃ®trise */}
+        {/* Barre de maîtrise */}
         <div className="space-y-2">
           <div className="flex justify-between">
-            <span className="font-body text-[13px] text-text-secondary dark:text-text-dark-secondary">MaÃ®trise</span>
+            <span className="font-body text-[13px] text-text-secondary dark:text-text-dark-secondary">Maîtrise</span>
             <span className="font-body text-[13px] font-semibold text-text-main dark:text-text-dark-main">
               {mastered} / {total}
-              {mastered === total && <span className="ml-2 text-success dark:text-success-dark">ðŸŽ“</span>}
+              {mastered === total && <span className="ml-2 text-success dark:text-success-dark">🎓</span>}
             </span>
           </div>
           <ProgressBar value={mastered} max={total} showCoin />
@@ -96,7 +96,7 @@ export function FlashcardViewer({ flashcards, courseId, userId }: FlashcardViewe
             </div>
             <button onClick={handleToggleMastered} disabled={isPending}
               className="flex-shrink-0 transition-transform hover:scale-110 disabled:opacity-50"
-              title={card.is_mastered ? 'Marquer non maÃ®trisÃ©e' : 'Marquer maÃ®trisÃ©e'}>
+              title={card.is_mastered ? 'Marquer non maîtrisée' : 'Marquer maîtrisée'}>
               {card.is_mastered
                 ? <CheckCircle className="h-7 w-7 text-success dark:text-success-dark" />
                 : <Circle className="h-7 w-7 text-sky-border dark:text-night-border" />}
@@ -125,7 +125,7 @@ export function FlashcardViewer({ flashcards, courseId, userId }: FlashcardViewe
         {/* Navigation */}
         <div className="flex items-center justify-between">
           <Button variant="secondary" size="sm" onClick={() => setIndex(Math.max(0, index - 1))} disabled={index === 0} className="gap-1.5">
-            <ChevronLeft className="h-4 w-4" />PrÃ©cÃ©dente
+            <ChevronLeft className="h-4 w-4" />Précédente
           </Button>
           <span className="font-body text-[13px] text-text-tertiary dark:text-text-dark-tertiary">{index + 1} / {total}</span>
           <Button variant="secondary" size="sm" onClick={() => setIndex(Math.min(total - 1, index + 1))} disabled={index === total - 1} className="gap-1.5">

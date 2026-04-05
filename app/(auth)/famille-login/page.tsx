@@ -26,7 +26,7 @@ export default function FamilleLoginPage() {
       .single()
 
     if (!group) {
-      setError('Code famille introuvable. VÃ©rifie le code donnÃ© par tes parents.')
+      setError('Code famille introuvable. Vérifie le code donné par tes parents.')
       setLoading(false)
       return
     }
@@ -66,7 +66,7 @@ export default function FamilleLoginPage() {
           </div>
           <div>
             <h2 className="font-display text-h2 text-text-main dark:text-text-dark-main">
-              Bonjour {childName} ! ðŸ‘‹
+              Bonjour {childName} ! 👋
             </h2>
             <p className="mt-1 font-body text-[14px] text-text-secondary dark:text-text-dark-secondary">
               Connexion en cours...
@@ -90,14 +90,14 @@ export default function FamilleLoginPage() {
         <div className="mb-8 text-center">
           <Link href="/" className="inline-flex flex-col items-center gap-3 mb-2">
             <div className="relative flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-purple-400 to-purple-600 shadow-lg">
-              <span className="text-3xl">ðŸ‘¨â€ðŸ‘©â€ðŸ‘§</span>
+              <span className="text-3xl">👨‍👩‍👧</span>
             </div>
             <span className="font-display text-[22px] font-bold text-text-main dark:text-text-dark-main">
               Skynote Famille
             </span>
           </Link>
           <p className="font-body text-[14px] text-text-secondary dark:text-text-dark-secondary">
-            Connecte-toi avec le code donnÃ© par tes parents
+            Connecte-toi avec le code donné par tes parents
           </p>
         </div>
 
@@ -121,7 +121,7 @@ export default function FamilleLoginPage() {
                 className="h-12 w-full rounded-input border border-sky-border bg-sky-bg px-4 font-mono text-[18px] font-bold text-text-main placeholder:text-text-tertiary placeholder:font-normal focus:border-purple-400 focus:outline-none focus:ring-2 focus:ring-purple-400/20 dark:border-night-border dark:bg-night-bg dark:text-text-dark-main uppercase tracking-widest transition-all"
               />
               <p className="mt-1.5 font-body text-[11px] text-text-tertiary dark:text-text-dark-tertiary">
-                Commence par FAM- (donnÃ© par tes parents)
+                Commence par FAM- (donné par tes parents)
               </p>
             </div>
 
@@ -134,7 +134,7 @@ export default function FamilleLoginPage() {
                 type="password"
                 value={accessCode}
                 onChange={(e) => setAccessCode(e.target.value.replace(/\D/g, '').slice(0, 4))}
-                placeholder="â€¢â€¢â€¢â€¢"
+                placeholder="••••"
                 maxLength={4}
                 required
                 className="h-12 w-full rounded-input border border-sky-border bg-sky-bg px-4 font-mono text-[28px] font-bold text-text-main placeholder:text-text-tertiary focus:border-purple-400 focus:outline-none focus:ring-2 focus:ring-purple-400/20 dark:border-night-border dark:bg-night-bg dark:text-text-dark-main tracking-[12px] text-center transition-all"
@@ -161,7 +161,7 @@ export default function FamilleLoginPage() {
                   Connexion...
                 </>
               ) : (
-                'ðŸš€ Se connecter'
+                '🚀 Se connecter'
               )}
             </button>
           </form>
@@ -171,7 +171,7 @@ export default function FamilleLoginPage() {
         <p className="mt-5 text-center font-body text-[13px] text-text-secondary dark:text-text-dark-secondary">
           Tu as un compte normal ?{' '}
           <Link href="/login" className="font-medium text-brand hover:underline dark:text-brand-dark">
-            Connexion normale â†’
+            Connexion normale →
           </Link>
         </p>
 

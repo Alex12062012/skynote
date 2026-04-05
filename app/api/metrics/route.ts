@@ -14,7 +14,7 @@ function getDaysArray(days: number): string[] {
 }
 
 export async function GET() {
-  // Auth check — proteger les metriques
+  // Auth check � proteger les metriques
   const { createClient: createAuthClient } = await import('@/lib/supabase/server')
   const authClient = await createAuthClient()
   const { data: { user } } = await authClient.auth.getUser()
@@ -63,7 +63,7 @@ export async function GET() {
     supabase.from('profiles').select('id').gte('last_login_at', since7d.toISOString()),
   ])
 
-  // â”€â”€ Courbes 30 jours â”€â”€
+  // ── Courbes 30 jours ──
   const days30 = getDaysArray(30)
   const signupsMap: Record<string, number> = {}
   const qcmMap: Record<string, number> = {}
@@ -77,14 +77,14 @@ export async function GET() {
   const qcmSeries = days30.map(date => ({ date, count: qcmMap[date] }))
   const coursesSeries = days30.map(date => ({ date, count: coursesMap[date] }))
 
-  // â”€â”€ RÃ©tention â”€â”€
+  // ── Rétention ──
   const totalU = totalUsers ?? 0
   const dau = activeToday?.length ?? 0
   const wau = active7d?.length ?? 0
   const dauRate = totalU > 0 ? ((dau / totalU) * 100).toFixed(1) : '0'
   const wauRate = totalU > 0 ? ((wau / totalU) * 100).toFixed(1) : '0'
 
-  // â”€â”€ RÃ©tention 7j (inscrits il y a 7-14 jours qui sont revenus) â”€â”€
+  // ── Rétention 7j (inscrits il y a 7-14 jours qui sont revenus) ──
   const since14d = new Date(now); since14d.setDate(since14d.getDate() - 14)
   const newUsersWeek = (allProfiles || []).filter((p: any) => {
     const created = new Date(p.created_at)
@@ -93,7 +93,7 @@ export async function GET() {
   const retained = newUsersWeek.filter((p: any) => p.last_login_at && new Date(p.last_login_at) >= since7d)
   const retention7d = newUsersWeek.length > 0 ? ((retained.length / newUsersWeek.length) * 100).toFixed(0) : 'N/A'
 
-  // â”€â”€ Engagement â”€â”€
+  // ── Engagement ──
   const avgCoursesPerUser = totalU > 0 ? ((totalCourses ?? 0) / totalU).toFixed(1) : '0'
   const avgQcmPerUser = totalU > 0 ? ((totalQcm ?? 0) / totalU).toFixed(1) : '0'
   const perfectRate = (totalQcm ?? 0) > 0 ? (((perfectQcm ?? 0) / (totalQcm ?? 1)) * 100).toFixed(1) : '0'
@@ -101,7 +101,7 @@ export async function GET() {
     ? ((allProfiles.reduce((s: number, p: any) => s + (p.streak_days || 0), 0)) / allProfiles.length).toFixed(1)
     : '0'
 
-  // â”€â”€ Plans â”€â”€
+  // ── Plans ──
   const planCounts = { free: 0, plus: 0, famille: 0 }
   const paidCounts = { plus: 0, famille: 0 } // Vrais payants uniquement (Stripe)
   ;(allProfiles || []).forEach((p: any) => {
@@ -121,13 +121,13 @@ export async function GET() {
   const arr = (parseFloat(mrr) * 12).toFixed(2)
   const ltv = ((paidCounts.plus * 4.99 * 12) + (paidCounts.famille * 11.99 * 12)).toFixed(2)
 
-  // â”€â”€ Feedbacks â”€â”€
+  // ── Feedbacks ──
   const scores = (feedbacks || []).map((f: any) => f.score)
   const avgScore = scores.length ? (scores.reduce((a: number, b: number) => a + b, 0) / scores.length).toFixed(1) : 'N/A'
   const nps = scores.filter((s: number) => s >= 9).length - scores.filter((s: number) => s <= 6).length
   const npsScore = scores.length > 0 ? Math.round((nps / scores.length) * 100) : 0
 
-  // â”€â”€ Coins distribuÃ©s â”€â”€
+  // ── Coins distribués ──
   const totalCoins = (coinTransactions || [])
     .filter((t: any) => t.amount > 0)
     .reduce((s: number, t: any) => s + t.amount, 0)

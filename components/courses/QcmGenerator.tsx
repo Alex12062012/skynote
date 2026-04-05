@@ -34,7 +34,7 @@ export function QcmGenerator({ courseId, flashcards }: QcmGeneratorProps) {
       }
     }
 
-    // Marquer les QCM comme prÃªts dans Supabase via une route
+    // Marquer les QCM comme prêts dans Supabase via une route
     await fetch('/api/mark-qcm-ready', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -51,9 +51,9 @@ export function QcmGenerator({ courseId, flashcards }: QcmGeneratorProps) {
   if (finished) {
     return (
       <div className="flex items-center gap-3 rounded-card border border-success/30 bg-success-soft px-5 py-3 dark:border-emerald-800/30 dark:bg-emerald-950/20">
-        <span className="text-xl">âœ…</span>
+        <span className="text-xl">✅</span>
         <div>
-          <p className="font-body text-[14px] font-semibold text-success dark:text-success-dark">QCM prÃªt !</p>
+          <p className="font-body text-[14px] font-semibold text-success dark:text-success-dark">QCM prêt !</p>
           <p className="font-body text-[12px] text-text-secondary dark:text-text-dark-secondary">Tu peux maintenant faire le QCM</p>
         </div>
       </div>
@@ -66,7 +66,7 @@ export function QcmGenerator({ courseId, flashcards }: QcmGeneratorProps) {
         <div className="flex items-center gap-2">
           <div className="h-4 w-4 animate-spin rounded-full border-2 border-brand border-t-transparent dark:border-brand-dark" />
           <p className="font-body text-[14px] font-semibold text-text-main dark:text-text-dark-main">
-            GÃ©nÃ©ration des QCM en cours...
+            Génération des QCM en cours...
           </p>
         </div>
         <span className="font-display text-[14px] font-bold text-brand dark:text-brand-dark">
@@ -83,12 +83,12 @@ export function QcmGenerator({ courseId, flashcards }: QcmGeneratorProps) {
       </div>
       
       <p className="mt-2 font-body text-[12px] text-text-tertiary dark:text-text-dark-tertiary">
-        Lis tes fiches pendant ce temps ! ðŸ“–
+        Lis tes fiches pendant ce temps ! 📖
       </p>
 
       {error && (
         <p className="mt-2 font-body text-[12px] text-amber-600 dark:text-amber-400">
-          âš ï¸ Une erreur s'est produite sur une fiche â€” la gÃ©nÃ©ration continue.
+          ⚠️ Une erreur s'est produite sur une fiche — la génération continue.
         </p>
       )}
     </div>

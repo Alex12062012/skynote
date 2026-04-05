@@ -8,11 +8,11 @@ import { useI18n } from '@/lib/i18n/context'
 
 const MESSAGES = [
   "L'IA lit ton cours...",
-  "L'IA gÃ©nÃ¨re tes fiches de rÃ©vision...",
+  "L'IA génère tes fiches de révision...",
   "L'IA structure les points essentiels...",
-  "L'IA rÃ©dige tes rÃ©sumÃ©s...",
-  "L'IA prÃ©pare tes questions QCM...",
-  "L'IA vÃ©rifie la qualitÃ© des fiches...",
+  "L'IA rédige tes résumés...",
+  "L'IA prépare tes questions QCM...",
+  "L'IA vérifie la qualité des fiches...",
   'Finalisation en cours...',
 ]
 
@@ -36,7 +36,7 @@ export function ProcessingLoader({ courseId, courseTitle }: ProcessingLoaderProp
     return () => clearInterval(interval)
   }, [])
 
-  // Ã‰coute realtime Supabase â€” se dÃ©clenche quand le cours est prÃªt
+  // Écoute realtime Supabase — se déclenche quand le cours est prêt
   useEffect(() => {
     const channel = supabase
       .channel(`course-status-${courseId}`)
@@ -62,7 +62,7 @@ export function ProcessingLoader({ courseId, courseTitle }: ProcessingLoaderProp
 
   return (
     <div className="flex min-h-[60vh] flex-col items-center justify-center gap-8 text-center animate-fade-in">
-      {/* Sky Coin qui tourne â€” effet flip de piÃ¨ce */}
+      {/* Sky Coin qui tourne — effet flip de pièce */}
       <div style={{ perspective: '400px' }}>
         <div
           style={{
@@ -83,7 +83,7 @@ export function ProcessingLoader({ courseId, courseTitle }: ProcessingLoaderProp
         </div>
       </div>
 
-      {/* Texte animÃ© */}
+      {/* Texte animé */}
       <div className="space-y-2">
         <h2 className="font-display text-[22px] font-semibold text-text-main dark:text-text-dark-main">
           {courseTitle}
@@ -115,7 +115,7 @@ export function ProcessingLoader({ courseId, courseTitle }: ProcessingLoaderProp
       </div>
 
       <p className="max-w-xs font-body text-[13px] text-text-tertiary dark:text-text-dark-tertiary">
-        La gÃ©nÃ©ration prend 15 Ã  30 secondes selon la longueur du cours.
+        La génération prend 15 à 30 secondes selon la longueur du cours.
       </p>
     </div>
   )
