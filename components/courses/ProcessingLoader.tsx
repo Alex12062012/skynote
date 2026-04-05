@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { SkyCoin } from '@/components/ui/SkyCoin'
+import { useI18n } from '@/lib/i18n/context'
 
 const MESSAGES = [
   "L'IA lit ton cours...",

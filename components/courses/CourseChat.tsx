@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { Send, MessageCircle, X, Lock } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useI18n } from '@/lib/i18n/context'
 
 interface Message {
   role: 'user' | 'assistant'

@@ -9,6 +9,7 @@ import { VoiceRecorder } from './VoiceRecorder'
 import { FileDropzone } from './FileDropzone'
 import { createCourse } from '@/lib/supabase/course-actions'
 import { X, AlertTriangle, Camera, List, Plus } from 'lucide-react'
+import { useI18n } from '@/lib/i18n/context'
 
 type SourceType = 'text' | 'photo' | 'list' | 'vocal'
 
