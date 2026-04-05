@@ -133,7 +133,7 @@ export async function GET(request: NextRequest) {
       supabase.from('courses').select('user_id, profiles(full_name, email, plan)').gte('created_at', sinceISO),
       supabase.from('qcm_attempts').select('user_id, profiles(full_name, email, plan)').gte('created_at', sinceISO),
       supabase.from('qcm_attempts').select('user_id, profiles(full_name, email, plan)').eq('perfect', true).gte('created_at', sinceISO),
-      supabase.from('profiles').select('id, full_name, email, plan, sky_coins, last_login_at').in('plan', ['plus', 'premium', 'famille']).order('sky_coins', { ascending: false }),
+      supabase.from('profiles').select('id, full_name, email, plan, sky_coins, last_login_at').in('plan', ['plus', 'famille']).order('sky_coins', { ascending: false }),
       supabase.from('profiles').select('id, full_name, email, streak_days, plan').gte('streak_days', 3).order('streak_days', { ascending: false }),
     ])
 

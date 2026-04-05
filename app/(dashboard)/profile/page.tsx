@@ -40,7 +40,7 @@ export default async function ProfilePage() {
       })
     : ''
 
-  const isPremium = ['plus', 'premium', 'famille'].includes(plan)
+  const isPremium = ['plus', 'famille'].includes(plan)
   const coinsNeeded = 750 - coins
   const showPremiumBanner = !isPremium && coins >= 450 && coins < 750
 

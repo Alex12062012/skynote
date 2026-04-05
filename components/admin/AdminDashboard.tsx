@@ -108,8 +108,8 @@ function UserListModal({ modal, onClose }: { modal: StatModal; onClose: () => vo
                     const val = col.render ? col.render(u) : u[col.key]
                     return val ? <span key={col.key} className="text-[11px] text-slate-400">{val}</span> : null
                   })}
-                  <span className={`text-[10px] px-2 py-0.5 rounded-full ${plan === 'plus' || plan === 'premium' ? 'bg-amber-900/30 text-amber-400' : plan === 'famille' ? 'bg-purple-900/30 text-purple-400' : 'bg-slate-700 text-slate-400'}`}>
-                    {plan === 'plus' || plan === 'premium' ? '⭐' : plan === 'famille' ? '👨‍👩‍👧' : '🆓'}
+                  <span className={`text-[10px] px-2 py-0.5 rounded-full ${plan === 'plus' ? 'bg-amber-900/30 text-amber-400' : plan === 'famille' ? 'bg-purple-900/30 text-purple-400' : 'bg-slate-700 text-slate-400'}`}>
+                    {plan === 'plus' ? '⭐' : plan === 'famille' ? '👨‍👩‍👧' : '🆓'}
                   </span>
                 </div>
               </div>
@@ -365,7 +365,7 @@ export function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                           {(u as any).is_beta_tester && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-blue-900/40 text-blue-400">🧪</span>}
                         </div>
                         <div className="flex items-center gap-2">
-                          <span className={`text-[11px] px-2 py-0.5 rounded-full ${u.plan === 'plus' || u.plan === 'premium' ? 'bg-amber-900/30 text-amber-400' : 'bg-slate-800 text-slate-400'}`}>{u.plan}</span>
+                          <span className={`text-[11px] px-2 py-0.5 rounded-full ${u.plan === 'plus' ? 'bg-amber-900/30 text-amber-400' : 'bg-slate-800 text-slate-400'}`}>{u.plan}</span>
                           <span className="font-bold text-[14px] text-blue-400">{u.sky_coins} 🪙</span>
                         </div>
                       </div>
@@ -405,7 +405,7 @@ export function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                           {u.is_beta_tester && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-blue-900/40 text-blue-400 flex-shrink-0">🧪</span>}
                         </div>
                       </td>
-                      <td className="px-4 py-3"><span className={`text-[11px] px-2 py-1 rounded-full font-medium ${u.plan === 'plus' || u.plan === 'premium' ? 'bg-amber-900/30 text-amber-400' : u.plan === 'famille' ? 'bg-purple-900/30 text-purple-400' : 'bg-slate-800 text-slate-400'}`}>{u.plan}</span></td>
+                      <td className="px-4 py-3"><span className={`text-[11px] px-2 py-1 rounded-full font-medium ${u.plan === 'plus' ? 'bg-amber-900/30 text-amber-400' : u.plan === 'famille' ? 'bg-purple-900/30 text-purple-400' : 'bg-slate-800 text-slate-400'}`}>{u.plan}</span></td>
                       <td className="px-4 py-3"><span className="font-bold text-[14px] text-blue-400">{u.sky_coins}</span></td>
                       <td className="px-4 py-3"><span className="text-[14px] text-orange-400">🔥 {u.streak_days}j</span></td>
                       <td className="px-4 py-3"><span className="text-[13px] text-slate-400">{new Date(u.created_at).toLocaleDateString('fr-FR')}</span></td>
@@ -451,7 +451,7 @@ export function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                       <div className="flex gap-2">
                         {[['free', 'Gratuit', 'bg-slate-600'], ['plus', '⭐ Plus', 'bg-amber-600'], ['famille', '👨‍👩‍👧', 'bg-purple-600']].map(([p, l, bg]) => (
                           <button key={p} onClick={() => doAction(selectedUser.id, 'set_plan', p)} disabled={actionLoading}
-                            className={`flex-1 h-10 rounded-xl text-[13px] font-semibold transition-colors ${selectedUser.plan === p || (p === 'plus' && selectedUser.plan === 'premium') ? `${bg} text-white` : 'border border-slate-700 text-slate-400 hover:bg-slate-800'}`}>
+                            className={`flex-1 h-10 rounded-xl text-[13px] font-semibold transition-colors ${selectedUser.plan === p || (p === 'plus' && false) ? `${bg} text-white` : 'border border-slate-700 text-slate-400 hover:bg-slate-800'}`}>
                             {l}
                           </button>
                         ))}

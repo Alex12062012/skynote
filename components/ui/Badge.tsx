@@ -32,7 +32,7 @@ export function BetaBadge() {
 }
 
 export function PlanBadge({ plan }: { plan: string }) {
-  if (plan === 'plus' || plan === 'premium') {
+  if (plan === 'plus') {
     return (
       <a href="/pricing" className="inline-flex items-center gap-1 rounded-pill bg-amber-100 px-3 py-1 font-body text-[12px] font-bold text-amber-700 hover:bg-amber-200 transition-colors dark:bg-amber-950/30 dark:text-amber-400 dark:hover:bg-amber-900/40 cursor-pointer">
         ⭐ Plus

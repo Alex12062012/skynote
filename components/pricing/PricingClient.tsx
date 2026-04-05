@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
@@ -73,7 +73,7 @@ export function PricingClient({ currentPlan, planExpiresAt, hasStripeSubscriptio
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null)
   const [portalLoading, setPortalLoading] = useState(false)
 
-  const isPaid = currentPlan === 'plus' || currentPlan === 'premium' || currentPlan === 'famille'
+  const isPaid = currentPlan === 'plus' || currentPlan === 'famille'
 
   async function handleStripe(planId: string) {
     if (!isLoggedIn) { router.push('/signup'); return }
@@ -186,7 +186,7 @@ export function PricingClient({ currentPlan, planExpiresAt, hasStripeSubscriptio
           {PLANS.map((plan) => {
             const price = billing === 'yearly' ? plan.price.yearly : plan.price.monthly
             const isLoading = loadingPlan === plan.id
-            const isCurrentPlan = plan.id === currentPlan || (plan.id === 'plus' && currentPlan === 'premium')
+            const isCurrentPlan = plan.id === currentPlan || (false)
             const canUpgrade = !isCurrentPlan && plan.id !== 'free'
             const isDowngrade = (currentPlan === 'famille' && plan.id === 'plus') || (isPaid && plan.id === 'free')
 

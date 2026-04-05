@@ -38,7 +38,7 @@ export default async function DashboardPage() {
   const firstName = profile?.full_name?.split(' ')[0] ?? 'toi'
   const coins = profile?.sky_coins ?? 0
   const streak = profile?.streak_days ?? 0
-  const isPremium = profile?.plan === 'plus' || profile?.plan === 'premium' || profile?.plan === 'famille'
+  const isPremium = profile?.plan === 'plus' || profile?.plan === 'famille'
   const isTeacher = (profile as any)?.role === 'teacher'
   const isStudent = (profile as any)?.role === 'student'
 
