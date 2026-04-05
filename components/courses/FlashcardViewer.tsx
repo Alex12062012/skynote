@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useTransition } from 'react'
 import { ChevronLeft, ChevronRight, CheckCircle, Circle } from 'lucide-react'
@@ -8,6 +8,7 @@ import { ObjectiveBadge } from '@/components/ui/ObjectiveBadge'
 import { toggleFlashcardMastered } from '@/lib/supabase/course-actions'
 import { checkMasteryObjective } from '@/lib/supabase/objectives-actions'
 import { cn } from '@/lib/utils'
+import { useI18n } from '@/lib/i18n/context'
 import type { Flashcard } from '@/types/database'
 
 interface FlashcardViewerProps {
@@ -17,6 +18,7 @@ interface FlashcardViewerProps {
 }
 
 export function FlashcardViewer({ flashcards, courseId, userId }: FlashcardViewerProps) {
+  const { t } = useI18n()
   const [index, setIndex] = useState(0)
   const [localCards, setLocalCards] = useState(flashcards)
   const [isPending, startTransition] = useTransition()
@@ -37,7 +39,7 @@ export function FlashcardViewer({ flashcards, courseId, userId }: FlashcardViewe
     startTransition(async () => {
       await toggleFlashcardMastered(card.id, newVal)
 
-      // Vérifier si toutes les fiches sont maintenant maîtrisées
+      // VÃ©rifier si toutes les fiches sont maintenant maÃ®trisÃ©es
       const allMastered = newCards.every((f) => f.is_mastered)
       if (allMastered && newVal) {
         await checkMasteryObjective(courseId, userId)
@@ -49,21 +51,21 @@ export function FlashcardViewer({ flashcards, courseId, userId }: FlashcardViewe
   return (
     <>
       <ObjectiveBadge
-        title="Maîtrise totale !"
-        icon="🎓"
+        title="MaÃ®trise totale !"
+        icon="ðŸŽ“"
         coins={15}
         visible={showMasteryBadge}
         onHide={() => setShowMasteryBadge(false)}
       />
 
       <div className="flex flex-col gap-6">
-        {/* Barre de maîtrise */}
+        {/* Barre de maÃ®trise */}
         <div className="space-y-2">
           <div className="flex justify-between">
-            <span className="font-body text-[13px] text-text-secondary dark:text-text-dark-secondary">Maîtrise</span>
+            <span className="font-body text-[13px] text-text-secondary dark:text-text-dark-secondary">MaÃ®trise</span>
             <span className="font-body text-[13px] font-semibold text-text-main dark:text-text-dark-main">
               {mastered} / {total}
-              {mastered === total && <span className="ml-2 text-success dark:text-success-dark">🎓</span>}
+              {mastered === total && <span className="ml-2 text-success dark:text-success-dark">ðŸŽ“</span>}
             </span>
           </div>
           <ProgressBar value={mastered} max={total} showCoin />
@@ -94,7 +96,7 @@ export function FlashcardViewer({ flashcards, courseId, userId }: FlashcardViewe
             </div>
             <button onClick={handleToggleMastered} disabled={isPending}
               className="flex-shrink-0 transition-transform hover:scale-110 disabled:opacity-50"
-              title={card.is_mastered ? 'Marquer non maîtrisée' : 'Marquer maîtrisée'}>
+              title={card.is_mastered ? 'Marquer non maÃ®trisÃ©e' : 'Marquer maÃ®trisÃ©e'}>
               {card.is_mastered
                 ? <CheckCircle className="h-7 w-7 text-success dark:text-success-dark" />
                 : <Circle className="h-7 w-7 text-sky-border dark:text-night-border" />}
@@ -123,7 +125,7 @@ export function FlashcardViewer({ flashcards, courseId, userId }: FlashcardViewe
         {/* Navigation */}
         <div className="flex items-center justify-between">
           <Button variant="secondary" size="sm" onClick={() => setIndex(Math.max(0, index - 1))} disabled={index === 0} className="gap-1.5">
-            <ChevronLeft className="h-4 w-4" />Précédente
+            <ChevronLeft className="h-4 w-4" />PrÃ©cÃ©dente
           </Button>
           <span className="font-body text-[13px] text-text-tertiary dark:text-text-dark-tertiary">{index + 1} / {total}</span>
           <Button variant="secondary" size="sm" onClick={() => setIndex(Math.min(total - 1, index + 1))} disabled={index === total - 1} className="gap-1.5">
@@ -134,3 +136,4 @@ export function FlashcardViewer({ flashcards, courseId, userId }: FlashcardViewe
     </>
   )
 }
+

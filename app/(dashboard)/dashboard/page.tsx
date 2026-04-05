@@ -1,4 +1,4 @@
-import Link from 'next/link'
+﻿import Link from 'next/link'
 import { Plus, ArrowRight, Flame, Zap } from 'lucide-react'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
@@ -12,6 +12,7 @@ import { ProgressBar } from '@/components/ui/ProgressBar'
 import { ClassroomSetup } from '@/components/classroom/ClassroomSetup'
 import { ClassroomPanel } from '@/components/classroom/ClassroomPanel'
 import type { Metadata } from 'next'
+import { getServerLocale, createServerT } from '@/lib/i18n/server'
 
 export const metadata: Metadata = { title: 'Tableau de bord' }
 
@@ -42,7 +43,7 @@ export default async function DashboardPage() {
   const isTeacher = (profile as any)?.role === 'teacher'
   const isStudent = (profile as any)?.role === 'student'
 
-  // Données classroom pour les profs
+  // DonnÃ©es classroom pour les profs
   let classroom: any = null
   let classroomStudents: any[] = []
   if (isTeacher) {
@@ -59,14 +60,14 @@ export default async function DashboardPage() {
         .eq('classroom_id', cls.id)
         .order('last_name')
 
-      // Récupérer les profils élèves liés à cette classe
+      // RÃ©cupÃ©rer les profils Ã©lÃ¨ves liÃ©s Ã  cette classe
       const { data: studentProfiles } = await supabase
         .from('profiles')
         .select('id, full_name, classroom_student_id')
         .eq('classroom_id', cls.id)
         .eq('role', 'student')
 
-      // Récupérer les tentatives QCM de tous les élèves
+      // RÃ©cupÃ©rer les tentatives QCM de tous les Ã©lÃ¨ves
       const studentIds = (studentProfiles || []).map((p: any) => p.id)
       let allAttempts: any[] = []
       if (studentIds.length > 0) {
@@ -99,7 +100,7 @@ export default async function DashboardPage() {
     }
   }
 
-  // Pour les élèves : récupérer les cours du prof
+  // Pour les Ã©lÃ¨ves : rÃ©cupÃ©rer les cours du prof
   let teacherCourses: any[] = []
   if (isStudent && (profile as any)?.classroom_id) {
     const { data: cls } = await supabase
@@ -121,7 +122,7 @@ export default async function DashboardPage() {
 
   // Message d'accueil selon l'heure
   const hour = new Date().getHours()
-  const greeting = hour < 12 ? 'Bonjour' : hour < 18 ? 'Bon après-midi' : 'Bonsoir'
+  const greeting = hour < 12 ? 'Bonjour' : hour < 18 ? 'Bon aprÃ¨s-midi' : 'Bonsoir'
 
   return (
     <div className="flex flex-col gap-8 animate-fade-in">
@@ -134,11 +135,11 @@ export default async function DashboardPage() {
           </h1>
           <p className="mt-1 font-body text-[15px] text-text-secondary dark:text-text-dark-secondary">
             {streak > 1
-              ? `🔥 ${streak} jours de suite — continue comme ça !`
-              : 'Prêt à réviser aujourd\'hui ?'}
+              ? `ðŸ”¥ ${streak} jours de suite â€” continue comme Ã§a !`
+              : 'PrÃªt Ã  rÃ©viser aujourd\'hui ?'}
           </p>
         </div>
-        {/* Les élèves ne peuvent pas créer de cours */}
+        {/* Les Ã©lÃ¨ves ne peuvent pas crÃ©er de cours */}
         {!isStudent && (
           <Link href="/courses/new">
             <Button size="lg" className="gap-2 w-full sm:w-auto">
@@ -157,7 +158,7 @@ export default async function DashboardPage() {
         <ClassroomPanel classCode={classroom.class_code} students={classroomStudents} siteUrl={process.env.NEXT_PUBLIC_SITE_URL || 'https://skynote.vercel.app'} />
       )}
 
-      {/* Cours du prof pour les élèves */}
+      {/* Cours du prof pour les Ã©lÃ¨ves */}
       {isStudent && teacherCourses.length > 0 && (
         <div>
           <h2 className="mb-4 font-display text-h3 text-text-main dark:text-text-dark-main">
@@ -179,13 +180,13 @@ export default async function DashboardPage() {
         coins={coins}
       />
 
-      {/* Bannière Premium si proche des 100 coins */}
+      {/* BanniÃ¨re Premium si proche des 100 coins */}
       {!isPremium && coins >= 60 && coins < 100 && (
         <div className="flex items-center gap-4 rounded-card border border-brand/20 bg-brand-soft p-4 dark:border-brand-dark/20 dark:bg-brand-dark-soft">
           <SkyCoin size={40} />
           <div className="flex-1 min-w-0">
             <p className="font-body text-[14px] font-semibold text-brand dark:text-brand-dark">
-              Plus que {100 - coins} coins pour débloquer Premium ! ⭐
+              Plus que {100 - coins} coins pour dÃ©bloquer Premium ! â­
             </p>
             <ProgressBar value={coins} max={100} className="mt-2" />
           </div>
@@ -197,12 +198,12 @@ export default async function DashboardPage() {
         </div>
       )}
 
-      {/* Cours récents — masqué pour les élèves qui voient déjà les cours du prof au-dessus */}
+      {/* Cours rÃ©cents â€” masquÃ© pour les Ã©lÃ¨ves qui voient dÃ©jÃ  les cours du prof au-dessus */}
       {!isStudent && (
       <div>
         <div className="mb-4 flex items-center justify-between">
           <h2 className="font-display text-h3 text-text-main dark:text-text-dark-main">
-            Cours récents
+            Cours rÃ©cents
           </h2>
           <Link href="/courses"
             className="flex items-center gap-1 font-body text-[14px] text-brand hover:underline dark:text-brand-dark">
@@ -212,12 +213,12 @@ export default async function DashboardPage() {
 
         {stats.recentCourses.length === 0 ? (
           <EmptyState
-            icon="📚"
+            icon="ðŸ“š"
             title="Aucun cours pour l'instant"
-            description="Crée ton premier cours pour commencer à réviser avec l'IA."
+            description="CrÃ©e ton premier cours pour commencer Ã  rÃ©viser avec l'IA."
             action={
               <Link href="/courses/new">
-                <Button className="gap-2"><Plus className="h-4 w-4" />Créer mon premier cours</Button>
+                <Button className="gap-2"><Plus className="h-4 w-4" />CrÃ©er mon premier cours</Button>
               </Link>
             }
           />
@@ -277,7 +278,7 @@ async function ObjectivesSummary({ userId }: { userId: string }) {
               <div className="mt-1.5 space-y-1">
                 <ProgressBar value={obj.current} max={obj.target_value} />
                 <p className="font-body text-[11px] text-text-tertiary dark:text-text-dark-tertiary">
-                  {obj.current}/{obj.target_value} · <span className="text-brand dark:text-brand-dark">+{obj.reward_coins} coins</span>
+                  {obj.current}/{obj.target_value} Â· <span className="text-brand dark:text-brand-dark">+{obj.reward_coins} coins</span>
                 </p>
               </div>
             </div>
@@ -287,3 +288,4 @@ async function ObjectivesSummary({ userId }: { userId: string }) {
     </div>
   )
 }
+

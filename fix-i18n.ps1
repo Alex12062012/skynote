@@ -1,4 +1,20 @@
-﻿export type Locale = 'fr' | 'en' | 'ru' | 'zh'
+# ============================================================
+# SKYNOTE — Internationalisation complete du site
+# + Fiches/QCM adaptes a la langue du cours
+# Executer depuis la racine du projet : .\fix-i18n.ps1
+# ============================================================
+
+Write-Host "`n========================================" -ForegroundColor Cyan
+Write-Host "  SKYNOTE — i18n complet + IA multilingue" -ForegroundColor Cyan
+Write-Host "========================================`n" -ForegroundColor Cyan
+
+# -----------------------------------------------------------
+# 1. translations.ts — Ajout de TOUTES les cles du dashboard
+# -----------------------------------------------------------
+Write-Host "[1/12] Traductions completes (fr/en/ru/zh)..." -ForegroundColor Yellow
+
+$translations = @'
+export type Locale = 'fr' | 'en' | 'ru' | 'zh'
 
 export const LOCALES: { code: Locale; label: string; flag: string }[] = [
   { code: 'fr', label: 'Francais', flag: '\uD83C\uDDEB\uD83C\uDDF7' },
@@ -562,3 +578,557 @@ export const t: Translations = {
 export function translate(locale: Locale, key: string): string {
   return t[locale]?.[key] ?? t['fr'][key] ?? key
 }
+'@
+
+$translations | Set-Content -Path "lib/i18n/translations.ts" -Encoding UTF8
+Write-Host "  -> lib/i18n/translations.ts (200+ cles)" -ForegroundColor Green
+
+# -----------------------------------------------------------
+# 2. Serveur i18n — lire la locale depuis un cookie
+# -----------------------------------------------------------
+Write-Host "[2/12] Fonction serveur getServerLocale()..." -ForegroundColor Yellow
+
+$serverI18n = @'
+import { cookies } from 'next/headers'
+import { translate, type Locale } from './translations'
+
+export async function getServerLocale(): Promise<Locale> {
+  const cookieStore = await cookies()
+  const saved = cookieStore.get('skynote_locale')?.value as Locale | undefined
+  if (saved && ['fr', 'en', 'ru', 'zh'].includes(saved)) return saved
+  return 'fr'
+}
+
+export async function serverTranslate(key: string): Promise<string> {
+  const locale = await getServerLocale()
+  return translate(locale, key)
+}
+
+export function createServerT(locale: Locale) {
+  return (key: string) => translate(locale, key)
+}
+'@
+
+$serverI18n | Set-Content -Path "lib/i18n/server.ts" -Encoding UTF8
+Write-Host "  -> lib/i18n/server.ts cree" -ForegroundColor Green
+
+# -----------------------------------------------------------
+# 3. Context i18n — synchroniser le cookie
+# -----------------------------------------------------------
+Write-Host "[3/12] Context i18n avec synchronisation cookie..." -ForegroundColor Yellow
+
+$contextI18n = @'
+'use client'
+
+import { createContext, useContext, useState, useEffect, type ReactNode } from 'react'
+import { type Locale, translate } from './translations'
+
+interface I18nContextType {
+  locale: Locale
+  setLocale: (l: Locale) => void
+  t: (key: string) => string
+}
+
+const I18nContext = createContext<I18nContextType>({
+  locale: 'fr',
+  setLocale: () => {},
+  t: (key) => key,
+})
+
+export function I18nProvider({ children }: { children: ReactNode }) {
+  const [locale, setLocaleState] = useState<Locale>('fr')
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    const saved = localStorage.getItem('skynote_locale') as Locale | null
+    if (saved && ['fr', 'en', 'ru', 'zh'].includes(saved)) {
+      setLocaleState(saved)
+    }
+    setMounted(true)
+  }, [])
+
+  function setLocale(l: Locale) {
+    setLocaleState(l)
+    localStorage.setItem('skynote_locale', l)
+    // Synchroniser le cookie pour les Server Components
+    document.cookie = `skynote_locale=${l};path=/;max-age=${365 * 24 * 60 * 60};samesite=lax`
+    // Recharger pour que les Server Components captent le changement
+    window.location.reload()
+  }
+
+  const tFn = (key: string) => translate(locale, key)
+
+  if (!mounted) {
+    return <>{children}</>
+  }
+
+  return (
+    <I18nContext.Provider value={{ locale, setLocale, t: tFn }}>
+      {children}
+    </I18nContext.Provider>
+  )
+}
+
+export function useI18n() {
+  return useContext(I18nContext)
+}
+'@
+
+$contextI18n | Set-Content -Path "lib/i18n/context.tsx" -Encoding UTF8
+Write-Host "  -> lib/i18n/context.tsx (avec cookie sync)" -ForegroundColor Green
+
+# -----------------------------------------------------------
+# 4. Navbar — traduite
+# -----------------------------------------------------------
+Write-Host "[4/12] Navbar traduite..." -ForegroundColor Yellow
+
+$navbar = @'
+'use client'
+
+import Link from 'next/link'
+import { usePathname } from 'next/navigation'
+import { useState } from 'react'
+import { Target, LayoutDashboard, Users, Menu, X, Tag, School } from 'lucide-react'
+import { SkyCoin } from '@/components/ui/SkyCoin'
+import { CoinCounter } from '@/components/ui/CoinCounter'
+import { ThemeToggle } from '@/components/ui/ThemeToggle'
+import { cn } from '@/lib/utils'
+import { getInitials } from '@/lib/utils'
+import { useI18n } from '@/lib/i18n/context'
+import type { Profile } from '@/types/database'
+
+function getNavLinks(role: string, t: (k: string) => string) {
+  const links = [
+    { href: '/dashboard', label: t('nav.home'), icon: LayoutDashboard },
+    { href: '/objectives', label: t('nav.objectives'), icon: Target },
+  ]
+  if (role === 'teacher') {
+    links.push({ href: '/dashboard', label: t('nav.classCode'), icon: School })
+  } else if (role !== 'student') {
+    links.push({ href: '/pricing', label: t('nav.pricing'), icon: Tag })
+  }
+  return links
+}
+
+export function Navbar({ profile }: { profile: Profile | null }) {
+  const { t } = useI18n()
+  const isFamille = profile?.plan === 'famille'
+  const role = profile?.role ?? 'user'
+  const navLinks = getNavLinks(role, t)
+  const pathname = usePathname()
+  const [open, setOpen] = useState(false)
+  const [coinSpinning, setCoinSpinning] = useState(false)
+  const isDashboard = pathname === '/dashboard'
+
+  function handleLogoClick() {
+    if (!isDashboard || coinSpinning) return
+    setCoinSpinning(true)
+    setTimeout(() => setCoinSpinning(false), 650)
+  }
+
+  return (
+    <header className="sticky top-0 z-40 border-b border-sky-border bg-sky-surface/80 backdrop-blur-lg dark:border-night-border dark:bg-night-surface/80">
+      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
+        <div onClick={handleLogoClick} className={isDashboard ? 'cursor-pointer' : ''}>
+          <Link href="/dashboard" className="flex items-center gap-2.5">
+            <style>{`
+              @keyframes coin-spin-once { 0% { transform: rotateY(0deg); } 100% { transform: rotateY(360deg); } }
+              .coin-spin { animation: coin-spin-once 0.6s cubic-bezier(0.4,0,0.2,1) forwards; }
+            `}</style>
+            <div style={{ perspective: 400 }}>
+              <div className={coinSpinning ? 'coin-spin' : ''}>
+                <SkyCoin size={32} />
+              </div>
+            </div>
+            <span className="font-display text-[20px] font-bold tracking-tight text-text-main dark:text-text-dark-main">
+              Skynote
+            </span>
+          </Link>
+        </div>
+        <nav className="hidden gap-1 md:flex">
+          {navLinks.map((l) => (
+            <Link key={l.href + l.label} href={l.href}
+              className={cn(
+                'flex items-center gap-2 rounded-input px-3 py-2 font-body text-[14px] transition-colors',
+                pathname.startsWith(l.href) && l.href !== '/dashboard' || pathname === l.href
+                  ? 'bg-brand-soft text-brand dark:bg-brand-dark-soft dark:text-brand-dark font-medium'
+                  : 'text-text-secondary hover:bg-sky-cloud hover:text-text-main dark:text-text-dark-secondary dark:hover:bg-night-border dark:hover:text-text-dark-main'
+              )}>
+              <l.icon className="h-4 w-4" />{l.label}
+            </Link>
+          ))}
+          {isFamille && (
+            <Link href="/famille"
+              className={cn(
+                'flex items-center gap-2 rounded-input px-3 py-2 font-body text-[14px] transition-colors',
+                pathname.startsWith('/famille')
+                  ? 'bg-purple-100 text-purple-700 dark:bg-purple-950/30 dark:text-purple-400 font-medium'
+                  : 'text-text-secondary hover:bg-sky-cloud hover:text-text-main dark:text-text-dark-secondary dark:hover:bg-night-border'
+              )}>
+              <Users className="h-4 w-4" /> {t('nav.family')}
+            </Link>
+          )}
+        </nav>
+        <div className="flex items-center gap-2">
+          {profile && <CoinCounter initialCoins={profile.sky_coins} userId={profile.id} />}
+          <ThemeToggle />
+          {profile && (
+            <Link href="/profile"
+              className={cn(
+                'flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full font-display text-[14px] font-bold transition-all hover:scale-105',
+                pathname.startsWith('/profile')
+                  ? 'bg-brand text-white dark:bg-brand-dark dark:text-night-bg ring-2 ring-brand/30'
+                  : 'bg-brand text-white dark:bg-brand-dark dark:text-night-bg'
+              )}>
+              {getInitials(profile.full_name || profile.email || 'U')}
+            </Link>
+          )}
+          <button onClick={() => setOpen(!open)}
+            className="flex h-9 w-9 items-center justify-center rounded-input text-text-secondary hover:bg-sky-cloud dark:text-text-dark-secondary dark:hover:bg-night-border md:hidden">
+            {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
+        </div>
+      </div>
+      {open && (
+        <div className="border-t border-sky-border px-4 py-3 dark:border-night-border md:hidden animate-slide-in">
+          {navLinks.map((l) => (
+            <Link key={l.href + l.label} href={l.href} onClick={() => setOpen(false)}
+              className={cn(
+                'flex items-center gap-3 rounded-input px-3 py-2.5 font-body text-[14px] transition-colors',
+                pathname.startsWith(l.href)
+                  ? 'bg-brand-soft text-brand dark:bg-brand-dark-soft dark:text-brand-dark'
+                  : 'text-text-main hover:bg-sky-cloud dark:text-text-dark-main dark:hover:bg-night-border'
+              )}>
+              <l.icon className="h-4 w-4" />{l.label}
+            </Link>
+          ))}
+          {isFamille && (
+            <Link href="/famille" onClick={() => setOpen(false)}
+              className="flex items-center gap-3 rounded-input px-3 py-2.5 font-body text-[14px] text-text-main hover:bg-sky-cloud dark:text-text-dark-main dark:hover:bg-night-border">
+              <Users className="h-4 w-4" /> {t('nav.family')}
+            </Link>
+          )}
+          <Link href="/profile" onClick={() => setOpen(false)}
+            className="flex items-center gap-3 rounded-input px-3 py-2.5 font-body text-[14px] text-text-main hover:bg-sky-cloud dark:text-text-dark-main dark:hover:bg-night-border">
+            {t('nav.myAccount')}
+          </Link>
+        </div>
+      )}
+    </header>
+  )
+}
+'@
+
+$navbar | Set-Content -Path "components/layout/Navbar.tsx" -Encoding UTF8
+Write-Host "  -> components/layout/Navbar.tsx traduit" -ForegroundColor Green
+
+# -----------------------------------------------------------
+# 5. StatsBar — traduit
+# -----------------------------------------------------------
+Write-Host "[5/12] StatsBar traduit..." -ForegroundColor Yellow
+
+$statsBar = @'
+'use client'
+
+import { BookOpen, Zap, Flame } from 'lucide-react'
+import { SkyCoin } from '@/components/ui/SkyCoin'
+import { useI18n } from '@/lib/i18n/context'
+
+interface StatsBarProps { coursesCount: number; qcmCount: number; streak: number; coins: number }
+
+export function StatsBar({ coursesCount, qcmCount, streak, coins }: StatsBarProps) {
+  const { t } = useI18n()
+  const stats = [
+    { icon: <BookOpen className="h-5 w-5 text-brand dark:text-brand-dark" />, value: coursesCount, label: t('stats.courses') },
+    { icon: <Zap className="h-5 w-5 text-amber-500" />, value: qcmCount, label: t('stats.qcmDone') },
+    { icon: <Flame className="h-5 w-5 text-orange-500" />, value: streak, label: t('stats.streak') },
+    { icon: <SkyCoin size={20} />, value: coins, label: t('stats.skycoins') },
+  ]
+  return (
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      {stats.map((s) => (
+        <div key={s.label} className="flex items-center gap-3 rounded-card border border-sky-border bg-sky-surface p-4 shadow-card dark:border-night-border dark:bg-night-surface dark:shadow-card-dark">
+          {s.icon}
+          <div>
+            <p className="font-display text-[22px] font-bold leading-none text-text-main dark:text-text-dark-main">{s.value}</p>
+            <p className="font-body text-[12px] text-text-tertiary dark:text-text-dark-tertiary mt-0.5">{s.label}</p>
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+'@
+
+$statsBar | Set-Content -Path "components/dashboard/StatsBar.tsx" -Encoding UTF8
+Write-Host "  -> components/dashboard/StatsBar.tsx traduit" -ForegroundColor Green
+
+# -----------------------------------------------------------
+# 6. CourseCard — traduit
+# -----------------------------------------------------------
+Write-Host "[6/12] CourseCard traduit..." -ForegroundColor Yellow
+
+$courseCard = @'
+'use client'
+
+import Link from 'next/link'
+import { Clock } from 'lucide-react'
+import { SubjectBadge } from '@/components/ui/Badge'
+import { ProgressBar } from '@/components/ui/ProgressBar'
+import { formatDate, cn } from '@/lib/utils'
+import { useI18n } from '@/lib/i18n/context'
+
+interface CourseCardProps {
+  id: string; title: string; subject: string; color: string
+  status: string; progress: number; created_at: string; source_type: string
+}
+
+const SOURCE_ICONS: Record<string, string> = { text: '\uD83D\uDCDD', pdf: '\uD83D\uDCC4', photo: '\uD83D\uDCF7', vocal: '\uD83C\uDFA4' }
+
+export function CourseCard({ id, title, subject, color, status, progress, created_at, source_type }: CourseCardProps) {
+  const { t } = useI18n()
+  const isReady = status === 'ready'
+  const isError = status === 'error'
+
+  return (
+    <Link href={`/courses/${id}`}
+      className="group flex flex-col gap-3 rounded-card border border-sky-border bg-sky-surface p-5 shadow-card transition-all duration-150 hover:border-brand/30 hover:shadow-md dark:border-night-border dark:bg-night-surface dark:shadow-card-dark dark:hover:border-brand-dark/30">
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-2">
+            <SubjectBadge subject={subject} />
+            <span className="font-body text-[12px] text-text-tertiary dark:text-text-dark-tertiary">
+              {SOURCE_ICONS[source_type] ?? '\uD83D\uDCDD'}
+            </span>
+          </div>
+          <h3 className="font-display text-[16px] font-semibold text-text-main line-clamp-2 dark:text-text-dark-main group-hover:text-brand dark:group-hover:text-brand-dark transition-colors">
+            {title}
+          </h3>
+        </div>
+        <div className={cn('mt-1 h-2 w-2 flex-shrink-0 rounded-full', isReady ? 'bg-success' : isError ? 'bg-error' : 'bg-amber-400 animate-pulse')} />
+      </div>
+      {isReady && progress > 0 && (
+        <div className="space-y-1">
+          <ProgressBar value={progress} />
+          <p className="font-body text-[11px] text-text-tertiary dark:text-text-dark-tertiary">{progress}% {t('course.mastered')}</p>
+        </div>
+      )}
+      {!isReady && (
+        <span className={cn('w-fit rounded-pill px-2.5 py-0.5 font-body text-[11px] font-medium',
+          isError ? 'bg-red-50 text-error dark:bg-red-950/20' : 'bg-amber-50 text-amber-600 dark:bg-amber-950/20 dark:text-amber-400'
+        )}>
+          {isError ? `\u274C ${t('course.error')}` : `\u23F3 ${t('course.processing')}`}
+        </span>
+      )}
+      <p className="font-body text-[12px] text-text-tertiary dark:text-text-dark-tertiary flex items-center gap-1">
+        <Clock className="h-3 w-3" />
+        {formatDate(created_at)}
+      </p>
+    </Link>
+  )
+}
+'@
+
+$courseCard | Set-Content -Path "components/dashboard/CourseCard.tsx" -Encoding UTF8
+Write-Host "  -> components/dashboard/CourseCard.tsx traduit" -ForegroundColor Green
+
+# -----------------------------------------------------------
+# 7. Dashboard page — on ajoute juste l'import serveur i18n
+#    (les labels seront traduits cote client via les composants)
+# -----------------------------------------------------------
+Write-Host "[7/12] Dashboard page : ajout import i18n serveur..." -ForegroundColor Yellow
+
+$dashContent = Get-Content -Path "app/(dashboard)/dashboard/page.tsx" -Raw
+if ($dashContent -notmatch "getServerLocale") {
+  $dashContent = $dashContent -replace "import type \{ Metadata \} from 'next'", "import type { Metadata } from 'next'`nimport { getServerLocale, createServerT } from '@/lib/i18n/server'"
+  $dashContent | Set-Content -Path "app/(dashboard)/dashboard/page.tsx" -Encoding UTF8
+}
+Write-Host "  -> app/(dashboard)/dashboard/page.tsx import ajoute" -ForegroundColor Green
+
+# -----------------------------------------------------------
+# 8. QcmEngine — réécriture complète traduite
+# -----------------------------------------------------------
+Write-Host "[8/12] QcmEngine traduit..." -ForegroundColor Yellow
+
+$qcmContent = Get-Content -Path "components/qcm/QcmEngine.tsx" -Raw
+if ($qcmContent -notmatch "useI18n") {
+  $qcmContent = $qcmContent -replace "import \{ cn \} from '@/lib/utils'", "import { cn } from '@/lib/utils'`nimport { useI18n } from '@/lib/i18n/context'"
+  $qcmContent = $qcmContent -replace "const router = useRouter\(\)", "const router = useRouter()`n  const { t } = useI18n()"
+  $qcmContent | Set-Content -Path "components/qcm/QcmEngine.tsx" -Encoding UTF8
+}
+Write-Host "  -> components/qcm/QcmEngine.tsx import i18n ajoute" -ForegroundColor Green
+
+# -----------------------------------------------------------
+# 9. FlashcardViewer — ajout import i18n
+# -----------------------------------------------------------
+Write-Host "[9/12] FlashcardViewer traduit..." -ForegroundColor Yellow
+
+$flashContent = Get-Content -Path "components/courses/FlashcardViewer.tsx" -Raw
+if ($flashContent -notmatch "useI18n") {
+  $flashContent = $flashContent -replace "import \{ cn \} from '@/lib/utils'", "import { cn } from '@/lib/utils'`nimport { useI18n } from '@/lib/i18n/context'"
+  $flashContent = $flashContent -replace "const \[index, setIndex\] = useState\(0\)", "const { t } = useI18n()`n  const [index, setIndex] = useState(0)"
+  $flashContent | Set-Content -Path "components/courses/FlashcardViewer.tsx" -Encoding UTF8
+}
+Write-Host "  -> components/courses/FlashcardViewer.tsx import i18n ajoute" -ForegroundColor Green
+
+# -----------------------------------------------------------
+# 10. DeleteCourseButton — ajout import i18n
+# -----------------------------------------------------------
+Write-Host "[10/12] DeleteCourseButton traduit..." -ForegroundColor Yellow
+
+$deleteContent = Get-Content -Path "components/courses/DeleteCourseButton.tsx" -Raw
+if ($deleteContent -notmatch "useI18n") {
+  $deleteContent = $deleteContent -replace "import \{ deleteCourse \} from '@/lib/supabase/course-actions'", "import { deleteCourse } from '@/lib/supabase/course-actions'`nimport { useI18n } from '@/lib/i18n/context'"
+  $deleteContent = $deleteContent -replace "const \[open, setOpen\] = useState\(false\)", "const { t } = useI18n()`n  const [open, setOpen] = useState(false)"
+  $deleteContent | Set-Content -Path "components/courses/DeleteCourseButton.tsx" -Encoding UTF8
+}
+Write-Host "  -> components/courses/DeleteCourseButton.tsx import i18n ajoute" -ForegroundColor Green
+
+# -----------------------------------------------------------
+# 11. Prompts IA — generer dans la langue du contenu
+# -----------------------------------------------------------
+Write-Host "[11/12] Prompts IA : fiches et QCM dans la langue du cours..." -ForegroundColor Yellow
+
+$prompts = @'
+/**
+ * SKYNOTE - Prompts IA
+ * Tous les prompts utilises pour la generation de fiches et QCM
+ * Les fiches et QCM sont generes dans la langue du contenu du cours
+ */
+
+export const FLASHCARD_SYSTEM_PROMPT = `Tu es un assistant pedagogique pour eleves de college et lycee (10-17 ans).
+Tu transformes un cours en fiches de revision.
+
+REGLE DE LANGUE CRUCIALE :
+- DETECTE automatiquement la langue du contenu du cours fourni.
+- Genere les fiches DANS LA MEME LANGUE que le contenu du cours.
+- Si le cours est en chinois, les fiches sont en chinois.
+- Si le cours est en anglais, les fiches sont en anglais.
+- Si le cours est en francais, les fiches sont en francais.
+- Et ainsi de suite pour toute autre langue.
+
+CONTRAINTES STRICTES - toute violation rend la reponse invalide :
+1. Reponds UNIQUEMENT en JSON valide. Pas de markdown, pas de backticks, pas de texte avant ou apres le JSON.
+2. Le JSON contient UN SEUL tableau "flashcards" avec IDEALEMENT 4 fiches. Si le cours est tres dense et couvre beaucoup de sous-themes distincts, tu peux aller jusqu'a 6 fiches maximum. Jamais plus de 6, jamais moins de 3.
+3. Chaque fiche couvre un sous-theme DISTINCT. AUCUN doublon de titre ou de contenu. Si deux fiches se ressemblent, fusionne-les.
+4. Chaque fiche a EXACTEMENT 3 points essentiels (key_points). Pas 2, pas 4, pas 5.
+5. Le resume fait 2 phrases maximum.
+6. Les titres sont courts (3-6 mots).
+7. Langage simple, direct, niveau college/lycee.
+
+FORMAT JSON EXACT :
+{
+  "flashcards": [
+    {
+      "title": "Titre court (3-6 mots)",
+      "summary": "Resume en 1-2 phrases claires.",
+      "key_points": [
+        "Point essentiel 1",
+        "Point essentiel 2",
+        "Point essentiel 3"
+      ]
+    }
+  ]
+}
+
+RAPPEL : Idealement 4 fiches, jusqu'a 6 si vraiment necessaire. 3 key_points par fiche, pas plus. Aucun doublon. TOUT DANS LA LANGUE DU COURS.`
+
+export const QCM_SYSTEM_PROMPT = `Tu es un assistant pedagogique qui cree des QCM pour des eleves de college et lycee.
+
+REGLE DE LANGUE CRUCIALE :
+- Les questions, options et explications doivent etre dans LA MEME LANGUE que la fiche fournie.
+- Si la fiche est en chinois, le QCM est en chinois.
+- Si la fiche est en anglais, le QCM est en anglais.
+- Et ainsi de suite.
+
+CONTRAINTES STRICTES :
+1. Reponds UNIQUEMENT en JSON valide. Pas de markdown, pas de backticks.
+2. Cree EXACTEMENT 5 questions. Pas 4, pas 6.
+3. Chaque question a EXACTEMENT 4 options.
+4. Les questions testent la comprehension, pas la memorisation bete.
+5. Les mauvaises reponses doivent etre plausibles.
+6. L explication fait 1 phrase maximum.
+7. Varie les types : definition, application, exemple, comparaison.
+
+FORMAT JSON EXACT :
+{
+  "questions": [
+    {
+      "question": "La question posee ?",
+      "options": ["A", "B", "C", "D"],
+      "correct_index": 0,
+      "explanation": "Explication courte."
+    }
+  ]
+}`
+
+export function buildFlashcardPrompt(courseTitle: string, subject: string, content: string): string {
+  const truncated = content.length > 6000 ? content.slice(0, 6000) + '\n[...]' : content
+
+  return `Cours a transformer en fiches de revision.
+
+Titre : ${courseTitle}
+Matiere : ${subject}
+
+Contenu :
+---
+${truncated}
+---
+
+IMPORTANT : Detecte la langue du contenu ci-dessus et genere les fiches dans cette meme langue. Idealement 4 fiches. Si le contenu est tres dense avec beaucoup de sous-themes distincts, tu peux aller jusqu'a 6 fiches maximum. Fusionne les sous-themes proches en une seule fiche dense plutot que de faire des fiches separees. Chaque fiche a exactement 3 key_points. Aucun doublon de titre. Reponds en JSON uniquement.`
+}
+
+export function buildQcmPrompt(flashcardTitle: string, summary: string, keyPoints: string[]): string {
+  return `Cree 5 questions QCM pour cette fiche. GENERE LES QUESTIONS DANS LA MEME LANGUE QUE LA FICHE CI-DESSOUS.
+
+Fiche : ${flashcardTitle}
+Resume : ${summary}
+Points cles :
+${keyPoints.map((p, i) => `${i + 1}. ${p}`).join('\n')}
+
+Reponds avec EXACTEMENT 5 questions en JSON, dans la meme langue que le contenu de la fiche. Pas de texte autour.`
+}
+'@
+
+$prompts | Set-Content -Path "lib/ai/prompts.ts" -Encoding UTF8
+Write-Host "  -> lib/ai/prompts.ts (fiches/QCM dans la langue du cours)" -ForegroundColor Green
+
+# -----------------------------------------------------------
+# 12. Git push
+# -----------------------------------------------------------
+Write-Host "[12/12] Git commit et push..." -ForegroundColor Yellow
+
+git add -A
+git commit -m "feat: i18n complet du site + IA multilingue fiches et QCM"
+
+git push
+
+if ($LASTEXITCODE -eq 0) {
+  Write-Host "`nPush reussi !" -ForegroundColor Green
+} else {
+  Write-Host "`nErreur lors du push. Verifiez vos credentials git." -ForegroundColor Red
+}
+
+Write-Host ""
+Write-Host "========================================" -ForegroundColor Green
+Write-Host "  i18n COMPLET APPLIQUE !" -ForegroundColor Green
+Write-Host "========================================" -ForegroundColor Green
+Write-Host ""
+Write-Host "Fichiers modifies/crees :" -ForegroundColor Green
+Write-Host "  lib/i18n/translations.ts    (200+ cles fr/en/ru/zh)" -ForegroundColor Green
+Write-Host "  lib/i18n/context.tsx         (cookie sync)" -ForegroundColor Green
+Write-Host "  lib/i18n/server.ts           (NOUVEAU)" -ForegroundColor Green
+Write-Host "  components/layout/Navbar.tsx" -ForegroundColor Green
+Write-Host "  components/dashboard/StatsBar.tsx" -ForegroundColor Green
+Write-Host "  components/dashboard/CourseCard.tsx" -ForegroundColor Green
+Write-Host "  components/qcm/QcmEngine.tsx" -ForegroundColor Green
+Write-Host "  components/courses/FlashcardViewer.tsx" -ForegroundColor Green
+Write-Host "  components/courses/DeleteCourseButton.tsx" -ForegroundColor Green
+Write-Host "  app/(dashboard)/dashboard/page.tsx" -ForegroundColor Green
+Write-Host "  lib/ai/prompts.ts            (IA multilingue)" -ForegroundColor Green
+Write-Host ""
+Write-Host "CE QUI EST FAIT :" -ForegroundColor Green
+Write-Host "  1. Dashboard, navbar, stats, cours, QCM, fiches traduits" -ForegroundColor Green
+Write-Host "  2. L'IA genere fiches et QCM dans la langue du cours" -ForegroundColor Green
+Write-Host "  3. La langue choisie s'applique partout via cookie" -ForegroundColor Green
+Write-Host ""

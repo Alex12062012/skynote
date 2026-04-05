@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react'
 import { type Locale, translate } from './translations'
@@ -30,6 +30,10 @@ export function I18nProvider({ children }: { children: ReactNode }) {
   function setLocale(l: Locale) {
     setLocaleState(l)
     localStorage.setItem('skynote_locale', l)
+    // Synchroniser le cookie pour les Server Components
+    document.cookie = `skynote_locale=${l};path=/;max-age=${365 * 24 * 60 * 60};samesite=lax`
+    // Recharger pour que les Server Components captent le changement
+    window.location.reload()
   }
 
   const tFn = (key: string) => translate(locale, key)

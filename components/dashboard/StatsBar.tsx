@@ -1,14 +1,18 @@
+﻿'use client'
+
 import { BookOpen, Zap, Flame } from 'lucide-react'
 import { SkyCoin } from '@/components/ui/SkyCoin'
+import { useI18n } from '@/lib/i18n/context'
 
 interface StatsBarProps { coursesCount: number; qcmCount: number; streak: number; coins: number }
 
 export function StatsBar({ coursesCount, qcmCount, streak, coins }: StatsBarProps) {
+  const { t } = useI18n()
   const stats = [
-    { icon: <BookOpen className="h-5 w-5 text-brand dark:text-brand-dark" />, value: coursesCount, label: 'Cours' },
-    { icon: <Zap className="h-5 w-5 text-amber-500" />, value: qcmCount, label: 'QCM faits' },
-    { icon: <Flame className="h-5 w-5 text-orange-500" />, value: streak, label: 'Jours consécutifs' },
-    { icon: <SkyCoin size={20} />, value: coins, label: 'Sky Coins' },
+    { icon: <BookOpen className="h-5 w-5 text-brand dark:text-brand-dark" />, value: coursesCount, label: t('stats.courses') },
+    { icon: <Zap className="h-5 w-5 text-amber-500" />, value: qcmCount, label: t('stats.qcmDone') },
+    { icon: <Flame className="h-5 w-5 text-orange-500" />, value: streak, label: t('stats.streak') },
+    { icon: <SkyCoin size={20} />, value: coins, label: t('stats.skycoins') },
   ]
   return (
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">

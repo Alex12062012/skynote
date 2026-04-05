@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
@@ -9,6 +9,7 @@ import { CoinAnimation, CoinToast } from '@/components/ui/CoinAnimation'
 import { useCoinReward } from '@/components/providers/CoinRewardProvider'
 import { saveQcmAttempt } from '@/lib/supabase/qcm-actions'
 import { cn } from '@/lib/utils'
+import { useI18n } from '@/lib/i18n/context'
 import type { QcmQuestion, Flashcard } from '@/types/database'
 
 interface QcmEngineProps {
@@ -22,6 +23,7 @@ interface UserAnswer { questionIndex: number; chosenIndex: number; correct: bool
 
 export function QcmEngine({ flashcard, questions, courseId }: QcmEngineProps) {
   const router = useRouter()
+  const { t } = useI18n()
   const [isPending, startTransition] = useTransition()
   const [currentQ, setCurrentQ] = useState(0)
   const [answers, setAnswers] = useState<UserAnswer[]>([])
@@ -67,7 +69,7 @@ export function QcmEngine({ flashcard, questions, courseId }: QcmEngineProps) {
           answers: newAnswers.map((a) => a.chosenIndex),
         })
         setCoinsEarned(earned)
-        if (earned > 0) { showReward({ amount: earned, reason: 'Score parfait au QCM !', icon: '⚡' }) }
+        if (earned > 0) { showReward({ amount: earned, reason: 'Score parfait au QCM !', icon: 'âš¡' }) }
         setShowResult(true)
       })
     }
@@ -79,7 +81,7 @@ export function QcmEngine({ flashcard, questions, courseId }: QcmEngineProps) {
     setCoinsEarned(0); setShowCoinAnim(false); setShowToast(false)
   }
 
-  // ── Résultats ──────────────────────────────────────────────
+  // â”€â”€ RÃ©sultats â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   if (showResult) {
     const finalScore = answers.filter((a) => a.correct).length
     const isPerfect = finalScore === total
@@ -93,21 +95,21 @@ export function QcmEngine({ flashcard, questions, courseId }: QcmEngineProps) {
             isPerfect ? 'bg-success-soft dark:bg-emerald-950/30'
               : pct >= 60 ? 'bg-brand-soft dark:bg-brand-dark-soft'
                 : 'bg-red-50 dark:bg-red-950/20')}>
-            <span className="text-5xl">{isPerfect ? '🏆' : pct >= 60 ? '⭐' : '📚'}</span>
+            <span className="text-5xl">{isPerfect ? 'ðŸ†' : pct >= 60 ? 'â­' : 'ðŸ“š'}</span>
           </div>
           <div>
             <h2 className="font-display text-h2 text-text-main dark:text-text-dark-main">
-              {isPerfect ? 'Score parfait !' : pct >= 60 ? 'Bon travail !' : 'Continue à réviser !'}
+              {isPerfect ? 'Score parfait !' : pct >= 60 ? 'Bon travail !' : 'Continue Ã  rÃ©viser !'}
             </h2>
             <p className="mt-1 font-body text-[15px] text-text-secondary dark:text-text-dark-secondary">
-              <strong className="text-text-main dark:text-text-dark-main">{finalScore}/{total}</strong> bonnes réponses · {pct}%
+              <strong className="text-text-main dark:text-text-dark-main">{finalScore}/{total}</strong> bonnes rÃ©ponses Â· {pct}%
             </p>
           </div>
           <div className="flex gap-2">
             {answers.map((a, i) => (
               <div key={i} className={cn('flex h-10 w-10 items-center justify-center rounded-full font-body text-[13px] font-bold',
                 a.correct ? 'bg-success-soft text-success dark:bg-emerald-950/30 dark:text-success-dark' : 'bg-red-50 text-error dark:bg-red-950/20')}>
-                {a.correct ? '✓' : '✗'}
+                {a.correct ? 'âœ“' : 'âœ—'}
               </div>
             ))}
           </div>
@@ -119,7 +121,7 @@ export function QcmEngine({ flashcard, questions, courseId }: QcmEngineProps) {
           )}
           {!isPerfect && (
             <p className="max-w-xs font-body text-[14px] text-text-secondary dark:text-text-dark-secondary">
-              {pct < 60 ? 'Relis les fiches puis réessaie ! 💪' : 'Encore un effort pour le score parfait !'}
+              {pct < 60 ? 'Relis les fiches puis rÃ©essaie ! ðŸ’ª' : 'Encore un effort pour le score parfait !'}
             </p>
           )}
           <div className="flex flex-col gap-3 w-full max-w-xs">
@@ -133,7 +135,7 @@ export function QcmEngine({ flashcard, questions, courseId }: QcmEngineProps) {
     )
   }
 
-  // ── Question en cours — layout fixe avec bouton toujours visible ──
+  // â”€â”€ Question en cours â€” layout fixe avec bouton toujours visible â”€â”€
   return (
     <div className="flex flex-col gap-0 animate-fade-in">
 
@@ -197,7 +199,7 @@ export function QcmEngine({ flashcard, questions, courseId }: QcmEngineProps) {
           })}
         </div>
 
-        {/* Explication — hauteur fixe pour éviter le saut */}
+        {/* Explication â€” hauteur fixe pour Ã©viter le saut */}
         <div className="min-h-[72px]">
           {answerState !== 'unanswered' && (
             <div className={cn('rounded-input px-4 py-3 animate-slide-in',
@@ -205,7 +207,7 @@ export function QcmEngine({ flashcard, questions, courseId }: QcmEngineProps) {
                 ? 'bg-success-soft border border-success/20 dark:bg-emerald-950/20 dark:border-emerald-800/30'
                 : 'bg-red-50 border border-error/20 dark:bg-red-950/20 dark:border-red-800/30')}>
               <p className="font-body text-[12px] font-semibold mb-0.5 dark:text-text-dark-main">
-                {answerState === 'correct' ? '✓ Bonne réponse !' : '✗ Pas tout à fait...'}
+                {answerState === 'correct' ? 'âœ“ Bonne rÃ©ponse !' : 'âœ— Pas tout Ã  fait...'}
               </p>
               <p className="font-body text-[13px] text-text-secondary dark:text-text-dark-secondary">
                 {question.explanation}
@@ -215,7 +217,7 @@ export function QcmEngine({ flashcard, questions, courseId }: QcmEngineProps) {
         </div>
       </div>
 
-      {/* Bouton Suivant — TOUJOURS en bas, visible sans scroller */}
+      {/* Bouton Suivant â€” TOUJOURS en bas, visible sans scroller */}
       <div className="sticky bottom-4 mt-2">
         <Button
           onClick={handleNext}
@@ -228,11 +230,12 @@ export function QcmEngine({ flashcard, questions, courseId }: QcmEngineProps) {
           )}
         >
           {currentQ < total - 1
-            ? 'Question suivante →'
-            : <><Zap className="h-5 w-5" />Voir mes résultats</>
+            ? 'Question suivante â†’'
+            : <><Zap className="h-5 w-5" />Voir mes rÃ©sultats</>
           }
         </Button>
       </div>
     </div>
   )
 }
+
