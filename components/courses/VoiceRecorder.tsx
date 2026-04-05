@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 import { useState, useRef } from 'react'
 import { Mic, Square, X } from 'lucide-react'
 import { cn } from '@/lib/utils'

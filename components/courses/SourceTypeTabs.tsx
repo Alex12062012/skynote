@@ -1,4 +1,4 @@
-﻿import { cn } from '@/lib/utils'
+import { cn } from '@/lib/utils'
 
 const ALL_TABS = [
   { id: 'text',  label: 'Texte',  icon: '📝', premiumOnly: false },

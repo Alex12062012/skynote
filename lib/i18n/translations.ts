@@ -1,4 +1,4 @@
-﻿export type Locale = 'fr' | 'en' | 'ru' | 'zh'
+export type Locale = 'fr' | 'en' | 'ru' | 'zh'
 
 export const LOCALES: { code: Locale; label: string; flag: string }[] = [
   { code: 'fr', label: 'Francais', flag: '\uD83C\uDDEB\uD83C\uDDF7' },

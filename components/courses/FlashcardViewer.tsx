@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { useState, useTransition } from 'react'
 import { ChevronLeft, ChevronRight, CheckCircle, Circle } from 'lucide-react'

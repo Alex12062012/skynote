@@ -1,4 +1,4 @@
-﻿import { cookies } from 'next/headers'
+import { cookies } from 'next/headers'
 import { translate, type Locale } from './translations'
 
 export async function getServerLocale(): Promise<Locale> {

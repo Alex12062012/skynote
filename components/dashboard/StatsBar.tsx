@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { BookOpen, Zap, Flame } from 'lucide-react'
 import { SkyCoin } from '@/components/ui/SkyCoin'

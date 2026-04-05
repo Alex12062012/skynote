@@ -1,4 +1,4 @@
-﻿/**
+/**
  * SKYNOTE - Prompts IA
  * Tous les prompts utilises pour la generation de fiches et QCM
  * Les fiches et QCM sont generes dans la langue du contenu du cours
