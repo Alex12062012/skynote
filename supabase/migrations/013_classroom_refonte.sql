@@ -1,0 +1,1 @@
+$root = "C:\Users\alexa\Downloads\skynote-complet\skynote"; cd $root; $u = New-Object System.Text.UTF8Encoding $false; $sql = (Get-Clipboard); [IO.File]::WriteAllText("$root\supabase\migrations\013_classroom_refonte.sql", $sql, $u); git add -A; git commit -m "feat: migration 013 refonte classe virtuelle"; git push; Write-Host "Done" -ForegroundColor Green
