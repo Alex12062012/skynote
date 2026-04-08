@@ -15,7 +15,7 @@ type SourceType = 'text' | 'photo' | 'list' | 'vocal'
 
 const PHOTO_WARNING_KEY = 'skynote_hide_photo_warning'
 
-export function CreateCourseForm() {
+export function CreateCourseForm({ folderId, classroomId }: { folderId?: string; classroomId?: string } = {}) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [title, setTitle] = useState('')
@@ -97,6 +97,8 @@ export function CreateCourseForm() {
       formData.set('title', title)
       formData.set('subject', subject)
       formData.set('sourceType', sourceType)
+      if (folderId) formData.set('folderId', folderId)
+      if (classroomId) formData.set('classroomId', classroomId)
 
       if (sourceType === 'text') formData.set('content', textContent)
       else if (sourceType === 'vocal') formData.set('content', voiceTranscript)

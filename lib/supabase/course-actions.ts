@@ -12,6 +12,8 @@ export async function createCourse(formData: FormData): Promise<{ courseId: stri
   const subject = formData.get('subject') as string
   const sourceType = formData.get('sourceType') as 'text' | 'pdf' | 'photo' | 'vocal'
   const content = formData.get('content') as string | null
+  const folderId = formData.get('folderId') as string | null
+  const classroomId = formData.get('classroomId') as string | null
 
   if (!title?.trim()) return { courseId: null, error: 'Titre requis' }
   if (!subject?.trim()) return { courseId: null, error: 'Matière requise' }
@@ -34,6 +36,7 @@ export async function createCourse(formData: FormData): Promise<{ courseId: stri
     color: subjectColors[subject] || '#2563EB', source_type: sourceType,
     source_content: content?.trim() || null, file_url: null,
     status: 'processing', progress: 0,
+    folder_id: folderId || null, classroom_id: classroomId || null,
   }).select('id').single()
 
   if (error || !course) return { courseId: null, error: 'Erreur création cours' }

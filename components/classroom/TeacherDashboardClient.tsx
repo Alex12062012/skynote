@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { BookOpen, Key, CreditCard, Plus, Copy, Check, Users, ArrowLeft, ChevronRight, FolderOpen } from 'lucide-react'
 import { CourseFolders } from './CourseFolders'
+import { CreateFolderModal } from './CreateFolderModal'
 import { CourseRanking } from './CourseRanking'
 import { PaymentTab } from './PaymentTab'
 import { Button } from '@/components/ui/Button'
@@ -33,6 +34,7 @@ export function TeacherDashboardClient({ classroom, folders, students, teachers,
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null)
   const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null)
   const [copied, setCopied] = useState<string | null>(null)
+  const [showCreateFolder, setShowCreateFolder] = useState(false)
 
   function copyToClipboard(text: string) {
     try { navigator.clipboard.writeText(text) } catch {
@@ -104,7 +106,7 @@ export function TeacherDashboardClient({ classroom, folders, students, teachers,
             id: f.id, name: f.name, color: f.color, is_default: f.is_default, courseCount: f.courseCount,
           }))}
           onSelectFolder={(id) => setSelectedFolderId(id)}
-          onCreateFolder={() => {}}
+          onCreateFolder={() => setShowCreateFolder(true)}
           isTeacher={true}
         />
       )}
@@ -190,6 +192,14 @@ export function TeacherDashboardClient({ classroom, folders, students, teachers,
       )}
 
       {/* ============ ONGLET CODE DE CLASSE ============ */}
+      {showCreateFolder && (
+        <CreateFolderModal
+          classroomId={classroom.id}
+          onClose={() => setShowCreateFolder(false)}
+          onCreated={() => window.location.reload()}
+        />
+      )}
+
       {tab === 'classCode' && (
         <div className="flex flex-col gap-5">
           <div className="rounded-card bg-brand-soft/30 border border-brand/10 p-5 dark:bg-brand-dark-soft/30 dark:border-brand-dark/10">
