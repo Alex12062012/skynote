@@ -108,6 +108,77 @@ export default async function DashboardPage() {
       .eq('classroom_id', cls.id)
       .single()
 
+    // Recuperer tous les cours de la classe
+    const { data: allCourses } = await supabase
+      .from('courses')
+      .select('*')
+      .eq('classroom_id', cls.id)
+      .order('created_at', { ascending: false })
+
+    // Compter les flashcards par cours (= nombre de QCM)
+    const courseIds = (allCourses || []).map((c: any) => c.id)
+    let flashcardsByCourse: Record<string, number> = {}
+    if (courseIds.length > 0) {
+      const { data: flashcards } = await supabase
+        .from('flashcards')
+        .select('id, course_id')
+        .in('course_id', courseIds)
+      for (const f of (flashcards || [])) {
+        flashcardsByCourse[f.course_id] = (flashcardsByCourse[f.course_id] || 0) + 1
+      }
+    }
+
+    // Recuperer les profils eleves lies
+    const { data: studentProfiles } = await supabase
+      .from('profiles')
+      .select('id, full_name, classroom_student_id')
+      .eq('classroom_id', cls.id)
+      .eq('role', 'student')
+
+    // Recuperer toutes les tentatives QCM des eleves
+    const studentProfileIds = (studentProfiles || []).map((p: any) => p.id)
+    let attemptsByStudent: Record<string, any[]> = {}
+    if (studentProfileIds.length > 0) {
+      const { data: attempts } = await supabase
+        .from('qcm_attempts')
+        .select('user_id, flashcard_id, score, total, perfect, created_at')
+        .in('user_id', studentProfileIds)
+      for (const a of (attempts || [])) {
+        if (!attemptsByStudent[a.user_id]) attemptsByStudent[a.user_id] = []
+        attemptsByStudent[a.user_id].push(a)
+      }
+    }
+
+    // Mapper student_id (classroom_students) vers profile_id
+    const studentDataWithProfileId = (classStudents || []).map((s: any) => {
+      const sp = (studentProfiles || []).find(
+        (p: any) => p.classroom_student_id === s.id || p.full_name === s.first_name + ' ' + s.last_name
+      )
+      return { ...s, profile_id: sp?.id || null }
+    })
+
+    // Ajouter course_id aux attempts via flashcard lookup
+    const { data: allFlashcards } = await supabase
+      .from('flashcards')
+      .select('id, course_id')
+      .in('course_id', courseIds)
+
+    const flashcardToCourse: Record<string, string> = {}
+    for (const f of (allFlashcards || [])) {
+      flashcardToCourse[f.id] = f.course_id
+    }
+
+    // Enrichir attempts avec course_id
+    const enrichedAttempts: Record<string, any[]> = {}
+    for (const s of studentDataWithProfileId) {
+      if (!s.profile_id) continue
+      const attempts = attemptsByStudent[s.profile_id] || []
+      enrichedAttempts[s.id] = attempts.map((a: any) => ({
+        ...a,
+        course_id: flashcardToCourse[a.flashcard_id] || null,
+      }))
+    }
+
     return (
       <div className="flex flex-col gap-6 animate-fade-in">
         <div>
@@ -125,6 +196,9 @@ export default async function DashboardPage() {
           teachers={classTeachers || []}
           settings={settings}
           siteUrl={process.env.NEXT_PUBLIC_SITE_URL || 'https://skynote.vercel.app'}
+          courses={allCourses || []}
+          flashcardsByCourse={flashcardsByCourse}
+          attemptsByStudent={enrichedAttempts}
         />
       </div>
     )
