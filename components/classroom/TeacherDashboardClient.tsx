@@ -251,24 +251,30 @@ export function TeacherDashboardClient({ classroom, folders, students, teachers,
             </div>
           </div>
 
-          {teachers.length > 0 && (
-            <div className="rounded-card bg-sky-surface p-5 shadow-card dark:bg-night-surface">
-              <h3 className="font-display text-[15px] font-semibold text-text-main dark:text-text-dark-main mb-3">Professeurs ({teachers.length})</h3>
-              <div className="space-y-2">
-                {teachers.map((t: any) => (
-                  <div key={t.id} className="flex items-center justify-between rounded-input bg-sky-bg px-4 py-2.5 dark:bg-night-bg">
-                    <span className="font-body text-[14px] text-text-main dark:text-text-dark-main">
-                      {(t as any).profiles?.full_name || (t as any).profiles?.email || 'Professeur'}
-                    </span>
-                    <span className={cn('font-body text-[11px] px-2 py-0.5 rounded-full',
-                      t.role === 'owner' ? 'bg-brand/10 text-brand dark:bg-brand-dark/10 dark:text-brand-dark' : 'bg-sky-cloud text-text-tertiary dark:bg-night-border dark:text-text-dark-tertiary')}>
-                      {t.role === 'owner' ? 'Createur' : 'Membre'}
-                    </span>
-                  </div>
-                ))}
-              </div>
+          {/* Professeurs */}
+          <div className="rounded-card bg-sky-surface p-5 shadow-card dark:bg-night-surface">
+            <h3 className="font-display text-[15px] font-semibold text-text-main dark:text-text-dark-main mb-3">Professeurs ({teachers.length})</h3>
+            <div className="space-y-2 mb-4">
+              {teachers.map((t: any) => (
+                <div key={t.id} className="flex items-center justify-between rounded-input bg-sky-bg px-4 py-2.5 dark:bg-night-bg">
+                  <span className="font-body text-[14px] text-text-main dark:text-text-dark-main">
+                    {(t as any).profiles?.full_name || (t as any).profiles?.email || 'Professeur'}
+                  </span>
+                  <span className={cn('font-body text-[11px] px-2 py-0.5 rounded-full',
+                    t.role === 'owner' ? 'bg-brand/10 text-brand dark:bg-brand-dark/10 dark:text-brand-dark' : 'bg-sky-cloud text-text-tertiary dark:bg-night-border dark:text-text-dark-tertiary')}>
+                    {t.role === 'owner' ? 'Createur' : 'Membre'}
+                  </span>
+                </div>
+              ))}
             </div>
-          )}
+            <AddTeacherForm classroomId={classroom.id} />
+          </div>
+
+          {/* Parametres */}
+          <div className="rounded-card bg-sky-surface p-5 shadow-card dark:bg-night-surface">
+            <h3 className="font-display text-[15px] font-semibold text-text-main dark:text-text-dark-main mb-4">Parametres</h3>
+            <SettingsToggles classroomId={classroom.id} initialSettings={settings} />
+          </div>
         </div>
       )}
 
