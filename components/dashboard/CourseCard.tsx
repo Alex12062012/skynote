@@ -10,11 +10,12 @@ import { useI18n } from '@/lib/i18n/context'
 interface CourseCardProps {
   id: string; title: string; subject: string; color: string
   status: string; progress: number; created_at: string; source_type: string
+  studentProgress?: { done: number; total: number; perfect: boolean }
 }
 
 const SOURCE_ICONS: Record<string, string> = { text: '\uD83D\uDCDD', pdf: '\uD83D\uDCC4', photo: '\uD83D\uDCF7', vocal: '\uD83C\uDFA4' }
 
-export function CourseCard({ id, title, subject, color, status, progress, created_at, source_type }: CourseCardProps) {
+export function CourseCard({ id, title, subject, color, status, progress, created_at, source_type, studentProgress }: CourseCardProps) {
   const { t } = useI18n()
   const isReady = status === 'ready'
   const isError = status === 'error'
