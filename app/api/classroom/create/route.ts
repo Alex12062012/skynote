@@ -89,6 +89,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Erreur lors de l\'ajout des eleves' }, { status: 500 })
     }
 
+    // Ajouter le créateur dans classroom_teachers avec le rôle 'owner'
+    // Indispensable pour qu'il puisse créer des dossiers
+    await supabase.from('classroom_teachers').insert({
+      classroom_id: classroom.id,
+      teacher_id: user.id,
+      role: 'owner',
+    })
+
     return NextResponse.json({
       classCode: classroom.class_code,
       classroomId: classroom.id,

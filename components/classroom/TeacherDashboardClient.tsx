@@ -1,11 +1,13 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { BookOpen, Key, CreditCard, Plus, Copy, Check, Users, ArrowLeft, ChevronRight, FolderOpen } from 'lucide-react'
+import { useState } from 'react'
+import { BookOpen, Plus, Copy, Check, Users, ArrowLeft, ChevronRight, FolderOpen } from 'lucide-react'
 import { CourseFolders } from './CourseFolders'
 import { CreateFolderModal } from './CreateFolderModal'
 import { CourseRanking } from './CourseRanking'
 import { PaymentTab } from './PaymentTab'
+import { AddTeacherForm } from './AddTeacherForm'
+import { SettingsToggles } from './SettingsToggles'
 import { Button } from '@/components/ui/Button'
 import { cn } from '@/lib/utils'
 
@@ -19,18 +21,10 @@ interface Props {
   courses: any[]
   flashcardsByCourse: Record<string, number>
   attemptsByStudent: Record<string, any[]>
+  activeTab?: string
 }
 
-const TABS = [
-  { id: 'courses' as const, label: 'Cours', icon: BookOpen },
-  { id: 'classCode' as const, label: 'Code de classe', icon: Key },
-  { id: 'payment' as const, label: 'Paiement', icon: CreditCard },
-]
-
-type TabId = typeof TABS[number]['id']
-
-export function TeacherDashboardClient({ classroom, folders, students, teachers, settings, siteUrl, courses, flashcardsByCourse, attemptsByStudent }: Props) {
-  const [tab, setTab] = useState<TabId>('courses')
+export function TeacherDashboardClient({ classroom, folders, students, teachers, settings, siteUrl, courses, flashcardsByCourse, attemptsByStudent, activeTab = 'courses' }: Props) {
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null)
   const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null)
   const [copied, setCopied] = useState<string | null>(null)
@@ -83,24 +77,9 @@ export function TeacherDashboardClient({ classroom, folders, students, teachers,
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Onglets */}
-      <div className="flex gap-1 rounded-card bg-sky-surface p-1 shadow-card dark:bg-night-surface dark:shadow-card-dark">
-        {TABS.map((t) => (
-          <button key={t.id} onClick={() => { setTab(t.id); setSelectedFolderId(null); setSelectedCourseId(null) }}
-            className={cn(
-              'flex flex-1 items-center justify-center gap-2 rounded-input px-4 py-2.5 font-body text-[14px] font-medium transition-all',
-              tab === t.id
-                ? 'bg-brand text-white shadow-sm dark:bg-brand-dark'
-                : 'text-text-secondary hover:bg-sky-cloud dark:text-text-dark-secondary dark:hover:bg-night-border'
-            )}>
-            <t.icon className="h-4 w-4" />
-            <span className="hidden sm:inline">{t.label}</span>
-          </button>
-        ))}
-      </div>
 
       {/* ============ ONGLET COURS ============ */}
-      {tab === 'courses' && !selectedFolderId && !selectedCourseId && (
+      {activeTab === 'courses' && !selectedFolderId && !selectedCourseId && (
         <CourseFolders
           folders={folders.map((f: any) => ({
             id: f.id, name: f.name, color: f.color, is_default: f.is_default, courseCount: f.courseCount,
@@ -112,7 +91,7 @@ export function TeacherDashboardClient({ classroom, folders, students, teachers,
       )}
 
       {/* VUE DOSSIER : liste des cours */}
-      {tab === 'courses' && selectedFolderId && !selectedCourseId && (
+      {activeTab === 'courses' && selectedFolderId && !selectedCourseId && (
         <div className="flex flex-col gap-4">
           <button onClick={() => setSelectedFolderId(null)}
             className="flex items-center gap-2 font-body text-[14px] text-text-secondary hover:text-text-main dark:text-text-dark-secondary dark:hover:text-text-dark-main transition-colors w-fit">
@@ -165,7 +144,7 @@ export function TeacherDashboardClient({ classroom, folders, students, teachers,
       )}
 
       {/* VUE COURS : classement des eleves */}
-      {tab === 'courses' && selectedCourseId && (
+      {activeTab === 'courses' && selectedCourseId && (
         <div className="flex flex-col gap-4">
           <button onClick={() => setSelectedCourseId(null)}
             className="flex items-center gap-2 font-body text-[14px] text-text-secondary hover:text-text-main dark:text-text-dark-secondary dark:hover:text-text-dark-main transition-colors w-fit">
@@ -200,7 +179,7 @@ export function TeacherDashboardClient({ classroom, folders, students, teachers,
         />
       )}
 
-      {tab === 'classCode' && (
+      {activeTab === 'classCode' && (
         <div className="flex flex-col gap-5">
           <div className="rounded-card bg-brand-soft/30 border border-brand/10 p-5 dark:bg-brand-dark-soft/30 dark:border-brand-dark/10">
             <h3 className="font-display text-[15px] font-semibold text-brand dark:text-brand-dark mb-2">
@@ -279,7 +258,7 @@ export function TeacherDashboardClient({ classroom, folders, students, teachers,
       )}
 
       {/* ============ ONGLET PAIEMENT ============ */}
-      {tab === 'payment' && <PaymentTab />}
+      {activeTab === 'payment' && <PaymentTab />}
     </div>
   )
 }

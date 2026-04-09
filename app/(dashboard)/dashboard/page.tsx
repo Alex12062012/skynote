@@ -15,7 +15,9 @@ import type { Metadata } from 'next'
 
 export const metadata: Metadata = { title: 'Tableau de bord' }
 
-export default async function DashboardPage() {
+export default async function DashboardPage({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
+  const { tab } = await searchParams
+  const activeTab = tab === 'classCode' || tab === 'payment' ? tab : 'courses'
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
@@ -199,6 +201,7 @@ export default async function DashboardPage() {
           courses={allCourses || []}
           flashcardsByCourse={flashcardsByCourse}
           attemptsByStudent={enrichedAttempts}
+          activeTab={activeTab}
         />
       </div>
     )

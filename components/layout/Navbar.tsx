@@ -1,9 +1,9 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
-import { useState } from 'react'
-import { Target, LayoutDashboard, Users, Menu, X, Tag, School } from 'lucide-react'
+import { usePathname, useSearchParams } from 'next/navigation'
+import { useState, Suspense } from 'react'
+import { Target, LayoutDashboard, Users, Menu, X, Tag, BookOpen, Key, CreditCard } from 'lucide-react'
 import { SkyCoin } from '@/components/ui/SkyCoin'
 import { CoinCounter } from '@/components/ui/CoinCounter'
 import { ThemeToggle } from '@/components/ui/ThemeToggle'
@@ -12,33 +12,61 @@ import { getInitials } from '@/lib/utils'
 import { useI18n } from '@/lib/i18n/context'
 import type { Profile } from '@/types/database'
 
-function getNavLinks(role: string, t: (k: string) => string) {
-  const links = [
+interface NavLink {
+  href: string
+  label: string
+  icon: React.ElementType
+  tab?: string // paramètre tab dans l'URL (pour les profs)
+}
+
+function getNavLinks(role: string, t: (k: string) => string): NavLink[] {
+  if (role === 'teacher') {
+    return [
+      { href: '/dashboard', label: 'Cours', icon: BookOpen },
+      { href: '/dashboard?tab=classCode', label: 'Code de classe', icon: Key, tab: 'classCode' },
+      { href: '/dashboard?tab=payment', label: 'Paiement', icon: CreditCard, tab: 'payment' },
+    ]
+  }
+
+  const links: NavLink[] = [
     { href: '/dashboard', label: t('nav.home'), icon: LayoutDashboard },
     { href: '/objectives', label: t('nav.objectives'), icon: Target },
   ]
-  if (role === 'teacher') {
-    links.push({ href: '/dashboard', label: t('nav.classCode'), icon: School })
-  } else if (role !== 'student') {
+  if (role !== 'student') {
     links.push({ href: '/pricing', label: t('nav.pricing'), icon: Tag })
   }
   return links
 }
 
-export function Navbar({ profile }: { profile: Profile | null }) {
+function NavbarInner({ profile }: { profile: Profile | null }) {
   const { t } = useI18n()
+  const role = (profile as any)?.role ?? 'user'
   const isFamille = profile?.plan === 'famille'
-  const role = profile?.role ?? 'user'
   const navLinks = getNavLinks(role, t)
   const pathname = usePathname()
+  const searchParams = useSearchParams()
+  const currentTab = searchParams.get('tab')
   const [open, setOpen] = useState(false)
   const [coinSpinning, setCoinSpinning] = useState(false)
   const isDashboard = pathname === '/dashboard'
+  const isTeacher = role === 'teacher'
 
   function handleLogoClick() {
     if (!isDashboard || coinSpinning) return
     setCoinSpinning(true)
     setTimeout(() => setCoinSpinning(false), 650)
+  }
+
+  function isActive(link: NavLink): boolean {
+    if (isTeacher) {
+      if (link.tab) {
+        return pathname === '/dashboard' && currentTab === link.tab
+      }
+      // Lien "Cours" : actif quand on est sur /dashboard sans tab
+      return pathname === '/dashboard' && !currentTab
+    }
+    if (link.href === '/dashboard') return pathname === '/dashboard'
+    return pathname.startsWith(link.href)
   }
 
   return (
@@ -60,12 +88,13 @@ export function Navbar({ profile }: { profile: Profile | null }) {
             </span>
           </Link>
         </div>
+
         <nav className="hidden gap-1 md:flex">
           {navLinks.map((l) => (
             <Link key={l.href + l.label} href={l.href}
               className={cn(
                 'flex items-center gap-2 rounded-input px-3 py-2 font-body text-[14px] transition-colors',
-                pathname.startsWith(l.href) && l.href !== '/dashboard' || pathname === l.href
+                isActive(l)
                   ? 'bg-brand-soft text-brand dark:bg-brand-dark-soft dark:text-brand-dark font-medium'
                   : 'text-text-secondary hover:bg-sky-cloud hover:text-text-main dark:text-text-dark-secondary dark:hover:bg-night-border dark:hover:text-text-dark-main'
               )}>
@@ -84,8 +113,10 @@ export function Navbar({ profile }: { profile: Profile | null }) {
             </Link>
           )}
         </nav>
+
         <div className="flex items-center gap-2">
-          {profile && <CoinCounter initialCoins={profile.sky_coins} userId={profile.id} />}
+          {/* Le CoinCounter est masqué pour les professeurs */}
+          {profile && !isTeacher && <CoinCounter initialCoins={profile.sky_coins} userId={profile.id} />}
           <ThemeToggle />
           {profile && (
             <Link href="/profile"
@@ -104,13 +135,14 @@ export function Navbar({ profile }: { profile: Profile | null }) {
           </button>
         </div>
       </div>
+
       {open && (
         <div className="border-t border-sky-border px-4 py-3 dark:border-night-border md:hidden animate-slide-in">
           {navLinks.map((l) => (
             <Link key={l.href + l.label} href={l.href} onClick={() => setOpen(false)}
               className={cn(
                 'flex items-center gap-3 rounded-input px-3 py-2.5 font-body text-[14px] transition-colors',
-                pathname.startsWith(l.href)
+                isActive(l)
                   ? 'bg-brand-soft text-brand dark:bg-brand-dark-soft dark:text-brand-dark'
                   : 'text-text-main hover:bg-sky-cloud dark:text-text-dark-main dark:hover:bg-night-border'
               )}>
@@ -130,5 +162,14 @@ export function Navbar({ profile }: { profile: Profile | null }) {
         </div>
       )}
     </header>
+  )
+}
+
+// Suspense requis par useSearchParams()
+export function Navbar({ profile }: { profile: Profile | null }) {
+  return (
+    <Suspense fallback={null}>
+      <NavbarInner profile={profile} />
+    </Suspense>
   )
 }

@@ -12,15 +12,23 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Nom requis' }, { status: 400 })
     }
 
-    // Verifier que le user est prof de cette classe
-    const { data: membership } = await supabase
-      .from('classroom_teachers')
-      .select('id')
-      .eq('classroom_id', classroomId)
-      .eq('teacher_id', user.id)
-      .single()
+    // Verifier que le user est prof de cette classe (membre OU créateur)
+    const [{ data: membership }, { data: ownership }] = await Promise.all([
+      supabase
+        .from('classroom_teachers')
+        .select('id')
+        .eq('classroom_id', classroomId)
+        .eq('teacher_id', user.id)
+        .maybeSingle(),
+      supabase
+        .from('classrooms')
+        .select('id')
+        .eq('id', classroomId)
+        .eq('teacher_id', user.id)
+        .maybeSingle(),
+    ])
 
-    if (!membership) {
+    if (!membership && !ownership) {
       return NextResponse.json({ error: 'Non autorise' }, { status: 403 })
     }
 
