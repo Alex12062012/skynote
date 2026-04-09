@@ -22,9 +22,10 @@ interface Props {
   flashcardsByCourse: Record<string, number>
   attemptsByStudent: Record<string, any[]>
   activeTab?: string
+  teacherUserNumber?: number | null
 }
 
-export function TeacherDashboardClient({ classroom, folders, students, teachers, settings, siteUrl, courses, flashcardsByCourse, attemptsByStudent, activeTab = 'courses' }: Props) {
+export function TeacherDashboardClient({ classroom, folders, students, teachers, settings, siteUrl, courses, flashcardsByCourse, attemptsByStudent, activeTab = 'courses', teacherUserNumber }: Props) {
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null)
   const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null)
   const [copied, setCopied] = useState<string | null>(null)
@@ -39,6 +40,11 @@ export function TeacherDashboardClient({ classroom, folders, students, teachers,
   }
 
   const loginUrl = `${siteUrl}/classroom-login`
+  const teacherLoginUrl = `${siteUrl}/teacher-login`
+  // Code personnel du professeur : PROF + user_number zero-padded
+  const teacherCode = teacherUserNumber != null
+    ? `PROF${String(teacherUserNumber).padStart(4, '0')}`
+    : null
   const selectedFolder = folders.find((f: any) => f.id === selectedFolderId)
   const folderCourses = courses.filter((c: any) => c.folder_id === selectedFolderId)
   const selectedCourse = courses.find((c: any) => c.id === selectedCourseId)
@@ -181,6 +187,34 @@ export function TeacherDashboardClient({ classroom, folders, students, teachers,
 
       {activeTab === 'classCode' && (
         <div className="flex flex-col gap-5">
+
+          {/* Code personnel du professeur */}
+          {teacherCode && (
+            <div className="rounded-card bg-sky-surface border border-sky-border p-5 shadow-card dark:bg-night-surface dark:border-night-border">
+              <h3 className="font-display text-[15px] font-semibold text-text-main dark:text-text-dark-main mb-1">
+                Votre code de connexion rapide
+              </h3>
+              <p className="font-body text-[13px] text-text-secondary dark:text-text-dark-secondary mb-3">
+                Utilisez ce code sur <span className="font-medium">{teacherLoginUrl}</span> pour vous connecter sans email
+              </p>
+              <div className="flex items-center gap-3">
+                <div className="flex-1 rounded-input bg-sky-bg border border-sky-border px-4 py-2.5 dark:bg-night-bg dark:border-night-border">
+                  <code className="font-mono text-[20px] font-bold tracking-widest text-brand dark:text-brand-dark">
+                    {teacherCode}
+                  </code>
+                </div>
+                <button onClick={() => copyToClipboard(teacherCode)}
+                  className="flex items-center gap-2 rounded-input bg-brand/10 px-3 py-2.5 font-body text-[13px] font-medium text-brand hover:bg-brand/20 dark:bg-brand-dark/10 dark:text-brand-dark dark:hover:bg-brand-dark/20 transition-colors flex-shrink-0">
+                  {copied === teacherCode ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                  {copied === teacherCode ? 'Copie !' : 'Copier'}
+                </button>
+              </div>
+              <p className="mt-2 font-body text-[11px] text-text-tertiary dark:text-text-dark-tertiary">
+                Gardez ce code secret — il donne acces a votre compte
+              </p>
+            </div>
+          )}
+
           <div className="rounded-card bg-brand-soft/30 border border-brand/10 p-5 dark:bg-brand-dark-soft/30 dark:border-brand-dark/10">
             <h3 className="font-display text-[15px] font-semibold text-brand dark:text-brand-dark mb-2">
               Comment les eleves accedent a la classe
@@ -193,10 +227,10 @@ export function TeacherDashboardClient({ classroom, folders, students, teachers,
             <div className="mt-3 rounded-input bg-brand/5 border border-brand/10 px-3 py-2 dark:bg-brand-dark/5 dark:border-brand-dark/10">
               <p className="font-body text-[12px] text-brand dark:text-brand-dark font-medium mb-0.5">Format du code de connexion</p>
               <p className="font-body text-[12px] text-text-secondary dark:text-text-dark-secondary">
-                1re lettre du prenom + nom de famille + code de classe
+                1re lettre du prenom + nom de famille + suffixe unique
               </p>
               <p className="font-mono text-[12px] text-brand dark:text-brand-dark mt-1">
-                Ex : Oscar Plouvier &rarr; <strong>oplouvier{classroom.class_code}</strong>
+                Ex : Oscar Plouvier &rarr; <strong>oplouvier-k9m2z</strong>
               </p>
             </div>
             <button onClick={() => copyToClipboard(loginUrl)}

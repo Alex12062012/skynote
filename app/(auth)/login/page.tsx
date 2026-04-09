@@ -42,6 +42,12 @@ export default function LoginPage({ searchParams }: { searchParams: { error?: st
               Entrer avec mon code
             </Link>
           </p>
+          <p className="mt-2 text-center font-body text-[13px] text-text-secondary dark:text-text-dark-secondary">
+            Professeur ?{' '}
+            <Link href="/teacher-login" className="font-medium text-brand hover:underline dark:text-brand-dark">
+              Connexion rapide avec mon code
+            </Link>
+          </p>
         </div>
       </div>
     </div>

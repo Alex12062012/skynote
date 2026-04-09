@@ -259,6 +259,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
           flashcardsByCourse={flashcardsByCourse}
           attemptsByStudent={enrichedAttempts}
           activeTab={activeTab}
+          teacherUserNumber={(profile as any)?.user_number ?? null}
         />
       </div>
     )

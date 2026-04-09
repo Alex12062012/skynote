@@ -21,11 +21,14 @@ function generateClassCode(): string {
   return Math.floor(100000 + Math.random() * 900000).toString()
 }
 
-function generateLoginCode(firstName: string, lastName: string, classCode: string): string {
+function generateLoginCode(firstName: string, lastName: string): string {
   const clean = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z]/g, '')
   const first = clean(firstName).charAt(0)
   const last = clean(lastName)
-  return `${first}${last}${classCode}`
+  const chars = 'abcdefghijkmnpqrstuvwxyz23456789' // sans 0/o/l/1 pour eviter confusion
+  let suffix = ''
+  for (let i = 0; i < 5; i++) suffix += chars[Math.floor(Math.random() * chars.length)]
+  return `${first}${last}-${suffix}`
 }
 
 export async function POST(req: NextRequest) {
@@ -80,7 +83,7 @@ export async function POST(req: NextRequest) {
       classroom_id: classroom.id,
       first_name: s.firstName.trim(),
       last_name: s.lastName.trim(),
-      login_code: generateLoginCode(s.firstName, s.lastName, classCode),
+      login_code: generateLoginCode(s.firstName, s.lastName),
     }))
 
     // Deduplication robuste des login_code
