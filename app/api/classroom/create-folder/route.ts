@@ -32,6 +32,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Non autorise' }, { status: 403 })
     }
 
+    // Si le créateur n'est pas encore dans classroom_teachers, l'y ajouter
+    // (cas des classes créées avant le correctif)
+    if (!membership && ownership) {
+      await supabase.from('classroom_teachers').upsert({
+        classroom_id: classroomId,
+        teacher_id: user.id,
+        role: 'owner',
+      }, { onConflict: 'classroom_id,teacher_id' })
+    }
+
     // Trouver le prochain order_index
     const { data: existing } = await supabase
       .from('course_folders')

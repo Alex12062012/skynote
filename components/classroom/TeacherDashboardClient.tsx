@@ -186,9 +186,18 @@ export function TeacherDashboardClient({ classroom, folders, students, teachers,
               Comment les eleves accedent a la classe
             </h3>
             <div className="space-y-2 font-body text-[13px] text-text-secondary dark:text-text-dark-secondary">
-              <p>1. L'eleve va sur <span className="font-medium text-brand dark:text-brand-dark">{loginUrl}</span></p>
-              <p>2. Il tape son code personnel (voir colonne "Code" ci-dessous)</p>
+              <p>1. L&apos;eleve va sur <span className="font-medium text-brand dark:text-brand-dark">{loginUrl}</span></p>
+              <p>2. Il tape son code personnel (voir colonne &quot;Code&quot; ci-dessous)</p>
               <p>3. Il accede directement aux cours et QCM de la classe</p>
+            </div>
+            <div className="mt-3 rounded-input bg-brand/5 border border-brand/10 px-3 py-2 dark:bg-brand-dark/5 dark:border-brand-dark/10">
+              <p className="font-body text-[12px] text-brand dark:text-brand-dark font-medium mb-0.5">Format du code de connexion</p>
+              <p className="font-body text-[12px] text-text-secondary dark:text-text-dark-secondary">
+                1re lettre du prenom + nom de famille + code de classe
+              </p>
+              <p className="font-mono text-[12px] text-brand dark:text-brand-dark mt-1">
+                Ex : Oscar Plouvier &rarr; <strong>oplouvier{classroom.class_code}</strong>
+              </p>
             </div>
             <button onClick={() => copyToClipboard(loginUrl)}
               className="mt-3 flex items-center gap-2 rounded-input bg-brand/10 px-3 py-2 font-body text-[13px] font-medium text-brand hover:bg-brand/20 dark:bg-brand-dark/10 dark:text-brand-dark dark:hover:bg-brand-dark/20 transition-colors">

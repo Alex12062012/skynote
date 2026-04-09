@@ -54,8 +54,8 @@ export function SettingsToggles({ classroomId, initialSettings }: Props) {
       {skycoinsEnabled && (
         <div className="flex items-center justify-between pl-4 border-l-2 border-sky-border dark:border-night-border">
           <div>
-            <p className="font-body text-[14px] font-medium text-text-main dark:text-text-dark-main">Skycoins dans le classement</p>
-            <p className="font-body text-[12px] text-text-tertiary dark:text-text-dark-tertiary">Afficher les Skycoins dans le classement des eleves</p>
+            <p className="font-body text-[14px] font-medium text-text-main dark:text-text-dark-main">Apparaitre dans le classement global</p>
+            <p className="font-body text-[12px] text-text-tertiary dark:text-text-dark-tertiary">Les eleves de la classe sont visibles sur skynote.fr/leaderboard</p>
           </div>
           <button onClick={toggleRanking} disabled={saving}
             className={cn('relative h-6 w-11 rounded-full transition-colors', skycoinsInRanking ? 'bg-brand dark:bg-brand-dark' : 'bg-sky-cloud dark:bg-night-border')}>

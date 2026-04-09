@@ -17,12 +17,32 @@ export default async function LeaderboardPage() {
   const { data: { user } } = await authClient.auth.getUser()
   if (!user) redirect('/login')
 
-  // Top 100
-  const { data: top100 } = await supabase
+  // Récupérer les classroom_ids où skycoins_in_ranking = false
+  const { data: hiddenSettings } = await supabase
+    .from('classroom_settings')
+    .select('classroom_id')
+    .eq('skycoins_in_ranking', false)
+
+  const hiddenClassroomIds = (hiddenSettings || []).map((s: any) => s.classroom_id)
+
+  // Top 100 — exclure les élèves des classes qui ont désactivé l'option
+  let query = supabase
     .from('profiles')
-    .select('id, full_name, pseudo, user_number, sky_coins, plan, streak_days')
+    .select('id, full_name, pseudo, user_number, sky_coins, plan, streak_days, classroom_id, role')
     .order('sky_coins', { ascending: false })
-    .limit(100)
+    .limit(200) // on récupère plus pour pouvoir filtrer et garder 100
+
+  const { data: rawTop } = await query
+
+  const top100 = (rawTop || [])
+    .filter((p: any) => {
+      // Exclure les élèves dont la classe a désactivé le classement global
+      if (p.role === 'student' && p.classroom_id && hiddenClassroomIds.includes(p.classroom_id)) {
+        return false
+      }
+      return true
+    })
+    .slice(0, 100)
 
   const myRankInTop100 = (top100 || []).findIndex(p => p.id === user.id)
   const myRank = myRankInTop100 >= 0 ? myRankInTop100 + 1 : null
