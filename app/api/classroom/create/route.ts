@@ -1,5 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { createClient as createAdminClient } from '@supabase/supabase-js'
+
+const DEFAULT_FOLDERS = [
+  { name: 'Mathematiques',         color: '#2563EB' },
+  { name: 'Francais',              color: '#DC2626' },
+  { name: 'Histoire-Geographie',   color: '#D97706' },
+  { name: 'Anglais',               color: '#0891B2' },
+  { name: 'Sciences (SVT)',        color: '#059669' },
+  { name: 'Physique-Chimie',       color: '#7C3AED' },
+  { name: 'Philosophie',           color: '#E11D48' },
+  { name: 'Economie (SES)',        color: '#F59E0B' },
+  { name: 'Informatique (NSI)',    color: '#6D28D9' },
+  { name: 'Sport (EPS)',           color: '#16A34A' },
+  { name: 'Arts',                  color: '#EC4899' },
+  { name: 'Autre',                 color: '#64748B' },
+]
 
 function generateClassCode(): string {
   return Math.floor(100000 + Math.random() * 900000).toString()
@@ -90,12 +106,28 @@ export async function POST(req: NextRequest) {
     }
 
     // Ajouter le créateur dans classroom_teachers avec le rôle 'owner'
-    // Indispensable pour qu'il puisse créer des dossiers
     await supabase.from('classroom_teachers').insert({
       classroom_id: classroom.id,
       teacher_id: user.id,
       role: 'owner',
     })
+
+    // Créer les dossiers matières par défaut via le client admin (bypass RLS)
+    const admin = createAdminClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      { auth: { autoRefreshToken: false, persistSession: false } }
+    )
+    await admin.from('course_folders').insert(
+      DEFAULT_FOLDERS.map((f, i) => ({
+        classroom_id: classroom.id,
+        name: f.name,
+        color: f.color,
+        is_default: true,
+        created_by: user.id,
+        order_index: i,
+      }))
+    )
 
     return NextResponse.json({
       classCode: classroom.class_code,

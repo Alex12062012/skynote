@@ -88,12 +88,48 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       role: 'owner',
     }, { onConflict: 'classroom_id,teacher_id' })
 
-    // Recuperer les dossiers avec compteur de cours
-    const { data: folders } = await admin
+    // Dossiers matières par défaut
+    const DEFAULT_FOLDERS = [
+      { name: 'Mathematiques',         color: '#2563EB' },
+      { name: 'Francais',              color: '#DC2626' },
+      { name: 'Histoire-Geographie',   color: '#D97706' },
+      { name: 'Anglais',               color: '#0891B2' },
+      { name: 'Sciences (SVT)',        color: '#059669' },
+      { name: 'Physique-Chimie',       color: '#7C3AED' },
+      { name: 'Philosophie',           color: '#E11D48' },
+      { name: 'Economie (SES)',        color: '#F59E0B' },
+      { name: 'Informatique (NSI)',    color: '#6D28D9' },
+      { name: 'Sport (EPS)',           color: '#16A34A' },
+      { name: 'Arts',                  color: '#EC4899' },
+      { name: 'Autre',                 color: '#64748B' },
+    ]
+
+    // Recuperer les dossiers existants
+    let { data: folders } = await admin
       .from('course_folders')
       .select('*')
       .eq('classroom_id', cls.id)
       .order('order_index')
+
+    // Si aucun dossier : créer les dossiers par défaut (comptes existants)
+    if (!folders || folders.length === 0) {
+      await admin.from('course_folders').insert(
+        DEFAULT_FOLDERS.map((f, i) => ({
+          classroom_id: cls.id,
+          name: f.name,
+          color: f.color,
+          is_default: true,
+          created_by: user.id,
+          order_index: i,
+        }))
+      )
+      const { data: newFolders } = await admin
+        .from('course_folders')
+        .select('*')
+        .eq('classroom_id', cls.id)
+        .order('order_index')
+      folders = newFolders
+    }
 
     const { data: classroomCourses } = await admin
       .from('courses')
