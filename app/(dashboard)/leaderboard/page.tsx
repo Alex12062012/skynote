@@ -17,6 +17,12 @@ export default async function LeaderboardPage() {
   const { data: { user } } = await authClient.auth.getUser()
   if (!user) redirect('/login')
 
+  // Les professeurs et élèves ne voient pas le leaderboard
+  const { data: currentProfile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+  if (currentProfile?.role === 'teacher' || currentProfile?.role === 'student') {
+    redirect('/dashboard')
+  }
+
   // Récupérer les classroom_ids où skycoins_in_ranking = false
   const { data: hiddenSettings } = await supabase
     .from('classroom_settings')

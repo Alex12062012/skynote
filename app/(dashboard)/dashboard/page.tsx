@@ -97,6 +97,13 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       .eq('classroom_id', cls.id)
       .order('last_name')
 
+    // S'assurer que le créateur est dans classroom_teachers (fix comptes existants)
+    await supabase.from('classroom_teachers').upsert({
+      classroom_id: cls.id,
+      teacher_id: user.id,
+      role: 'owner',
+    }, { onConflict: 'classroom_id,teacher_id' }).select()
+
     // Recuperer les profs de la classe
     const { data: classTeachers } = await supabase
       .from('classroom_teachers')
@@ -197,7 +204,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
           students={classStudents || []}
           teachers={classTeachers || []}
           settings={settings}
-          siteUrl={process.env.NEXT_PUBLIC_SITE_URL || 'https://skynote.vercel.app'}
+          siteUrl={process.env.NEXT_PUBLIC_SITE_URL || 'https://skynote.fr'}
           courses={allCourses || []}
           flashcardsByCourse={flashcardsByCourse}
           attemptsByStudent={enrichedAttempts}
@@ -263,6 +270,16 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   // ============================================
   // DASHBOARD UTILISATEUR NORMAL
   // ============================================
+
+  // Vérifier si l'utilisateur est dans le top 100 sans pseudo
+  const { data: top100Check } = await supabase
+    .from('profiles')
+    .select('id')
+    .order('sky_coins', { ascending: false })
+    .limit(100)
+  const isInTop100 = (top100Check || []).some((p: any) => p.id === user.id)
+  const needsPseudo = isInTop100 && !profile?.pseudo
+
   return (
     <div className="flex flex-col gap-8 animate-fade-in">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -280,6 +297,26 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
           </Button>
         </Link>
       </div>
+
+      {needsPseudo && (
+        <div className="rounded-card border border-amber-200 bg-amber-50 p-5 dark:border-amber-800/30 dark:bg-amber-950/20">
+          <p className="font-body text-[14px] font-semibold text-amber-800 dark:text-amber-300 mb-1">
+            🏆 Tu es dans le top 100 du classement !
+          </p>
+          <p className="font-body text-[13px] text-amber-700 dark:text-amber-400 mb-3">
+            Choisis un pseudo pour apparaitre dans le classement global.
+          </p>
+          <form action="/api/set-pseudo" method="POST" className="flex gap-2">
+            <input type="hidden" name="userId" value={user.id} />
+            <input type="text" name="pseudo" maxLength={20} required placeholder="Ton pseudo (max 20 car.)"
+              className="flex-1 h-10 rounded-input border border-amber-300 bg-white px-3 font-body text-[14px] text-text-main placeholder:text-text-tertiary focus:border-brand focus:outline-none dark:border-amber-700 dark:bg-night-surface dark:text-text-dark-main" />
+            <button type="submit"
+              className="h-10 px-4 rounded-input bg-brand font-body text-[13px] font-semibold text-white hover:bg-brand-hover dark:bg-brand-dark dark:text-night-bg">
+              Valider
+            </button>
+          </form>
+        </div>
+      )}
 
       <StatsBar coursesCount={totalCourses ?? 0} qcmCount={totalQcm ?? 0} streak={streak} coins={coins} />
 

@@ -25,6 +25,12 @@ export default async function ObjectivesPage() {
   ])
 
   const profile = profileRes.data
+
+  // Profs et élèves n'ont pas accès aux objectifs/skycoins
+  if (profile?.role === 'teacher' || profile?.role === 'student') {
+    redirect('/dashboard')
+  }
+
   const objectives = objectivesRes.data ?? []
   const userObjectives = userObjectivesRes.data ?? []
   const transactions = transactionsRes.data ?? []

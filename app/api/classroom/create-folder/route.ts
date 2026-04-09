@@ -1,9 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { createClient as createAdminClient } from '@supabase/supabase-js'
 
 export async function POST(req: NextRequest) {
   try {
     const supabase = await createClient()
+    const admin = createAdminClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      { auth: { autoRefreshToken: false, persistSession: false } }
+    )
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Non authentifie' }, { status: 401 })
 
@@ -52,7 +58,8 @@ export async function POST(req: NextRequest) {
 
     const nextIndex = existing && existing.length > 0 ? existing[0].order_index + 1 : 0
 
-    const { data: folder, error } = await supabase
+    // Utiliser le client admin pour bypasser la RLS sur course_folders
+    const { data: folder, error } = await admin
       .from('course_folders')
       .insert({
         classroom_id: classroomId,
@@ -65,7 +72,7 @@ export async function POST(req: NextRequest) {
       .select()
       .single()
 
-    if (error) return NextResponse.json({ error: 'Erreur creation' }, { status: 500 })
+    if (error) return NextResponse.json({ error: `Erreur creation: ${error.message}` }, { status: 500 })
     return NextResponse.json({ folder })
   } catch {
     return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 })

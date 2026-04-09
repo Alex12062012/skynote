@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { X } from 'lucide-react'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
@@ -18,6 +19,9 @@ export function CreateFolderModal({ classroomId, onClose, onCreated }: Props) {
   const [color, setColor] = useState('#2563EB')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => { setMounted(true) }, [])
 
   async function handleCreate() {
     if (!name.trim()) { setError('Nom requis'); return }
@@ -34,8 +38,10 @@ export function CreateFolderModal({ classroomId, onClose, onCreated }: Props) {
     } catch { setError('Erreur reseau'); setLoading(false) }
   }
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+  if (!mounted) return null
+
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
       <div className="relative z-10 w-full max-w-sm rounded-card-login border border-sky-border bg-sky-surface p-6 shadow-2xl dark:border-night-border dark:bg-night-surface">
         <div className="flex items-center justify-between mb-5">
@@ -43,7 +49,7 @@ export function CreateFolderModal({ classroomId, onClose, onCreated }: Props) {
           <button onClick={onClose} className="text-text-tertiary hover:text-text-main dark:hover:text-text-dark-main"><X className="h-5 w-5" /></button>
         </div>
         <div className="flex flex-col gap-4">
-          <Input id="folder-name" label="Nom du dossier" placeholder="Ex: Sciences economiques"
+          <Input id="folder-name" label="Nom du dossier" placeholder="Ex: Mathematiques"
             value={name} onChange={(e) => setName(e.target.value)} error={error} required />
           <div>
             <p className="font-body text-[13px] font-medium text-text-main dark:text-text-dark-main mb-2">Couleur</p>
@@ -58,6 +64,7 @@ export function CreateFolderModal({ classroomId, onClose, onCreated }: Props) {
           <Button onClick={handleCreate} loading={loading} size="lg" className="w-full mt-1">Creer le dossier</Button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }

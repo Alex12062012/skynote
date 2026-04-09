@@ -9,6 +9,10 @@ export async function POST(req: Request) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: "Non autorise" }, { status: 401 })
 
+  // Élèves et profs ne gagnent pas de skycoins
+  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+  const canEarnCoins = profile?.role !== 'student' && profile?.role !== 'teacher'
+
   const { quizId, score, total } = await req.json() as {
     quizId: string
     score: number
@@ -26,7 +30,7 @@ export async function POST(req: Request) {
     coins_earned: coinsEarned,
   })
 
-  if (coinsEarned > 0) {
+  if (coinsEarned > 0 && canEarnCoins) {
     await supabase.rpc("increment_coins", {
       p_user_id: user.id,
       p_amount: coinsEarned,
