@@ -55,3 +55,6 @@ Exécuter dans l'ordre dans Supabase SQL Editor :
 - 🏅 **Badge objectif complété** — notification animée en bas d'écran
 - 📊 **Dashboard enrichi** — objectifs en cours, bannière progression Premium
 - 👤 **Profil enrichi** — stats complètes, barre de progression coins
+
+Skynote - AI note app for students
+Official website: https://skynote.fr
