@@ -17,11 +17,9 @@ export default async function LeaderboardPage() {
   const { data: { user } } = await authClient.auth.getUser()
   if (!user) redirect('/login')
 
-  // Les professeurs et élèves ne voient pas le leaderboard
+  // Récupérer le rôle pour adapter l'affichage
   const { data: currentProfile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
-  if (currentProfile?.role === 'teacher' || currentProfile?.role === 'student') {
-    redirect('/dashboard')
-  }
+  const isObserver = currentProfile?.role === 'teacher' || currentProfile?.role === 'student'
 
   // Récupérer les classroom_ids où skycoins_in_ranking = false
   const { data: hiddenSettings } = await supabase
@@ -98,13 +96,23 @@ export default async function LeaderboardPage() {
         </p>
       </div>
 
-      {/* Demande de pseudo si dans le top 100 sans pseudo */}
-      {isInTop100 && needsPseudo && (
+      {/* Profs et élèves : spectateurs uniquement */}
+      {isObserver && (
+        <div className="mb-6 flex items-center gap-3 rounded-card border border-sky-border bg-sky-surface px-5 py-3.5 dark:border-night-border dark:bg-night-surface">
+          <span className="text-lg">👀</span>
+          <p className="font-body text-[13px] text-text-secondary dark:text-text-dark-secondary">
+            Vous consultez le classement en mode spectateur.
+          </p>
+        </div>
+      )}
+
+      {/* Demande de pseudo si dans le top 100 sans pseudo (utilisateurs normaux uniquement) */}
+      {!isObserver && isInTop100 && needsPseudo && (
         <PseudoForm userId={user.id} />
       )}
 
-      {/* Ma position si pas dans le top 100 */}
-      {!isInTop100 && (
+      {/* Ma position si pas dans le top 100 (utilisateurs normaux uniquement) */}
+      {!isObserver && !isInTop100 && (
         <div className="mb-6 flex items-center gap-4 rounded-card border border-brand/20 bg-brand-soft px-5 py-4 dark:border-brand-dark/20 dark:bg-brand-dark-soft">
           <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-brand/10 font-display text-[16px] font-bold text-brand dark:text-brand-dark">
             ?

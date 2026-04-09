@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { Plus, ArrowRight, Flame } from 'lucide-react'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { createClient as createAdminClient } from '@supabase/supabase-js'
 import { getDashboardStats, getProfileWithCoins } from '@/lib/supabase/queries'
 import { StatsBar } from '@/components/dashboard/StatsBar'
 import { CourseCard } from '@/components/dashboard/CourseCard'
@@ -51,7 +52,14 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   // DASHBOARD PROFESSEUR
   // ============================================
   if (isTeacher) {
-    const { data: cls } = await supabase
+    // Client admin pour bypasser la RLS sur toutes les données classroom
+    const admin = createAdminClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      { auth: { autoRefreshToken: false, persistSession: false } }
+    )
+
+    const { data: cls } = await admin
       .from('classrooms')
       .select('*')
       .eq('teacher_id', user.id)
@@ -73,14 +81,21 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       )
     }
 
+    // S'assurer que le créateur est dans classroom_teachers (fix comptes existants)
+    await admin.from('classroom_teachers').upsert({
+      classroom_id: cls.id,
+      teacher_id: user.id,
+      role: 'owner',
+    }, { onConflict: 'classroom_id,teacher_id' })
+
     // Recuperer les dossiers avec compteur de cours
-    const { data: folders } = await supabase
+    const { data: folders } = await admin
       .from('course_folders')
       .select('*')
       .eq('classroom_id', cls.id)
       .order('order_index')
 
-    const { data: classroomCourses } = await supabase
+    const { data: classroomCourses } = await admin
       .from('courses')
       .select('id, folder_id')
       .eq('classroom_id', cls.id)
@@ -91,34 +106,27 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     }))
 
     // Recuperer les eleves
-    const { data: classStudents } = await supabase
+    const { data: classStudents } = await admin
       .from('classroom_students')
       .select('*')
       .eq('classroom_id', cls.id)
       .order('last_name')
 
-    // S'assurer que le créateur est dans classroom_teachers (fix comptes existants)
-    await supabase.from('classroom_teachers').upsert({
-      classroom_id: cls.id,
-      teacher_id: user.id,
-      role: 'owner',
-    }, { onConflict: 'classroom_id,teacher_id' }).select()
-
     // Recuperer les profs de la classe
-    const { data: classTeachers } = await supabase
+    const { data: classTeachers } = await admin
       .from('classroom_teachers')
       .select('*, profiles(full_name, email)')
       .eq('classroom_id', cls.id)
 
     // Settings
-    const { data: settings } = await supabase
+    const { data: settings } = await admin
       .from('classroom_settings')
       .select('*')
       .eq('classroom_id', cls.id)
       .single()
 
     // Recuperer tous les cours de la classe
-    const { data: allCourses } = await supabase
+    const { data: allCourses } = await admin
       .from('courses')
       .select('*')
       .eq('classroom_id', cls.id)
@@ -128,7 +136,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     const courseIds = (allCourses || []).map((c: any) => c.id)
     let flashcardsByCourse: Record<string, number> = {}
     if (courseIds.length > 0) {
-      const { data: flashcards } = await supabase
+      const { data: flashcards } = await admin
         .from('flashcards')
         .select('id, course_id')
         .in('course_id', courseIds)
@@ -138,7 +146,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     }
 
     // Recuperer les profils eleves lies
-    const { data: studentProfiles } = await supabase
+    const { data: studentProfiles } = await admin
       .from('profiles')
       .select('id, full_name, classroom_student_id')
       .eq('classroom_id', cls.id)
@@ -148,7 +156,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     const studentProfileIds = (studentProfiles || []).map((p: any) => p.id)
     let attemptsByStudent: Record<string, any[]> = {}
     if (studentProfileIds.length > 0) {
-      const { data: attempts } = await supabase
+      const { data: attempts } = await admin
         .from('qcm_attempts')
         .select('user_id, flashcard_id, score, total, perfect, created_at')
         .in('user_id', studentProfileIds)
@@ -167,7 +175,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     })
 
     // Ajouter course_id aux attempts via flashcard lookup
-    const { data: allFlashcards } = await supabase
+    const { data: allFlashcards } = await admin
       .from('flashcards')
       .select('id, course_id')
       .in('course_id', courseIds)

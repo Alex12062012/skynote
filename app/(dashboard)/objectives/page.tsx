@@ -26,9 +26,19 @@ export default async function ObjectivesPage() {
 
   const profile = profileRes.data
 
-  // Profs et élèves n'ont pas accès aux objectifs/skycoins
+  // Profs et élèves : afficher un message bloquant
   if (profile?.role === 'teacher' || profile?.role === 'student') {
-    redirect('/dashboard')
+    return (
+      <div className="mx-auto max-w-2xl flex flex-col items-center justify-center py-24 text-center gap-4 animate-fade-in">
+        <span className="text-5xl">🔒</span>
+        <h1 className="font-display text-h2 text-text-main dark:text-text-dark-main">Fonctionnalite bloquee</h1>
+        <p className="font-body text-[15px] text-text-secondary dark:text-text-dark-secondary max-w-sm">
+          {profile.role === 'student'
+            ? 'Votre professeur a bloque cette fonctionnalite.'
+            : 'Les objectifs et Skycoins ne sont pas disponibles pour les professeurs.'}
+        </p>
+      </div>
+    )
   }
 
   const objectives = objectivesRes.data ?? []
