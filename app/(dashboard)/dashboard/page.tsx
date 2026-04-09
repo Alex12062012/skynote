@@ -111,16 +111,22 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       .eq('classroom_id', cls.id)
       .order('order_index')
 
-    // Si aucun dossier : créer les dossiers par défaut (comptes existants)
-    if (!folders || folders.length === 0) {
+    // Ajouter uniquement les dossiers par défaut qui n'existent pas encore
+    const existingNames = new Set((folders || []).map((f: any) => f.name))
+    const missingFolders = DEFAULT_FOLDERS.filter(f => !existingNames.has(f.name))
+
+    if (missingFolders.length > 0) {
+      const maxIndex = folders && folders.length > 0
+        ? Math.max(...folders.map((f: any) => f.order_index ?? 0)) + 1
+        : 0
       await admin.from('course_folders').insert(
-        DEFAULT_FOLDERS.map((f, i) => ({
+        missingFolders.map((f, i) => ({
           classroom_id: cls.id,
           name: f.name,
           color: f.color,
           is_default: true,
           created_by: user.id,
-          order_index: i,
+          order_index: maxIndex + i,
         }))
       )
       const { data: newFolders } = await admin
