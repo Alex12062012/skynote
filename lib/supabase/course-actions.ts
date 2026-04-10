@@ -39,7 +39,7 @@ export async function createCourse(formData: FormData): Promise<{ courseId: stri
     folder_id: folderId || null, classroom_id: classroomId || null,
   }).select('id').single()
 
-  if (error || !course) return { courseId: null, error: 'Erreur création cours' }
+  if (error || !course) return { courseId: null, error: `Erreur: ${error?.message || error?.code || 'inconnue'}` }
   // Incrémenter le compteur hebdomadaire
   await incrementWeeklyCourseCount(user.id)
   revalidatePath('/courses')
