@@ -15,11 +15,24 @@ type SourceType = 'text' | 'photo' | 'list' | 'vocal'
 
 const PHOTO_WARNING_KEY = 'skynote_hide_photo_warning'
 
-export function CreateCourseForm({ folderId, classroomId }: { folderId?: string; classroomId?: string } = {}) {
+interface TeacherFolder { id: string; name: string; color: string; classroom_id: string }
+
+export function CreateCourseForm({
+  folderId,
+  classroomId,
+  isTeacher = false,
+  teacherFolders = [],
+}: {
+  folderId?: string
+  classroomId?: string
+  isTeacher?: boolean
+  teacherFolders?: TeacherFolder[]
+} = {}) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [title, setTitle] = useState('')
   const [subject, setSubject] = useState('')
+  const [selectedFolderId, setSelectedFolderId] = useState(folderId || '')
   const [sourceType, setSourceType] = useState<SourceType>('text')
   const [textContent, setTextContent] = useState('')
   const [file, setFile] = useState<File | null>(null)
@@ -80,7 +93,11 @@ export function CreateCourseForm({ folderId, classroomId }: { folderId?: string;
   function validate(): boolean {
     const e: Record<string, string> = {}
     if (!title.trim()) e.title = 'Le titre est requis'
-    if (!subject) e.subject = 'La matiere est requise'
+    if (isTeacher) {
+      if (!selectedFolderId) e.folder = 'Le dossier est requis'
+    } else {
+      if (!subject) e.subject = 'La matiere est requise'
+    }
     if (sourceType === 'text' && !textContent.trim()) e.content = 'Le contenu est requis'
     if (sourceType === 'photo' && !extractedText.trim()) e.file = 'Uploade une photo et attends la transcription'
     if (sourceType === 'vocal' && !voiceTranscript.trim()) e.content = 'Enregistre du contenu vocal'
@@ -95,10 +112,18 @@ export function CreateCourseForm({ folderId, classroomId }: { folderId?: string;
     startTransition(async () => {
       const formData = new FormData()
       formData.set('title', title)
-      formData.set('subject', subject)
+      // Pour les profs, subject = 'General' par defaut (champ requis en BDD)
+      formData.set('subject', isTeacher ? 'General' : subject)
       formData.set('sourceType', sourceType)
-      if (folderId) formData.set('folderId', folderId)
-      if (classroomId) formData.set('classroomId', classroomId)
+      const activeFolderId = isTeacher ? selectedFolderId : folderId
+      if (activeFolderId) formData.set('folderId', activeFolderId)
+      // Recuperer le classroom_id depuis le dossier selectionne si prof
+      if (isTeacher && selectedFolderId) {
+        const folder = teacherFolders.find(f => f.id === selectedFolderId)
+        if (folder?.classroom_id) formData.set('classroomId', folder.classroom_id)
+      } else if (classroomId) {
+        formData.set('classroomId', classroomId)
+      }
 
       if (sourceType === 'text') formData.set('content', textContent)
       else if (sourceType === 'vocal') formData.set('content', voiceTranscript)
@@ -193,7 +218,33 @@ export function CreateCourseForm({ folderId, classroomId }: { folderId?: string;
           error={errors.title} required
         />
 
-        <SubjectSelect value={subject} onChange={setSubject} error={errors.subject} />
+        {isTeacher ? (
+          <div className="flex flex-col gap-1.5">
+            <label className="font-body text-[13px] font-medium text-text-main dark:text-text-dark-main">
+              Dossier
+            </label>
+            {folderId ? (
+              // Dossier pre-selectionne depuis l'URL, affichage en lecture seule
+              <div className="flex h-11 items-center rounded-input border border-sky-border bg-sky-surface px-4 font-body text-[14px] text-text-main dark:border-night-border dark:bg-night-surface dark:text-text-dark-main">
+                📁 {teacherFolders.find(f => f.id === folderId)?.name || 'Dossier selectionne'}
+              </div>
+            ) : (
+              <select
+                value={selectedFolderId}
+                onChange={(e) => setSelectedFolderId(e.target.value)}
+                className={`h-11 w-full appearance-none rounded-input border border-sky-border bg-sky-surface px-4 font-body text-[14px] text-text-main transition-all focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/15 dark:border-night-border dark:bg-night-surface dark:text-text-dark-main dark:focus:border-brand-dark ${!selectedFolderId ? 'text-text-tertiary dark:text-text-dark-tertiary' : ''} ${errors.folder ? 'border-error' : ''}`}
+              >
+                <option value="">Choisir un dossier...</option>
+                {teacherFolders.map((f) => (
+                  <option key={f.id} value={f.id}>📁 {f.name}</option>
+                ))}
+              </select>
+            )}
+            {errors.folder && <p className="font-body text-[12px] text-error">{errors.folder}</p>}
+          </div>
+        ) : (
+          <SubjectSelect value={subject} onChange={setSubject} error={errors.subject} />
+        )}
 
         <SourceTypeTabs value={sourceType} onChange={handleSourceTypeChange} vocalEnabled={true} />
 

@@ -18,11 +18,24 @@ export default async function NewCoursePage({ searchParams }: Props) {
   const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
   if (profile?.role === 'student') redirect('/dashboard')
 
+  const isTeacher = profile?.role === 'teacher'
+
   // Si un folder est passe, recuperer son nom pour l'afficher
   let folderName = ''
   if (params.folder) {
     const { data: folder } = await supabase.from('course_folders').select('name').eq('id', params.folder).single()
     folderName = folder?.name || ''
+  }
+
+  // Si prof, recuperer tous ses dossiers
+  let teacherFolders: { id: string; name: string; color: string; classroom_id: string }[] = []
+  if (isTeacher) {
+    const { data: folders } = await supabase
+      .from('course_folders')
+      .select('id, name, color, classroom_id')
+      .eq('created_by', user.id)
+      .order('order_index', { ascending: true })
+    teacherFolders = folders || []
   }
 
   return (
@@ -35,11 +48,16 @@ export default async function NewCoursePage({ searchParams }: Props) {
       <div className="mb-8">
         <h1 className="font-display text-h2 text-text-main dark:text-text-dark-main">Nouveau cours</h1>
         <p className="mt-1 font-body text-[15px] text-text-secondary dark:text-text-dark-secondary">
-          {folderName ? `Cours dans le dossier ${folderName}` : "L'IA genere tes fiches de revision et ton QCM automatiquement"}
+          {folderName ? `Cours dans le dossier ${folderName}` : isTeacher ? "Ajoutez un cours dans un de vos dossiers" : "L'IA genere tes fiches de revision et ton QCM automatiquement"}
         </p>
       </div>
       <div className="rounded-card-login bg-sky-surface p-6 shadow-card dark:bg-night-surface dark:shadow-card-dark">
-        <CreateCourseForm folderId={params.folder} classroomId={params.classroom} />
+        <CreateCourseForm
+          folderId={params.folder}
+          classroomId={params.classroom}
+          isTeacher={isTeacher}
+          teacherFolders={teacherFolders}
+        />
       </div>
     </div>
   )
