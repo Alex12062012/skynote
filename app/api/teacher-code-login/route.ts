@@ -46,13 +46,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Code invalide. Verifie ton code professeur.' }, { status: 404 })
     }
 
+    // Utiliser l'origin de la requête pour que ca marche en local ET en prod
+    const origin = req.headers.get('origin') || req.headers.get('referer')?.replace(/\/$/, '') || process.env.NEXT_PUBLIC_SITE_URL || 'https://skynote.fr'
+    const siteOrigin = origin.startsWith('http') ? new URL(origin).origin : origin
+
     // Generer un lien de connexion magique (sans envoyer d'email)
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://skynote.fr'
     const { data: linkData, error: linkError } = await admin.auth.admin.generateLink({
       type: 'magiclink',
       email: profile.email,
       options: {
-        redirectTo: `${siteUrl}/dashboard`,
+        redirectTo: `${siteOrigin}/auth/callback?next=/dashboard`,
       },
     })
 
