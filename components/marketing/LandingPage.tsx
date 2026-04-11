@@ -27,7 +27,7 @@ const STATS: Stat[] = [
   { value: "100%",  label: "adapte college & lycee" },
 ]
 
-const TESTIMONIALS: Testimonial[] = [
+const FALLBACK_TESTIMONIALS: Testimonial[] = [
   { text: "J'ai eu 17 en histoire grace aux fiches Skynote. Ma prof a cru que j'avais revise 3h.", name: "Ines, 3eme",  grade: "17/20" },
   { text: "Le QCM m'a fait comprendre des trucs que j'avais pas capte en cours. C'est ouf.",       name: "Yanis, 2nde", grade: "15/20" },
   { text: "Je prends mon cours en photo et 15 secondes apres j'ai mes fiches. C'est magique.",     name: "Lea, 4eme",   grade: "16/20" },
@@ -229,7 +229,8 @@ function PricingFamily() {
 // Composant principal
 // ---------------------------------------------------------------------------
 
-export function LandingPage({ isBeta = true }: { isBeta?: boolean }) {
+export function LandingPage({ isBeta = true, testimonials }: { isBeta?: boolean; testimonials?: Testimonial[] }) {
+  const TESTIMONIALS = (testimonials && testimonials.length >= 3) ? testimonials : FALLBACK_TESTIMONIALS
   const [glowPulse, setGlowPulse] = useState(false)
   const { t } = useI18n()
   useScrollReveal()

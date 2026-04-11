@@ -36,18 +36,21 @@ export default function LoginPage({ searchParams }: { searchParams: { error?: st
               Créer un compte
             </Link>
           </p>
-          <p className="mt-3 text-center font-body text-[13px] text-text-secondary dark:text-text-dark-secondary">
-            Élève en classe virtuelle ?{' '}
-            <Link href="/classroom-login" className="font-medium text-brand hover:underline dark:text-brand-dark">
-              Entrer avec mon code
+          <div className="mt-5 flex items-center gap-3">
+            <div className="flex-1 border-t border-sky-border dark:border-night-border" />
+            <span className="font-body text-[11px] text-text-tertiary dark:text-text-dark-tertiary">accès rapide</span>
+            <div className="flex-1 border-t border-sky-border dark:border-night-border" />
+          </div>
+          <div className="mt-3 grid grid-cols-2 gap-2">
+            <Link href="/classroom-login"
+              className="flex items-center justify-center gap-1.5 rounded-input border border-sky-border bg-sky-bg py-2.5 font-body text-[12px] font-medium text-text-secondary transition-colors hover:border-brand hover:text-brand dark:border-night-border dark:bg-night-bg dark:text-text-dark-secondary dark:hover:border-brand-dark dark:hover:text-brand-dark">
+              🎒 Élève
             </Link>
-          </p>
-          <p className="mt-2 text-center font-body text-[13px] text-text-secondary dark:text-text-dark-secondary">
-            Professeur ?{' '}
-            <Link href="/teacher-login" className="font-medium text-brand hover:underline dark:text-brand-dark">
-              Connexion rapide avec mon code
+            <Link href="/teacher-login"
+              className="flex items-center justify-center gap-1.5 rounded-input border border-sky-border bg-sky-bg py-2.5 font-body text-[12px] font-medium text-text-secondary transition-colors hover:border-brand hover:text-brand dark:border-night-border dark:bg-night-bg dark:text-text-dark-secondary dark:hover:border-brand-dark dark:hover:text-brand-dark">
+              👨‍🏫 Professeur
             </Link>
-          </p>
+          </div>
         </div>
       </div>
     </div>

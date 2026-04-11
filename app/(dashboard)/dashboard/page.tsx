@@ -145,7 +145,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     const foldersWithCount = (folders || []).map((f: any) => ({
       ...f,
       courseCount: (classroomCourses || []).filter((c: any) => c.folder_id === f.id).length,
-    }))
+    })).sort((a: any, b: any) => b.courseCount - a.courseCount)
 
     // Recuperer les eleves
     const { data: classStudents } = await admin
