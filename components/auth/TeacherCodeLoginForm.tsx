@@ -1,9 +1,12 @@
 'use client'
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
+import { createClient } from '@/lib/supabase/client'
 
 export function TeacherCodeLoginForm() {
+  const router = useRouter()
   const [code, setCode] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -28,12 +31,25 @@ export function TeacherCodeLoginForm() {
         return
       }
 
-      // Afficher le nom du prof puis rediriger vers le lien magique
       setTeacherName(data.teacherName)
-      // Courte pause pour afficher le message de bienvenue
-      setTimeout(() => {
-        window.location.href = data.actionLink
-      }, 800)
+
+      // Vérifier l'OTP directement côté client — évite le problème PKCE
+      const supabase = createClient()
+      const { error: otpError } = await supabase.auth.verifyOtp({
+        email: data.email,
+        token: data.token,
+        type: 'magiclink',
+      })
+
+      if (otpError) {
+        setTeacherName('')
+        setError('Erreur de connexion. Reessaie.')
+        setLoading(false)
+        return
+      }
+
+      // Connexion réussie → dashboard
+      router.push('/dashboard')
     } catch {
       setError('Erreur de connexion. Reessaie.')
       setLoading(false)
