@@ -59,15 +59,15 @@ export async function POST(req: NextRequest) {
       },
     })
 
-    if (linkError || !linkData?.properties?.hashed_token) {
+    if (linkError || !linkData?.properties?.email_otp) {
       console.error('generateLink error:', linkError)
       return NextResponse.json({ error: 'Erreur lors de la generation du lien de connexion' }, { status: 500 })
     }
 
-    // Retourner le token et l'email pour verifyOtp côté client (evite le problème PKCE)
+    // Retourner le token brut (email_otp) pour verifyOtp côté client
     return NextResponse.json({
       success: true,
-      token: linkData.properties.hashed_token,
+      token: linkData.properties.email_otp,
       email: profile.email,
       teacherName: profile.full_name || 'Professeur',
     })
