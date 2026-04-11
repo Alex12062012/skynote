@@ -44,11 +44,11 @@ export default function LoginPage({ searchParams }: { searchParams: { error?: st
           <div className="mt-3 grid grid-cols-2 gap-2">
             <Link href="/classroom-login"
               className="flex items-center justify-center gap-1.5 rounded-input border border-sky-border bg-sky-bg py-2.5 font-body text-[12px] font-medium text-text-secondary transition-colors hover:border-brand hover:text-brand dark:border-night-border dark:bg-night-bg dark:text-text-dark-secondary dark:hover:border-brand-dark dark:hover:text-brand-dark">
-              🎒 Élève
+              Élève
             </Link>
             <Link href="/teacher-login"
               className="flex items-center justify-center gap-1.5 rounded-input border border-sky-border bg-sky-bg py-2.5 font-body text-[12px] font-medium text-text-secondary transition-colors hover:border-brand hover:text-brand dark:border-night-border dark:bg-night-bg dark:text-text-dark-secondary dark:hover:border-brand-dark dark:hover:text-brand-dark">
-              👨‍🏫 Professeur
+              Professeur
             </Link>
           </div>
         </div>
