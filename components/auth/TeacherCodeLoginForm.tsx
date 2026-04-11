@@ -36,9 +36,8 @@ export function TeacherCodeLoginForm() {
       // Vérifier l'OTP directement côté client — évite le problème PKCE
       const supabase = createClient()
       const { error: otpError } = await supabase.auth.verifyOtp({
-        email: data.email,
-        token: data.token,
-        type: 'magiclink',
+        token_hash: data.token,
+        type: 'email',
       })
 
       if (otpError) {
