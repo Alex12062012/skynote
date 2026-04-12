@@ -47,19 +47,53 @@ export function CreateCourseForm({
   const [showExtracted, setShowExtracted] = useState(false)
   const [photoCount, setPhotoCount] = useState(0)
 
+  // Popup confirmation changement de type
+  const [showSourceChangeConfirm, setShowSourceChangeConfirm] = useState(false)
+  const [pendingSourceType, setPendingSourceType] = useState<SourceType | null>(null)
+
+  function hasContent(): boolean {
+    if (sourceType === 'text' && textContent.trim()) return true
+    if (sourceType === 'photo' && (extractedText.trim() || file)) return true
+    if (sourceType === 'vocal' && voiceTranscript.trim()) return true
+    return false
+  }
+
   function handleSourceTypeChange(v: string) {
     const type = v as SourceType
+    if (type === sourceType) return
+
+    // Si du contenu existe, demander confirmation
+    if (hasContent()) {
+      setPendingSourceType(type)
+      setShowSourceChangeConfirm(true)
+      return
+    }
+
+    applySourceTypeChange(type)
+  }
+
+  function applySourceTypeChange(type: SourceType) {
     setSourceType(type)
     setExtractedText('')
     setShowExtracted(false)
     setFile(null)
     setPhotoCount(0)
+    setTextContent('')
+    setVoiceTranscript('')
     setErrors({})
 
     if (type === 'photo') {
       const hideWarning = localStorage.getItem(PHOTO_WARNING_KEY) === 'true'
       if (!hideWarning) setShowPhotoWarning(true)
     }
+  }
+
+  function confirmSourceTypeChange() {
+    if (pendingSourceType) {
+      applySourceTypeChange(pendingSourceType)
+    }
+    setShowSourceChangeConfirm(false)
+    setPendingSourceType(null)
   }
 
   async function extractTextFromPhoto(photoFile: File) {
@@ -189,6 +223,30 @@ export function CreateCourseForm({
             >
               Ne plus afficher pour les prochains cours
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Popup confirmation changement de type source */}
+      {showSourceChangeConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => { setShowSourceChangeConfirm(false); setPendingSourceType(null) }} />
+          <div className="relative z-10 w-full max-w-sm rounded-card-login border border-sky-border bg-sky-surface p-6 shadow-2xl dark:border-night-border dark:bg-night-surface animate-slide-in">
+            <h3 className="font-display text-[17px] font-bold text-text-main dark:text-text-dark-main mb-2">
+              Changer de mode ?
+            </h3>
+            <p className="font-body text-[13px] text-text-secondary dark:text-text-dark-secondary mb-5 leading-relaxed">
+              Tu as deja du contenu saisi. Si tu changes de mode, il sera efface.
+            </p>
+            <div className="flex gap-3">
+              <Button variant="secondary" className="flex-1"
+                onClick={() => { setShowSourceChangeConfirm(false); setPendingSourceType(null) }}>
+                Annuler
+              </Button>
+              <Button className="flex-1" onClick={confirmSourceTypeChange}>
+                Oui, changer
+              </Button>
+            </div>
           </div>
         </div>
       )}
@@ -327,16 +385,16 @@ export function CreateCourseForm({
                 </p>
               </div>
             )}
-            {/* Bouton ajouter une autre photo */}
+            {/* Bouton ajouter une autre photo — bien visible sur mobile */}
             <button
               type="button"
               onClick={() => { setFile(null); setShowExtracted(false) }}
-              className="mt-3 flex w-full items-center justify-center gap-2 rounded-input border-2 border-dashed border-brand/30 py-3 font-body text-[13px] font-medium text-brand transition-all hover:border-brand hover:bg-brand-soft dark:border-brand-dark/30 dark:text-brand-dark dark:hover:border-brand-dark dark:hover:bg-brand-dark-soft"
+              className="mt-4 flex w-full items-center justify-center gap-2 rounded-input bg-brand py-3.5 font-body text-[14px] font-semibold text-white shadow-btn transition-all hover:bg-brand-hover active:scale-[0.98] dark:bg-brand-dark dark:text-night-bg dark:hover:bg-brand-dark-hover"
             >
-              <Plus className="h-4 w-4" />
+              <Camera className="h-4 w-4" />
               Ajouter une autre photo
             </button>
-            <p className="mt-1.5 text-center font-body text-[11px] text-text-tertiary dark:text-text-dark-tertiary">
+            <p className="mt-1.5 text-center font-body text-[12px] text-text-tertiary dark:text-text-dark-tertiary">
               Le texte sera ajoute a la suite du texte existant
             </p>
           </div>

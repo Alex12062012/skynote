@@ -53,7 +53,19 @@ export function QcmPageClient({ flashcards, questionsByFlashcard, courseId }: Qc
             </button>
           </div>
           {regenError && <p className="mb-3 font-body text-[13px] text-error">{regenError}</p>}
-          <QcmEngine key={`${selectedFlashcardId}-${currentQuestions.length}`} flashcard={selectedFlashcard} questions={currentQuestions} courseId={courseId} onRegenerate={handleRegenerate} />
+          {isRegenerating ? (
+            <div className="flex flex-col items-center justify-center gap-4 py-16 text-center animate-fade-in">
+              <div className="h-10 w-10 rounded-full border-[3px] border-brand border-t-transparent animate-spin dark:border-brand-dark" />
+              <p className="font-display text-[16px] font-bold text-text-main dark:text-text-dark-main">
+                Nouvelles questions en cours...
+              </p>
+              <p className="font-body text-[13px] text-text-secondary dark:text-text-dark-secondary">
+                L'IA génère de nouvelles questions ✨
+              </p>
+            </div>
+          ) : (
+            <QcmEngine key={`${selectedFlashcardId}-${currentQuestions.length}`} flashcard={selectedFlashcard} questions={currentQuestions} courseId={courseId} onRegenerate={handleRegenerate} />
+          )}
         </div>
       ) : (
         <div className="flex flex-col items-center justify-center py-16 text-center">
