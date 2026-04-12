@@ -47,6 +47,19 @@ export async function createCourse(formData: FormData): Promise<{ courseId: stri
   return { courseId: course.id, error: null }
 }
 
+export async function updateCourseTitle(courseId: string, newTitle: string): Promise<{ error: string | null }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Non connecté' }
+  if (!newTitle?.trim()) return { error: 'Titre requis' }
+  const { error } = await supabase.from('courses').update({ title: newTitle.trim() }).eq('id', courseId).eq('user_id', user.id)
+  if (error) return { error: error.message }
+  revalidatePath(`/courses/${courseId}`)
+  revalidatePath('/courses')
+  revalidatePath('/dashboard')
+  return { error: null }
+}
+
 export async function deleteCourse(courseId: string): Promise<{ error: string | null }> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()

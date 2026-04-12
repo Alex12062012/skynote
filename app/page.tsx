@@ -22,14 +22,29 @@ export default async function RootPage() {
       process.env.SUPABASE_SERVICE_ROLE_KEY!,
       { auth: { autoRefreshToken: false, persistSession: false } }
     )
-    const { data: feedbacks } = await admin
+    // D'abord chercher les feedbacks marqués "featured" par l'admin
+    let { data: feedbacks } = await admin
       .from("feedbacks")
-      .select("love, score, profiles(full_name, grade_level)")
+      .select("love, score, featured, profiles(full_name, grade_level)")
+      .eq("featured", true)
       .not("love", "is", null)
       .neq("love", "")
-      .gte("score", 7)
-      .order("score", { ascending: false })
       .limit(3)
+
+    // Fallback : si pas assez de featured, compléter avec les meilleurs avis
+    if (!feedbacks || feedbacks.length < 3) {
+      const featuredIds = (feedbacks || []).map((f: any) => f.id).filter(Boolean)
+      const { data: topFeedbacks } = await admin
+        .from("feedbacks")
+        .select("love, score, featured, profiles(full_name, grade_level)")
+        .not("love", "is", null)
+        .neq("love", "")
+        .gte("score", 7)
+        .neq("featured", true)
+        .order("score", { ascending: false })
+        .limit(3 - (feedbacks?.length || 0))
+      feedbacks = [...(feedbacks || []), ...(topFeedbacks || [])]
+    }
 
     if (feedbacks && feedbacks.length > 0) {
       testimonials = feedbacks.map((f: any) => ({

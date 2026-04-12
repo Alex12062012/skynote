@@ -15,13 +15,18 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single()
+  const [{ data: profile }, { data: betaRow }] = await Promise.all([
+    supabase.from('profiles').select('*').eq('id', user.id).single(),
+    supabase.from('admin_settings').select('value').eq('key', 'beta_mode').maybeSingle(),
+  ])
+
+  const isBetaEnabled = betaRow?.value === 'true'
 
   return (
     <CoinRewardProvider>
     <div className="min-h-screen">
       <SkyBackground />
-      <Navbar profile={profile as Profile | null} />
+      <Navbar profile={profile as Profile | null} isBetaEnabled={isBetaEnabled} />
       {/* Mise à jour silencieuse du streak de connexion */}
       <StreakTracker userId={user.id} />
       <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6">

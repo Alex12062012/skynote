@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { ArrowLeft, Zap, AlertCircle } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { getCourse, getCourseFlashcards } from '@/lib/supabase/queries'
+import { EditableTitle } from '@/components/courses/EditableTitle'
 import { ProcessingLoader } from '@/components/courses/ProcessingLoader'
 import { GenerationTrigger } from '@/components/courses/GenerationTrigger'
 import { FlashcardViewer } from '@/components/courses/FlashcardViewer'
@@ -62,9 +63,7 @@ export default async function CourseDetailPage({ params }: Props) {
               · {formatDate(course.created_at)}
             </span>
           </div>
-          <h1 className="font-display text-h2 text-text-main dark:text-text-dark-main leading-tight">
-            {course.title}
-          </h1>
+          <EditableTitle courseId={id} initialTitle={course.title} canEdit={!isStudent} />
         </div>
         {!isStudent && <DeleteCourseButton courseId={id} courseTitle={course.title} />}
       </div>

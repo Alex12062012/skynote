@@ -27,7 +27,7 @@ export function QcmPageClient({ flashcards, questionsByFlashcard, courseId }: Qc
     if (!selectedFlashcardId) return
     setIsRegenerating(true); setRegenError(null)
     try {
-      const res = await fetch('/api/generate-qcm', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ flashcardId: selectedFlashcardId }) })
+      const res = await fetch('/api/generate-qcm', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ flashcardId: selectedFlashcardId, regenerate: true }) })
       if (!res.ok) throw new Error('Error')
       const reloadRes = await fetch(`/api/qcm-questions?flashcardId=${selectedFlashcardId}`)
       if (reloadRes.ok) { const data = await reloadRes.json(); setLocalQuestions((prev) => ({ ...prev, [selectedFlashcardId]: data.questions })) }
@@ -53,7 +53,7 @@ export function QcmPageClient({ flashcards, questionsByFlashcard, courseId }: Qc
             </button>
           </div>
           {regenError && <p className="mb-3 font-body text-[13px] text-error">{regenError}</p>}
-          <QcmEngine key={`${selectedFlashcardId}-${currentQuestions.length}`} flashcard={selectedFlashcard} questions={currentQuestions} courseId={courseId} />
+          <QcmEngine key={`${selectedFlashcardId}-${currentQuestions.length}`} flashcard={selectedFlashcard} questions={currentQuestions} courseId={courseId} onRegenerate={handleRegenerate} />
         </div>
       ) : (
         <div className="flex flex-col items-center justify-center py-16 text-center">

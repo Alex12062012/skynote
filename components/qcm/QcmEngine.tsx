@@ -16,12 +16,13 @@ interface QcmEngineProps {
   flashcard: Flashcard
   questions: QcmQuestion[]
   courseId: string
+  onRegenerate?: () => void
 }
 
 type AnswerState = 'unanswered' | 'correct' | 'incorrect'
 interface UserAnswer { questionIndex: number; chosenIndex: number; correct: boolean }
 
-export function QcmEngine({ flashcard, questions, courseId }: QcmEngineProps) {
+export function QcmEngine({ flashcard, questions, courseId, onRegenerate }: QcmEngineProps) {
   const router = useRouter()
   const { t } = useI18n()
   const [isPending, startTransition] = useTransition()
@@ -79,6 +80,8 @@ export function QcmEngine({ flashcard, questions, courseId }: QcmEngineProps) {
     setCurrentQ(0); setAnswers([]); setSelectedOption(null)
     setAnswerState('unanswered'); setShowResult(false)
     setCoinsEarned(0); setShowCoinAnim(false); setShowToast(false)
+    // Régénérer de nouvelles questions quand on recommence
+    if (onRegenerate) onRegenerate()
   }
 
   // ── Résultats ──────────────────────────────────────────────

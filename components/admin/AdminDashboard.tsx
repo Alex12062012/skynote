@@ -212,6 +212,22 @@ export function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     setTimeout(() => setFeedback(''), 3000)
   }
 
+  async function toggleFeatured(feedbackId: string, currentFeatured: boolean) {
+    try {
+      const res = await fetch('/api/admin/feedbacks', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ feedbackId, featured: !currentFeatured }),
+      })
+      const data = await res.json()
+      if (data.ok) {
+        setFeedbacks(prev => prev.map((f: any) => f.id === feedbackId ? { ...f, featured: !currentFeatured } : f))
+      } else {
+        alert(data.error || 'Erreur')
+      }
+    } catch { alert('Erreur réseau') }
+  }
+
   function savePin() {
     if (newPin.length < 4) { setPinFeedback('Code trop court (min 4 caractères)'); return }
     localStorage.setItem(STORAGE_KEY, newPin)
@@ -485,11 +501,34 @@ export function AdminDashboard({ onLogout }: { onLogout: () => void }) {
             <div className="space-y-3">
               {feedbacks.length === 0 ? (
                 <div className="rounded-xl border border-slate-800 bg-slate-900 p-8 text-center text-slate-400">Aucun feedback</div>
-              ) : feedbacks.map((f: any) => (
-                <div key={f.id} className="rounded-xl border border-slate-800 bg-slate-900 p-5">
+              ) : feedbacks.map((f: any) => {
+                const canFeature = f.love && f.score >= 7
+                const featuredCount = feedbacks.filter((fb: any) => fb.featured).length
+                const isMaxed = featuredCount >= 3 && !f.featured
+                return (
+                <div key={f.id} className={`rounded-xl border ${f.featured ? 'border-emerald-500/50 bg-emerald-950/20' : 'border-slate-800 bg-slate-900'} p-5`}>
                   <div className="flex items-start justify-between mb-3">
-                    <div><p className="text-[14px] font-medium text-white">{f.profiles?.full_name || 'Anonyme'}</p><p className="text-[11px] text-slate-400">{f.profiles?.email}{f.profiles?.is_beta_tester && <span className="text-blue-400"> · 🧪</span>}</p></div>
+                    <div className="flex items-start gap-3">
+                      {canFeature && (
+                        <button
+                          onClick={() => toggleFeatured(f.id, !!f.featured)}
+                          disabled={isMaxed}
+                          className={`mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded border-2 transition-all ${
+                            f.featured
+                              ? 'border-emerald-500 bg-emerald-600'
+                              : isMaxed
+                                ? 'border-slate-700 bg-slate-800 opacity-30 cursor-not-allowed'
+                                : 'border-slate-600 bg-transparent hover:border-emerald-500'
+                          }`}
+                          title={f.featured ? 'Retirer de la landing page' : isMaxed ? 'Maximum 3 avis' : 'Afficher sur la landing page'}
+                        >
+                          {f.featured && <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>}
+                        </button>
+                      )}
+                      <div><p className="text-[14px] font-medium text-white">{f.profiles?.full_name || 'Anonyme'}</p><p className="text-[11px] text-slate-400">{f.profiles?.email}{f.profiles?.is_beta_tester && <span className="text-blue-400"> · 🧪</span>}</p></div>
+                    </div>
                     <div className="flex items-center gap-2">
+                      {f.featured && <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-900/40 text-emerald-400">Landing page</span>}
                       {f.milestone && <span className="text-[11px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-400">{f.milestone} QCM</span>}
                       <span className="font-bold text-[20px]" style={{ color: f.score >= 8 ? '#34D399' : '#FBBF24' }}>{f.score}/10</span>
                     </div>
@@ -498,7 +537,8 @@ export function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                   {f.missing && <div><p className="text-[11px] text-amber-400 font-semibold mb-1">⚠ Ce qui manque</p><p className="text-[13px] text-slate-300">{f.missing}</p></div>}
                   <p className="text-[11px] text-slate-500 mt-2">{new Date(f.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })}</p>
                 </div>
-              ))}
+                )
+              })}
             </div>
           </div>
         )}

@@ -11,7 +11,8 @@ export async function POST(request: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
 
-    const { flashcardId } = await request.json()
+    const body = await request.json()
+    const { flashcardId, regenerate } = body
 
     const { data: flashcard } = await supabase
       .from('flashcards')
@@ -22,14 +23,19 @@ export async function POST(request: NextRequest) {
 
     if (!flashcard) return NextResponse.json({ error: 'Fiche introuvable' }, { status: 404 })
 
-    // Vérifier si les QCM existent déjà pour cette fiche
-    const { count } = await supabase
-      .from('qcm_questions')
-      .select('id', { count: 'exact' })
-      .eq('flashcard_id', flashcardId)
+    // Si régénération demandée, supprimer les anciennes questions
+    if (regenerate) {
+      await supabase.from('qcm_questions').delete().eq('flashcard_id', flashcardId)
+    } else {
+      // Vérifier si les QCM existent déjà pour cette fiche
+      const { count } = await supabase
+        .from('qcm_questions')
+        .select('id', { count: 'exact' })
+        .eq('flashcard_id', flashcardId)
 
-    if ((count ?? 0) > 0) {
-      return NextResponse.json({ ok: true, skipped: true })
+      if ((count ?? 0) > 0) {
+        return NextResponse.json({ ok: true, skipped: true })
+      }
     }
 
     const keyPoints = Array.isArray(flashcard.key_points)

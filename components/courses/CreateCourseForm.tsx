@@ -185,7 +185,7 @@ export function CreateCourseForm({
             </div>
             <button
               onClick={() => { localStorage.setItem(PHOTO_WARNING_KEY, 'true'); setShowPhotoWarning(false) }}
-              className="mt-3 w-full text-center font-body text-[12px] text-text-tertiary hover:text-text-secondary transition-colors"
+              className="mt-3 w-full text-center font-body text-[13px] font-medium text-text-secondary underline underline-offset-2 hover:text-text-main transition-colors dark:text-text-dark-secondary dark:hover:text-text-dark-main"
             >
               Ne plus afficher pour les prochains cours
             </button>

@@ -33,7 +33,7 @@ export function FeedbackButton({ userId }: { userId: string }) {
       {/* Bouton flottant */}
       <button
         onClick={() => setOpen(true)}
-        className="fixed bottom-6 right-6 z-40 flex items-center gap-2 rounded-pill bg-brand px-4 py-2.5 font-body text-[13px] font-semibold text-white shadow-btn transition-all hover:bg-brand-hover hover:scale-105 dark:bg-brand-dark dark:text-night-bg dark:hover:bg-brand-dark-hover"
+        className="fixed bottom-20 right-6 z-40 flex items-center gap-2 rounded-pill bg-brand px-4 py-2.5 font-body text-[13px] font-semibold text-white shadow-btn transition-all hover:bg-brand-hover hover:scale-105 dark:bg-brand-dark dark:text-night-bg dark:hover:bg-brand-dark-hover sm:bottom-6"
       >
         <MessageSquare className="h-4 w-4" />
         Feedback

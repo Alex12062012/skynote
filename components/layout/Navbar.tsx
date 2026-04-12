@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { usePathname, useSearchParams } from 'next/navigation'
 import { useState, Suspense } from 'react'
-import { Target, LayoutDashboard, Users, Menu, X, Tag, BookOpen, Key, CreditCard } from 'lucide-react'
+import { Target, LayoutDashboard, Users, Menu, X, Tag, BookOpen, Key, CreditCard, Trophy } from 'lucide-react'
 import { SkyCoin } from '@/components/ui/SkyCoin'
 import { CoinCounter } from '@/components/ui/CoinCounter'
 import { ThemeToggle } from '@/components/ui/ThemeToggle'
@@ -19,7 +19,7 @@ interface NavLink {
   tab?: string // paramètre tab dans l'URL (pour les profs)
 }
 
-function getNavLinks(role: string, t: (k: string) => string): NavLink[] {
+function getNavLinks(role: string, t: (k: string) => string, isBetaEnabled: boolean): NavLink[] {
   if (role === 'teacher') {
     return [
       { href: '/dashboard', label: 'Cours', icon: BookOpen },
@@ -32,17 +32,20 @@ function getNavLinks(role: string, t: (k: string) => string): NavLink[] {
     { href: '/dashboard', label: t('nav.home'), icon: LayoutDashboard },
     { href: '/objectives', label: t('nav.objectives'), icon: Target },
   ]
-  if (role !== 'student') {
+  // Quand la beta est activée, afficher le Leaderboard au lieu de Pricing
+  if (isBetaEnabled) {
+    links.push({ href: '/leaderboard', label: 'Classement', icon: Trophy })
+  } else if (role !== 'student') {
     links.push({ href: '/pricing', label: t('nav.pricing'), icon: Tag })
   }
   return links
 }
 
-function NavbarInner({ profile }: { profile: Profile | null }) {
+function NavbarInner({ profile, isBetaEnabled = false }: { profile: Profile | null; isBetaEnabled?: boolean }) {
   const { t } = useI18n()
   const role = (profile as any)?.role ?? 'user'
   const isFamille = profile?.plan === 'famille'
-  const navLinks = getNavLinks(role, t)
+  const navLinks = getNavLinks(role, t, isBetaEnabled)
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const currentTab = searchParams.get('tab')
@@ -166,10 +169,10 @@ function NavbarInner({ profile }: { profile: Profile | null }) {
 }
 
 // Suspense requis par useSearchParams()
-export function Navbar({ profile }: { profile: Profile | null }) {
+export function Navbar({ profile, isBetaEnabled = false }: { profile: Profile | null; isBetaEnabled?: boolean }) {
   return (
     <Suspense fallback={null}>
-      <NavbarInner profile={profile} />
+      <NavbarInner profile={profile} isBetaEnabled={isBetaEnabled} />
     </Suspense>
   )
 }

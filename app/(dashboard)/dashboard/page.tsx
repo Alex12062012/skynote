@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/Button'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { SkyCoin } from '@/components/ui/SkyCoin'
 import { ProgressBar } from '@/components/ui/ProgressBar'
+import { PseudoModal } from '@/components/leaderboard/PseudoModal'
 import { ClassroomSetup } from '@/components/classroom/ClassroomSetup'
 import { TeacherDashboardClient } from '@/components/classroom/TeacherDashboardClient'
 import type { Metadata } from 'next'
@@ -350,23 +351,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       </div>
 
       {needsPseudo && (
-        <div className="rounded-card border border-amber-200 bg-amber-50 p-5 dark:border-amber-800/30 dark:bg-amber-950/20">
-          <p className="font-body text-[14px] font-semibold text-amber-800 dark:text-amber-300 mb-1">
-            🏆 Tu es dans le top 100 du classement !
-          </p>
-          <p className="font-body text-[13px] text-amber-700 dark:text-amber-400 mb-3">
-            Choisis un pseudo pour apparaitre dans le classement global.
-          </p>
-          <form action="/api/set-pseudo" method="POST" className="flex gap-2">
-            <input type="hidden" name="userId" value={user.id} />
-            <input type="text" name="pseudo" maxLength={20} required placeholder="Ton pseudo (max 20 car.)"
-              className="flex-1 h-10 rounded-input border border-amber-300 bg-white px-3 font-body text-[14px] text-text-main placeholder:text-text-tertiary focus:border-brand focus:outline-none dark:border-amber-700 dark:bg-night-surface dark:text-text-dark-main" />
-            <button type="submit"
-              className="h-10 px-4 rounded-input bg-brand font-body text-[13px] font-semibold text-white hover:bg-brand-hover dark:bg-brand-dark dark:text-night-bg">
-              Valider
-            </button>
-          </form>
-        </div>
+        <PseudoModal userId={user.id} />
       )}
 
       <StatsBar coursesCount={totalCourses ?? 0} qcmCount={totalQcm ?? 0} streak={streak} coins={coins} />
