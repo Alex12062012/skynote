@@ -112,15 +112,26 @@ export default async function CourseDetailPage({ params }: Props) {
         </div>
       )}
 
-      {course.status === 'ready' && <ReadyCourse courseId={id} userId={user.id} courseTitle={course.title} qcmStatus={(course as any).qcm_status} isTeacher={isTeacher} isStudent={isStudent} />}
+      {course.status === 'ready' && <ReadyCourse courseId={id} userId={user.id} courseOwnerId={course.user_id} courseTitle={course.title} qcmStatus={(course as any).qcm_status} isTeacher={isTeacher} isStudent={isStudent} />}
     </div>
   )
 }
 
-async function ReadyCourse({ courseId, userId, courseTitle, qcmStatus, isTeacher, isStudent }: { courseId: string; userId: string; courseTitle: string; qcmStatus?: string; isTeacher: boolean; isStudent: boolean }) {
+async function ReadyCourse({ courseId, userId, courseOwnerId, courseTitle, qcmStatus, isTeacher, isStudent }: { courseId: string; userId: string; courseOwnerId: string; courseTitle: string; qcmStatus?: string; isTeacher: boolean; isStudent: boolean }) {
   const supabase = await createClient()
   const flashcards = await getCourseFlashcards(courseId)
-  const qcmReady = qcmStatus === 'ready' || !qcmStatus
+
+  // Pour les élèves : vérifier si des questions existent réellement (qcm_status peut être 'processing' même si le prof a tout généré)
+  let qcmReady = qcmStatus === 'ready' || !qcmStatus
+  if (isStudent && !qcmReady && flashcards.length > 0) {
+    const flashcardIds = flashcards.map((f) => f.id)
+    const { count } = await supabase
+      .from('qcm_questions')
+      .select('*', { count: 'exact', head: true })
+      .in('flashcard_id', flashcardIds)
+      .eq('user_id', courseOwnerId)
+    qcmReady = (count ?? 0) > 0
+  }
 
   if (flashcards.length === 0) {
     return (
