@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { Plus } from 'lucide-react'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { getUserCourses, getTeacherCourses } from '@/lib/supabase/queries'
+import { getUserCourses } from '@/lib/supabase/queries'
 import { CourseCard } from '@/components/dashboard/CourseCard'
 import { Button } from '@/components/ui/Button'
 import { EmptyState } from '@/components/ui/EmptyState'
@@ -18,26 +18,41 @@ export default async function CoursesPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+  const { data: profile } = await supabase.from('profiles').select('role, classroom_id').eq('id', user.id).single()
   const isStudent = profile?.role === 'student'
 
-  const courses = isStudent
-    ? await getTeacherCourses(user.id)
-    : await getUserCourses(user.id)
-
-  // ── STUDENT VIEW: subject folders with new-course badge ──
+  // ── STUDENT VIEW: folder-based grouping ──
   if (isStudent) {
-    // Get student's QCM attempts to determine "done" courses
-    const courseIds = courses.map((c) => c.id)
-    let attemptedCourseIds = new Set<string>()
+    const classroomId = (profile as any)?.classroom_id
+    let classFolders: any[] = []
+    let teacherCourses: any[] = []
 
+    if (classroomId) {
+      const [foldersRes, coursesRes] = await Promise.all([
+        supabase
+          .from('course_folders')
+          .select('id, name, color, order_index')
+          .eq('classroom_id', classroomId)
+          .order('order_index'),
+        supabase
+          .from('courses')
+          .select('*, folder_id')
+          .eq('classroom_id', classroomId)
+          .eq('status', 'ready')
+          .order('created_at', { ascending: false }),
+      ])
+      classFolders = foldersRes.data || []
+      teacherCourses = coursesRes.data || []
+    }
+
+    // Determine which courses the student has attempted
+    const courseIds = teacherCourses.map((c: any) => c.id)
+    let attemptedCourseIds = new Set<string>()
     if (courseIds.length > 0) {
-      // Get flashcard→course mapping for attempted flashcards
       const { data: attempts } = await supabase
         .from('qcm_attempts')
         .select('flashcard_id')
         .eq('user_id', user.id)
-
       if (attempts && attempts.length > 0) {
         const flashcardIds = [...new Set(attempts.map((a: any) => a.flashcard_id))]
         const { data: flashcards } = await supabase
@@ -45,40 +60,43 @@ export default async function CoursesPage() {
           .select('id, course_id')
           .in('id', flashcardIds)
           .in('course_id', courseIds)
-
         if (flashcards) {
-          for (const f of flashcards) {
-            attemptedCourseIds.add(f.course_id)
-          }
+          for (const f of flashcards) attemptedCourseIds.add(f.course_id)
         }
       }
     }
 
     const now = Date.now()
     const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000
-
-    // Enrich courses with "new" and "done" flags
-    const enrichedCourses = courses.map((c) => ({
+    const enrichedCourses = teacherCourses.map((c: any) => ({
       ...c,
       isNew: (now - new Date(c.created_at).getTime()) < ONE_WEEK_MS,
       isDone: attemptedCourseIds.has(c.id),
     }))
 
-    // Group by subject
-    const grouped = enrichedCourses.reduce<Record<string, typeof enrichedCourses>>((acc, c) => {
-      if (!acc[c.subject]) acc[c.subject] = []
-      acc[c.subject].push(c)
-      return acc
-    }, {})
+    // Group by folder, keep only folders with courses, sort: new first
+    const foldersWithCourses = classFolders
+      .map((f: any) => ({
+        id: f.id,
+        name: f.name,
+        color: f.color,
+        courses: enrichedCourses.filter((c: any) => c.folder_id === f.id),
+      }))
+      .filter((f: any) => f.courses.length > 0)
+      .sort((a: any, b: any) => {
+        const aNew = a.courses.some((c: any) => c.isNew)
+        const bNew = b.courses.some((c: any) => c.isNew)
+        if (aNew && !bNew) return -1
+        if (!aNew && bNew) return 1
+        return 0
+      })
 
-    // Sort subjects: those with "new" courses first, then alphabetically
-    const sortedSubjects = Object.entries(grouped).sort(([subA, coursesA], [subB, coursesB]) => {
-      const aHasNew = coursesA.some((c) => c.isNew)
-      const bHasNew = coursesB.some((c) => c.isNew)
-      if (aHasNew && !bHasNew) return -1
-      if (!aHasNew && bHasNew) return 1
-      return subA.localeCompare(subB)
-    })
+    const coursesWithoutFolder = enrichedCourses.filter(
+      (c: any) => !c.folder_id || !classFolders.some((f: any) => f.id === c.folder_id)
+    )
+    if (coursesWithoutFolder.length > 0) {
+      foldersWithCourses.push({ id: '__other__', name: 'Autres cours', color: '#64748B', courses: coursesWithoutFolder })
+    }
 
     return (
       <div className="flex flex-col gap-8 animate-fade-in">
@@ -87,25 +105,25 @@ export default async function CoursesPage() {
             Cours de la classe
           </h1>
           <p className="mt-1 font-body text-[14px] text-text-secondary dark:text-text-dark-secondary">
-            {courses.length} cours
+            {teacherCourses.length} cours
           </p>
         </div>
 
-        {courses.length === 0 ? (
+        {teacherCourses.length === 0 ? (
           <EmptyState
             icon="📚"
             title="Aucun cours pour l'instant"
             description="Ton professeur n'a pas encore ajouté de cours."
           />
         ) : (
-          <StudentCourseFolders subjects={sortedSubjects} />
+          <StudentCourseFolders folders={foldersWithCourses} />
         )}
       </div>
     )
   }
 
   // ── TEACHER / NORMAL USER VIEW: grouped by subject ──
-  // Sort: subjects with more courses at the top
+  const courses = await getUserCourses(user.id)
   const grouped = courses.reduce<Record<string, Course[]>>((acc, c) => {
     if (!acc[c.subject]) acc[c.subject] = []
     acc[c.subject].push(c)

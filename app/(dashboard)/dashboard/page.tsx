@@ -265,25 +265,30 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   // DASHBOARD ELEVE
   // ============================================
   if (isStudent) {
+    const classroomId = (profile as any)?.classroom_id
     let teacherCourses: any[] = []
-    if ((profile as any)?.classroom_id) {
-      const { data: cls } = await supabase
-        .from('classrooms')
-        .select('teacher_id')
-        .eq('id', (profile as any).classroom_id)
-        .single()
-      if (cls) {
-        const { data: courses } = await supabase
+    let classFolders: any[] = []
+
+    if (classroomId) {
+      // Fetch classroom folders + courses by classroom_id (so folder_id is correct)
+      const [foldersRes, coursesRes] = await Promise.all([
+        supabase
+          .from('course_folders')
+          .select('id, name, color, order_index')
+          .eq('classroom_id', classroomId)
+          .order('order_index'),
+        supabase
           .from('courses')
-          .select('*')
-          .eq('user_id', cls.teacher_id)
+          .select('*, folder_id')
+          .eq('classroom_id', classroomId)
           .eq('status', 'ready')
-          .order('created_at', { ascending: false })
-        teacherCourses = courses || []
-      }
+          .order('created_at', { ascending: false }),
+      ])
+      classFolders = foldersRes.data || []
+      teacherCourses = coursesRes.data || []
     }
 
-    // Compute which courses the student has already attempted QCMs for
+    // Compute which courses the student has attempted QCMs for
     const courseIds = teacherCourses.map((c: any) => c.id)
     let attemptedCourseIds = new Set<string>()
     if (courseIds.length > 0) {
@@ -312,16 +317,36 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       isDone: attemptedCourseIds.has(c.id),
     }))
 
-    // Group by subject, subjects with new courses first
-    const grouped = enrichedCourses.reduce<Record<string, typeof enrichedCourses>>((acc, c) => {
-      if (!acc[c.subject]) acc[c.subject] = []
-      acc[c.subject].push(c)
-      return acc
-    }, {})
-    const sortedSubjects = Object.entries(grouped).sort(([, a], [, b]) => {
-      const aNew = a.some((c) => c.isNew); const bNew = b.some((c) => c.isNew)
-      if (aNew && !bNew) return -1; if (!aNew && bNew) return 1; return 0
-    })
+    // Group by folder_id, keep only folders that have courses
+    const foldersWithCourses = classFolders
+      .map((f: any) => ({
+        id: f.id,
+        name: f.name,
+        color: f.color,
+        courses: enrichedCourses.filter((c: any) => c.folder_id === f.id),
+      }))
+      .filter((f: any) => f.courses.length > 0)
+      // Folders with new courses first
+      .sort((a: any, b: any) => {
+        const aNew = a.courses.some((c: any) => c.isNew)
+        const bNew = b.courses.some((c: any) => c.isNew)
+        if (aNew && !bNew) return -1
+        if (!aNew && bNew) return 1
+        return 0
+      })
+
+    // Courses without a folder go to a catch-all
+    const coursesWithoutFolder = enrichedCourses.filter(
+      (c: any) => !c.folder_id || !classFolders.some((f: any) => f.id === c.folder_id)
+    )
+    if (coursesWithoutFolder.length > 0) {
+      foldersWithCourses.push({
+        id: '__other__',
+        name: 'Autres cours',
+        color: '#64748B',
+        courses: coursesWithoutFolder,
+      })
+    }
 
     return (
       <div className="flex flex-col gap-8 animate-fade-in">
@@ -338,8 +363,8 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
 
         <div>
           <h2 className="mb-4 font-display text-h3 text-text-main dark:text-text-dark-main">Cours de la classe</h2>
-          {teacherCourses.length > 0 ? (
-            <StudentCourseFolders subjects={sortedSubjects} />
+          {foldersWithCourses.length > 0 ? (
+            <StudentCourseFolders folders={foldersWithCourses} />
           ) : (
             <EmptyState icon="\uD83D\uDCDA" title="Aucun cours" description="Ton professeur n'a pas encore ajoute de cours." />
           )}
