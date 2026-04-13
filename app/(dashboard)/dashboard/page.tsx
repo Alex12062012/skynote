@@ -13,7 +13,7 @@ import { ProgressBar } from '@/components/ui/ProgressBar'
 import { PseudoModal } from '@/components/leaderboard/PseudoModal'
 import { ClassroomSetup } from '@/components/classroom/ClassroomSetup'
 import { TeacherDashboardClient } from '@/components/classroom/TeacherDashboardClient'
-import { StudentCourseFolders } from '@/components/courses/StudentCourseFolders'
+import { SubjectBadge } from '@/components/ui/Badge'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = { title: 'Tableau de bord' }
@@ -270,82 +270,22 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     let classFolders: any[] = []
 
     if (classroomId) {
-      // Fetch classroom folders + courses by classroom_id (so folder_id is correct)
       const [foldersRes, coursesRes] = await Promise.all([
-        supabase
-          .from('course_folders')
-          .select('id, name, color, order_index')
-          .eq('classroom_id', classroomId)
-          .order('order_index'),
-        supabase
-          .from('courses')
-          .select('*, folder_id')
-          .eq('classroom_id', classroomId)
-          .eq('status', 'ready')
-          .order('created_at', { ascending: false }),
+        supabase.from('course_folders').select('id, name, order_index').eq('classroom_id', classroomId).order('order_index'),
+        supabase.from('courses').select('*, folder_id').eq('classroom_id', classroomId).eq('status', 'ready').order('created_at', { ascending: false }),
       ])
       classFolders = foldersRes.data || []
       teacherCourses = coursesRes.data || []
     }
 
-    // Compute which courses the student has attempted QCMs for
-    const courseIds = teacherCourses.map((c: any) => c.id)
-    let attemptedCourseIds = new Set<string>()
-    if (courseIds.length > 0) {
-      const { data: attempts } = await supabase
-        .from('qcm_attempts')
-        .select('flashcard_id')
-        .eq('user_id', user.id)
-      if (attempts && attempts.length > 0) {
-        const flashcardIds = [...new Set(attempts.map((a: any) => a.flashcard_id))]
-        const { data: flashcards } = await supabase
-          .from('flashcards')
-          .select('id, course_id')
-          .in('id', flashcardIds)
-          .in('course_id', courseIds)
-        if (flashcards) {
-          for (const f of flashcards) attemptedCourseIds.add(f.course_id)
-        }
-      }
-    }
-
-    const now = Date.now()
-    const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000
-    const enrichedCourses = teacherCourses.map((c: any) => ({
-      ...c,
-      isNew: (now - new Date(c.created_at).getTime()) < ONE_WEEK_MS,
-      isDone: attemptedCourseIds.has(c.id),
-    }))
-
-    // Group by folder_id, keep only folders that have courses
-    const foldersWithCourses = classFolders
-      .map((f: any) => ({
-        id: f.id,
-        name: f.name,
-        color: f.color,
-        courses: enrichedCourses.filter((c: any) => c.folder_id === f.id),
-      }))
-      .filter((f: any) => f.courses.length > 0)
-      // Folders with new courses first
-      .sort((a: any, b: any) => {
-        const aNew = a.courses.some((c: any) => c.isNew)
-        const bNew = b.courses.some((c: any) => c.isNew)
-        if (aNew && !bNew) return -1
-        if (!aNew && bNew) return 1
-        return 0
-      })
-
-    // Courses without a folder go to a catch-all
-    const coursesWithoutFolder = enrichedCourses.filter(
-      (c: any) => !c.folder_id || !classFolders.some((f: any) => f.id === c.folder_id)
-    )
-    if (coursesWithoutFolder.length > 0) {
-      foldersWithCourses.push({
-        id: '__other__',
-        name: 'Autres cours',
-        color: '#64748B',
-        courses: coursesWithoutFolder,
-      })
+    // Group by folder name — same layout as normal users
+    const folderMap = new Map(classFolders.map((f: any) => [f.id, f]))
+    const grouped: Record<string, any[]> = {}
+    for (const course of teacherCourses) {
+      const folder = folderMap.get(course.folder_id)
+      const key = folder?.name ?? 'Autres'
+      if (!grouped[key]) grouped[key] = []
+      grouped[key].push(course)
     }
 
     return (
@@ -361,12 +301,24 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
 
         <StatsBar coursesCount={totalCourses ?? 0} qcmCount={totalQcm ?? 0} streak={streak} coins={coins} />
 
-        <div>
-          <h2 className="mb-4 font-display text-h3 text-text-main dark:text-text-dark-main">Cours de la classe</h2>
-          {foldersWithCourses.length > 0 ? (
-            <StudentCourseFolders folders={foldersWithCourses} />
+        <div className="flex flex-col gap-8">
+          <h2 className="font-display text-h3 text-text-main dark:text-text-dark-main">Cours de la classe</h2>
+          {teacherCourses.length === 0 ? (
+            <EmptyState icon="📚" title="Aucun cours" description="Ton professeur n'a pas encore ajouté de cours." />
           ) : (
-            <EmptyState icon="\uD83D\uDCDA" title="Aucun cours" description="Ton professeur n'a pas encore ajoute de cours." />
+            Object.entries(grouped).map(([folderName, courses]) => (
+              <div key={folderName}>
+                <div className="mb-4 flex items-center gap-3">
+                  <SubjectBadge subject={folderName} />
+                  <span className="font-body text-[13px] text-text-tertiary dark:text-text-dark-tertiary">
+                    {courses.length} cours
+                  </span>
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {courses.map((c: any) => <CourseCard key={c.id} {...c} />)}
+                </div>
+              </div>
+            ))
           )}
         </div>
 
