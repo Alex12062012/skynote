@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/Button'
 import { SkyCoin } from '@/components/ui/SkyCoin'
 import { CoinAnimation, CoinToast } from '@/components/ui/CoinAnimation'
 import { useCoinReward } from '@/components/providers/CoinRewardProvider'
-import { saveQcmAttempt } from '@/lib/supabase/qcm-actions'
+import { saveQcmAttempt, type QcmDifficulty } from '@/lib/supabase/qcm-actions'
 import { cn } from '@/lib/utils'
 import { useI18n } from '@/lib/i18n/context'
 import type { QcmQuestion, Flashcard } from '@/types/database'
@@ -16,13 +16,21 @@ interface QcmEngineProps {
   flashcard: Flashcard
   questions: QcmQuestion[]
   courseId: string
+  difficulty?: QcmDifficulty
   onRegenerate?: () => void
+  onChangeDifficulty?: () => void
 }
 
 type AnswerState = 'unanswered' | 'correct' | 'incorrect'
 interface UserAnswer { questionIndex: number; chosenIndex: number; correct: boolean }
 
-export function QcmEngine({ flashcard, questions, courseId, onRegenerate }: QcmEngineProps) {
+const DIFFICULTY_LABELS: Record<QcmDifficulty, { label: string; emoji: string; color: string }> = {
+  easy: { label: 'Paisible', emoji: '🌿', color: 'text-emerald-600 dark:text-emerald-400' },
+  medium: { label: 'Normal', emoji: '⚡', color: 'text-brand dark:text-brand-dark' },
+  hard: { label: 'Hardcore', emoji: '💀', color: 'text-red-600 dark:text-red-400' },
+}
+
+export function QcmEngine({ flashcard, questions, courseId, difficulty = 'medium', onRegenerate, onChangeDifficulty }: QcmEngineProps) {
   const router = useRouter()
   const { t } = useI18n()
   const [isPending, startTransition] = useTransition()
@@ -68,9 +76,10 @@ export function QcmEngine({ flashcard, questions, courseId, onRegenerate }: QcmE
           score: finalScore,
           total,
           answers: newAnswers.map((a) => a.chosenIndex),
+          difficulty,
         })
         setCoinsEarned(earned)
-        if (earned > 0) { showReward({ amount: earned, reason: 'Score parfait au QCM !', icon: '⚡' }) }
+        if (earned > 0) { showReward({ amount: earned, reason: `Score parfait ${DIFFICULTY_LABELS[difficulty].emoji} ${DIFFICULTY_LABELS[difficulty].label} !`, icon: '⚡' }) }
         setShowResult(true)
       })
     }
@@ -129,6 +138,11 @@ export function QcmEngine({ flashcard, questions, courseId, onRegenerate }: QcmE
           )}
           <div className="flex flex-col gap-3 w-full max-w-xs">
             <Button onClick={handleRestart} className="w-full gap-2"><RotateCcw className="h-4 w-4" />Recommencer</Button>
+            {onChangeDifficulty && (
+              <Button onClick={onChangeDifficulty} variant="secondary" className="w-full gap-2">
+                🎯 Changer de niveau
+              </Button>
+            )}
             <Button onClick={() => router.push(`/courses/${courseId}`)} variant="secondary" className="w-full gap-2">
               <ArrowLeft className="h-4 w-4" />Retour aux fiches
             </Button>
@@ -148,9 +162,14 @@ export function QcmEngine({ flashcard, questions, courseId, onRegenerate }: QcmE
         {/* Progression */}
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <span className="font-body text-[13px] text-text-tertiary dark:text-text-dark-tertiary">
-              Question {currentQ + 1} / {total}
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="font-body text-[13px] text-text-tertiary dark:text-text-dark-tertiary">
+                Question {currentQ + 1} / {total}
+              </span>
+              <span className={cn('font-body text-[11px] font-semibold', DIFFICULTY_LABELS[difficulty].color)}>
+                {DIFFICULTY_LABELS[difficulty].emoji} {DIFFICULTY_LABELS[difficulty].label}
+              </span>
+            </div>
             <span className="font-body text-[13px] font-semibold text-success dark:text-success-dark">
               {answers.filter((a) => a.correct).length} correctes
             </span>

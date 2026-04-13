@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
     if (!user) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
 
     const body = await request.json()
-    const { flashcardId, regenerate } = body
+    const { flashcardId, regenerate, difficulty = 'medium' } = body
 
     const { data: flashcard } = await supabase
       .from('flashcards')
@@ -45,7 +45,8 @@ export async function POST(request: NextRequest) {
     const questions = await generateQcmQuestions(
       flashcard.title,
       flashcard.summary,
-      keyPoints
+      keyPoints,
+      difficulty
     )
 
     await supabase.from('qcm_questions').insert(

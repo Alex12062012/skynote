@@ -2,8 +2,10 @@ import Anthropic from '@anthropic-ai/sdk'
 import {
   FLASHCARD_SYSTEM_PROMPT,
   QCM_SYSTEM_PROMPT,
+  getQcmSystemPrompt,
   buildFlashcardPrompt,
   buildQcmPrompt,
+  type QcmDifficulty,
 } from './prompts'
 
 const anthropic = new Anthropic({
@@ -95,12 +97,13 @@ export async function generateFlashcards(
 }
 
 export async function generateQcmQuestions(
-  flashcardTitle: string, summary: string, keyPoints: string[]
+  flashcardTitle: string, summary: string, keyPoints: string[],
+  difficulty: QcmDifficulty = 'medium'
 ): Promise<GeneratedQuestion[]> {
   const message = await anthropic.messages.create({
     model: 'claude-sonnet-4-20250514',
     max_tokens: 2048,
-    system: QCM_SYSTEM_PROMPT,
+    system: getQcmSystemPrompt(difficulty),
     messages: [{ role: 'user', content: buildQcmPrompt(flashcardTitle, summary, keyPoints) }],
   })
 

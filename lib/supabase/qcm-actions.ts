@@ -3,11 +3,20 @@
 import { createClient } from './server'
 import { revalidatePath } from 'next/cache'
 
+export type QcmDifficulty = 'easy' | 'medium' | 'hard'
+
+const COINS_BY_DIFFICULTY: Record<QcmDifficulty, number> = {
+  easy: 1,
+  medium: 3,
+  hard: 5,
+}
+
 export interface SaveAttemptInput {
   flashcardId: string
   score: number
   total: number
   answers: number[] // indices des réponses données
+  difficulty?: QcmDifficulty
 }
 
 /**
@@ -22,7 +31,7 @@ export async function saveQcmAttempt(input: SaveAttemptInput): Promise<{
   if (!user) return { coinsEarned: 0, error: 'Non connecté' }
 
   const perfect = input.score === input.total && input.total > 0
-  const coinsEarned = perfect ? 10 : 0
+  const coinsEarned = perfect ? (COINS_BY_DIFFICULTY[input.difficulty ?? 'medium']) : 0
 
   // Enregistrer la tentative
   const { error } = await supabase.from('qcm_attempts').insert({
@@ -52,10 +61,11 @@ export async function saveQcmAttempt(input: SaveAttemptInput): Promise<{
         .eq('id', user.id)
 
       // Enregistrer la transaction
+      const difficultyLabel = input.difficulty === 'easy' ? 'Paisible' : input.difficulty === 'hard' ? 'Hardcore' : 'Normal'
       await supabase.from('coin_transactions').insert({
         user_id: user.id,
         amount: coinsEarned,
-        reason: `Score parfait au QCM ⚡`,
+        reason: `Score parfait au QCM ${difficultyLabel} ⚡`,
       })
     }
   }
