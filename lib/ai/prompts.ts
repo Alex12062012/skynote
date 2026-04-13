@@ -41,7 +41,29 @@ FORMAT JSON EXACT :
 
 RAPPEL : Idealement 4 fiches, jusqu'a 6 si vraiment necessaire. 3 key_points par fiche, pas plus. Aucun doublon. TOUT DANS LA LANGUE DU COURS.`
 
-export const QCM_SYSTEM_PROMPT = `Tu es un assistant pedagogique qui cree des QCM pour des eleves de college et lycee.
+export type QcmDifficulty = 'easy' | 'medium' | 'hard'
+
+const QCM_DIFFICULTY_INSTRUCTIONS: Record<QcmDifficulty, string> = {
+  easy: `NIVEAU FACILE :
+- Questions directes sur les definitions et faits principaux du cours.
+- Les mauvaises reponses sont clairement differentes de la bonne.
+- Pas de pieges ni de nuances subtiles.
+- Formulations simples et courtes.`,
+  medium: `NIVEAU MOYEN :
+- Questions de comprehension : l'eleve doit avoir compris, pas juste memorise.
+- Les mauvaises reponses sont plausibles mais distinguables avec reflexion.
+- Inclure des questions d'application et de comparaison.
+- Formulations claires mais qui demandent de reflechir.`,
+  hard: `NIVEAU DIFFICILE :
+- Questions avancees : application, analyse, cas concrets, pieges subtils.
+- Les mauvaises reponses sont tres plausibles et proches de la bonne.
+- Inclure des "lequel n'est PAS...", des cas limites, des nuances.
+- L'eleve doit maitriser parfaitement le cours pour reussir.
+- Ajouter un champ "learn_more" : une explication detaillee de 2-3 phrases qui approfondit le sujet de la question.`,
+}
+
+export function getQcmSystemPrompt(difficulty: QcmDifficulty = 'medium'): string {
+  return `Tu es un assistant pedagogique qui cree des QCM pour des eleves de college et lycee.
 
 REGLE DE LANGUE CRUCIALE :
 - Les questions, options et explications doivent etre dans LA MEME LANGUE que la fiche fournie.
@@ -49,14 +71,16 @@ REGLE DE LANGUE CRUCIALE :
 - Si la fiche est en anglais, le QCM est en anglais.
 - Et ainsi de suite.
 
+${QCM_DIFFICULTY_INSTRUCTIONS[difficulty]}
+
 CONTRAINTES STRICTES :
 1. Reponds UNIQUEMENT en JSON valide. Pas de markdown, pas de backticks.
 2. Cree EXACTEMENT 5 questions. Pas 4, pas 6.
 3. Chaque question a EXACTEMENT 4 options.
-4. Les questions testent la comprehension, pas la memorisation bete.
-5. Les mauvaises reponses doivent etre plausibles.
-6. L explication fait 1 phrase maximum.
-7. Varie les types : definition, application, exemple, comparaison.
+4. Les mauvaises reponses doivent etre plausibles.
+5. L explication fait 1 phrase maximum.
+6. Chaque question DOIT avoir un champ "learn_more" : 2-3 phrases qui approfondissent le sujet aborde par la question (contexte historique, exemples supplementaires, liens avec d'autres concepts). Ce champ sert a l'eleve qui veut aller plus loin.
+7. Varie les types de questions.
 
 FORMAT JSON EXACT :
 {
@@ -65,10 +89,15 @@ FORMAT JSON EXACT :
       "question": "La question posee ?",
       "options": ["A", "B", "C", "D"],
       "correct_index": 0,
-      "explanation": "Explication courte."
+      "explanation": "Explication courte.",
+      "learn_more": "Approfondissement en 2-3 phrases pour aller plus loin sur le sujet."
     }
   ]
 }`
+}
+
+// Garder l'ancien prompt pour compatibilité
+export const QCM_SYSTEM_PROMPT = getQcmSystemPrompt('medium')
 
 export function buildFlashcardPrompt(courseTitle: string, subject: string, content: string): string {
   const truncated = content.length > 6000 ? content.slice(0, 6000) + '\n[...]' : content

@@ -38,7 +38,7 @@ export function TeacherCodeLoginForm() {
       const { error: otpError } = await supabase.auth.verifyOtp({
         email: data.email,
         token: data.token,
-        type: 'email',
+        type: 'magiclink',
       })
 
       if (otpError) {
