@@ -148,14 +148,9 @@ async function ReadyCourse({ courseId, userId, courseTitle, qcmStatus, isTeacher
             />
           ) : (
             <div className="flex items-center justify-between rounded-card border border-sky-border bg-sky-surface-2 px-5 py-4 dark:border-night-border dark:bg-night-surface-2">
-              <div>
-                <p className="font-body text-[14px] font-semibold text-text-main dark:text-text-dark-main">
-                  {flashcards.length} fiches générées ✨
-                </p>
-                <p className="font-body text-[13px] text-text-secondary dark:text-text-dark-secondary">
-                  Score parfait au QCM = +10 Sky Coins
-                </p>
-              </div>
+              <p className="font-body text-[14px] font-semibold text-text-main dark:text-text-dark-main">
+                {flashcards.length} fiches générées ✨
+              </p>
               <Link href={`/courses/${courseId}/qcm`}>
                 <Button size="sm" className="gap-1.5 flex-shrink-0">
                   <Zap className="h-4 w-4" />
