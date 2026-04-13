@@ -6,24 +6,26 @@ import { CourseCard } from '@/components/dashboard/CourseCard'
 import { SubjectBadge } from '@/components/ui/Badge'
 import { cn } from '@/lib/utils'
 
-// Colors per subject
+// Colors per subject — handles both accented and raw DB values
 const SUBJECT_COLORS: Record<string, string> = {
-  'Mathématiques': '#2563EB',
-  'Mathematiques': '#2563EB',
-  'Français': '#DC2626',
-  'Francais': '#DC2626',
-  'Histoire-Géographie': '#D97706',
-  'Histoire-Geographie': '#D97706',
-  'Anglais': '#0891B2',
-  'Sciences (SVT)': '#059669',
-  'Physique-Chimie': '#7C3AED',
-  'Philosophie': '#E11D48',
-  'Économie (SES)': '#F59E0B',
-  'Economie (SES)': '#F59E0B',
-  'Informatique (NSI)': '#6D28D9',
-  'Sport (EPS)': '#16A34A',
-  'Arts': '#EC4899',
-  'Autre': '#64748B',
+  // Raw DB values (SubjectSelect)
+  'Mathematiques':      '#2563EB',
+  'Francais':           '#DC2626',
+  'Histoire-Geographie':'#D97706',
+  'Anglais':            '#0891B2',
+  'Sciences (SVT)':     '#059669',
+  'Physique-Chimie':    '#7C3AED',
+  'General':            '#0891B2',
+  // Display labels with accents
+  'Mathématiques':      '#2563EB',
+  'Français':           '#DC2626',
+  'Histoire-Géographie':'#D97706',
+  'SVT':                '#059669',
+  'Physique':           '#7C3AED',
+  'Chimie':             '#7C3AED',
+  'Général':            '#0891B2',
+  'Philosophie':        '#E11D48',
+  'Espagnol':           '#DC2626',
 }
 
 function getSubjectColor(subject: string): string {

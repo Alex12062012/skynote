@@ -13,6 +13,7 @@ import { ProgressBar } from '@/components/ui/ProgressBar'
 import { PseudoModal } from '@/components/leaderboard/PseudoModal'
 import { ClassroomSetup } from '@/components/classroom/ClassroomSetup'
 import { TeacherDashboardClient } from '@/components/classroom/TeacherDashboardClient'
+import { StudentCourseFolders } from '@/components/courses/StudentCourseFolders'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = { title: 'Tableau de bord' }
@@ -91,18 +92,12 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
 
     // Dossiers matières par défaut
     const DEFAULT_FOLDERS = [
-      { name: 'Mathematiques',         color: '#2563EB' },
       { name: 'Francais',              color: '#DC2626' },
+      { name: 'Mathematiques',         color: '#2563EB' },
       { name: 'Histoire-Geographie',   color: '#D97706' },
       { name: 'Anglais',               color: '#0891B2' },
       { name: 'Sciences (SVT)',        color: '#059669' },
       { name: 'Physique-Chimie',       color: '#7C3AED' },
-      { name: 'Philosophie',           color: '#E11D48' },
-      { name: 'Economie (SES)',        color: '#F59E0B' },
-      { name: 'Informatique (NSI)',    color: '#6D28D9' },
-      { name: 'Sport (EPS)',           color: '#16A34A' },
-      { name: 'Arts',                  color: '#EC4899' },
-      { name: 'Autre',                 color: '#64748B' },
     ]
 
     // Recuperer les dossiers existants
@@ -288,6 +283,46 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       }
     }
 
+    // Compute which courses the student has already attempted QCMs for
+    const courseIds = teacherCourses.map((c: any) => c.id)
+    let attemptedCourseIds = new Set<string>()
+    if (courseIds.length > 0) {
+      const { data: attempts } = await supabase
+        .from('qcm_attempts')
+        .select('flashcard_id')
+        .eq('user_id', user.id)
+      if (attempts && attempts.length > 0) {
+        const flashcardIds = [...new Set(attempts.map((a: any) => a.flashcard_id))]
+        const { data: flashcards } = await supabase
+          .from('flashcards')
+          .select('id, course_id')
+          .in('id', flashcardIds)
+          .in('course_id', courseIds)
+        if (flashcards) {
+          for (const f of flashcards) attemptedCourseIds.add(f.course_id)
+        }
+      }
+    }
+
+    const now = Date.now()
+    const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000
+    const enrichedCourses = teacherCourses.map((c: any) => ({
+      ...c,
+      isNew: (now - new Date(c.created_at).getTime()) < ONE_WEEK_MS,
+      isDone: attemptedCourseIds.has(c.id),
+    }))
+
+    // Group by subject, subjects with new courses first
+    const grouped = enrichedCourses.reduce<Record<string, typeof enrichedCourses>>((acc, c) => {
+      if (!acc[c.subject]) acc[c.subject] = []
+      acc[c.subject].push(c)
+      return acc
+    }, {})
+    const sortedSubjects = Object.entries(grouped).sort(([, a], [, b]) => {
+      const aNew = a.some((c) => c.isNew); const bNew = b.some((c) => c.isNew)
+      if (aNew && !bNew) return -1; if (!aNew && bNew) return 1; return 0
+    })
+
     return (
       <div className="flex flex-col gap-8 animate-fade-in">
         <div>
@@ -301,18 +336,14 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
 
         <StatsBar coursesCount={totalCourses ?? 0} qcmCount={totalQcm ?? 0} streak={streak} coins={coins} />
 
-        {teacherCourses.length > 0 ? (
-          <div>
-            <h2 className="mb-4 font-display text-h3 text-text-main dark:text-text-dark-main">Cours de la classe</h2>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {teacherCourses.map((course: any) => (
-                <CourseCard key={course.id} {...course} />
-              ))}
-            </div>
-          </div>
-        ) : (
-          <EmptyState icon="\uD83D\uDCDA" title="Aucun cours" description="Ton professeur n'a pas encore ajoute de cours." />
-        )}
+        <div>
+          <h2 className="mb-4 font-display text-h3 text-text-main dark:text-text-dark-main">Cours de la classe</h2>
+          {teacherCourses.length > 0 ? (
+            <StudentCourseFolders subjects={sortedSubjects} />
+          ) : (
+            <EmptyState icon="\uD83D\uDCDA" title="Aucun cours" description="Ton professeur n'a pas encore ajoute de cours." />
+          )}
+        </div>
 
         <ObjectivesSummary userId={user.id} />
       </div>
