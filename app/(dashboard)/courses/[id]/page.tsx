@@ -36,9 +36,27 @@ export default async function CourseDetailPage({ params }: Props) {
   const course = await getCourse(id, user.id)
   if (!course) notFound()
 
-  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+  const { data: profile } = await supabase.from('profiles').select('role, classroom_id').eq('id', user.id).single()
   const isStudent = profile?.role === 'student'
   const isTeacher = profile?.role === 'teacher'
+
+  // For students: fetch the folder name to display instead of the generic subject
+  let folderName: string | null = null
+  if (isStudent) {
+    const { data: courseWithFolder } = await supabase
+      .from('courses')
+      .select('folder_id')
+      .eq('id', id)
+      .single()
+    if (courseWithFolder?.folder_id) {
+      const { data: folder } = await supabase
+        .from('course_folders')
+        .select('name')
+        .eq('id', courseWithFolder.folder_id)
+        .single()
+      folderName = folder?.name ?? null
+    }
+  }
 
   const SOURCE_LABELS: Record<string, string> = { text: 'Texte', pdf: 'PDF', photo: 'Photo', vocal: 'Vocal' }
 
@@ -55,7 +73,11 @@ export default async function CourseDetailPage({ params }: Props) {
       <div className="mb-8 flex items-start justify-between gap-4">
         <div className="flex-1 min-w-0">
           <div className="flex flex-wrap items-center gap-2 mb-2">
-            <SubjectBadge subject={course.subject} />
+            {folderName ? (
+              <SubjectBadge subject={folderName} />
+            ) : (
+              <SubjectBadge subject={course.subject} />
+            )}
             <span className="font-body text-[12px] text-text-tertiary dark:text-text-dark-tertiary">
               {SOURCE_LABELS[course.source_type] ?? course.source_type}
             </span>

@@ -50,12 +50,18 @@ export function QcmGenerator({ courseId, flashcards }: QcmGeneratorProps) {
 
   if (finished) {
     return (
-      <div className="flex items-center gap-3 rounded-card border border-success/30 bg-success-soft px-5 py-3 dark:border-emerald-800/30 dark:bg-emerald-950/20">
-        <span className="text-xl">✅</span>
-        <div>
-          <p className="font-body text-[14px] font-semibold text-success dark:text-success-dark">QCM prêt !</p>
-          <p className="font-body text-[12px] text-text-secondary dark:text-text-dark-secondary">Tu peux maintenant faire le QCM</p>
+      <div className="flex items-center justify-between gap-3 rounded-card border border-success/30 bg-success-soft px-5 py-3 dark:border-emerald-800/30 dark:bg-emerald-950/20">
+        <div className="flex items-center gap-3">
+          <span className="text-xl">✅</span>
+          <div>
+            <p className="font-body text-[14px] font-semibold text-success dark:text-success-dark">QCM prêt !</p>
+            <p className="font-body text-[12px] text-text-secondary dark:text-text-dark-secondary">Tu peux maintenant faire le QCM</p>
+          </div>
         </div>
+        <a href={`/courses/${courseId}/qcm`} className="flex items-center gap-1.5 rounded-input bg-success px-4 py-2 font-body text-[13px] font-semibold text-white transition-opacity hover:opacity-90 flex-shrink-0">
+          <Zap className="h-4 w-4" />
+          Faire le QCM
+        </a>
       </div>
     )
   }
