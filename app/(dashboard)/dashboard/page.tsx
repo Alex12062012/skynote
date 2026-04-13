@@ -13,7 +13,7 @@ import { ProgressBar } from '@/components/ui/ProgressBar'
 import { PseudoModal } from '@/components/leaderboard/PseudoModal'
 import { ClassroomSetup } from '@/components/classroom/ClassroomSetup'
 import { TeacherDashboardClient } from '@/components/classroom/TeacherDashboardClient'
-import { SubjectBadge } from '@/components/ui/Badge'
+import { StudentCourseFolders } from '@/components/courses/StudentCourseFolders'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = { title: 'Tableau de bord' }
@@ -271,21 +271,48 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
 
     if (classroomId) {
       const [foldersRes, coursesRes] = await Promise.all([
-        supabase.from('course_folders').select('id, name, order_index').eq('classroom_id', classroomId).order('order_index'),
+        supabase.from('course_folders').select('id, name, color, order_index').eq('classroom_id', classroomId).order('order_index'),
         supabase.from('courses').select('*, folder_id').eq('classroom_id', classroomId).eq('status', 'ready').order('created_at', { ascending: false }),
       ])
       classFolders = foldersRes.data || []
       teacherCourses = coursesRes.data || []
     }
 
-    // Group by folder name — same layout as normal users
+    const now = Date.now()
+    const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000
     const folderMap = new Map(classFolders.map((f: any) => [f.id, f]))
-    const grouped: Record<string, any[]> = {}
-    for (const course of teacherCourses) {
-      const folder = folderMap.get(course.folder_id)
-      const key = folder?.name ?? 'Autres'
-      if (!grouped[key]) grouped[key] = []
-      grouped[key].push(course)
+
+    // Build folder list with their courses (only folders that have courses)
+    const foldersWithCourses = classFolders
+      .map((f: any) => ({
+        id: f.id,
+        name: f.name,
+        color: f.color,
+        courses: teacherCourses
+          .filter((c: any) => c.folder_id === f.id)
+          .map((c: any) => ({
+            ...c,
+            isNew: (now - new Date(c.created_at).getTime()) < ONE_WEEK_MS,
+            isDone: false,
+          })),
+      }))
+      .filter((f: any) => f.courses.length > 0)
+
+    // Courses without a folder
+    const coursesWithoutFolder = teacherCourses.filter(
+      (c: any) => !c.folder_id || !folderMap.has(c.folder_id)
+    )
+    if (coursesWithoutFolder.length > 0) {
+      foldersWithCourses.push({
+        id: '__other__',
+        name: 'Autres cours',
+        color: '#64748B',
+        courses: coursesWithoutFolder.map((c: any) => ({
+          ...c,
+          isNew: (now - new Date(c.created_at).getTime()) < ONE_WEEK_MS,
+          isDone: false,
+        })),
+      })
     }
 
     return (
@@ -301,24 +328,12 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
 
         <StatsBar coursesCount={totalCourses ?? 0} qcmCount={totalQcm ?? 0} streak={streak} coins={coins} />
 
-        <div className="flex flex-col gap-8">
+        <div className="flex flex-col gap-4">
           <h2 className="font-display text-h3 text-text-main dark:text-text-dark-main">Cours de la classe</h2>
-          {teacherCourses.length === 0 ? (
+          {foldersWithCourses.length === 0 ? (
             <EmptyState icon="📚" title="Aucun cours" description="Ton professeur n'a pas encore ajouté de cours." />
           ) : (
-            Object.entries(grouped).map(([folderName, courses]) => (
-              <div key={folderName}>
-                <div className="mb-4 flex items-center gap-3">
-                  <SubjectBadge subject={folderName} />
-                  <span className="font-body text-[13px] text-text-tertiary dark:text-text-dark-tertiary">
-                    {courses.length} cours
-                  </span>
-                </div>
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                  {courses.map((c: any) => <CourseCard key={c.id} {...c} />)}
-                </div>
-              </div>
-            ))
+            <StudentCourseFolders folders={foldersWithCourses} />
           )}
         </div>
 
