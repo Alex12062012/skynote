@@ -92,9 +92,7 @@ export function StudentCourseFolders({ folders }: StudentCourseFoldersProps) {
               {notDone.map((c) => (
                 <div key={c.id} className="relative">
                   {c.isNew && (
-                    <div className="absolute -top-1.5 -right-1.5 z-10 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 shadow-md">
-                      <span className="text-[9px] font-bold text-white">N</span>
-                    </div>
+                    <div className="absolute -top-1 -right-1 z-10 h-2.5 w-2.5 rounded-full bg-red-500 shadow-sm" />
                   )}
                   <CourseCard {...c} />
                 </div>
@@ -137,9 +135,7 @@ export function StudentCourseFolders({ folders }: StudentCourseFoldersProps) {
             className="group relative flex items-center gap-3 rounded-card border border-sky-border bg-sky-surface p-4 shadow-card transition-all hover:border-brand/30 hover:shadow-md dark:border-night-border dark:bg-night-surface dark:shadow-card-dark dark:hover:border-brand-dark/30 text-left"
           >
             {hasNew && (
-              <div className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 shadow-md animate-pulse">
-                <span className="text-[9px] font-bold text-white">!</span>
-              </div>
+              <div className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-red-500 shadow-sm" />
             )}
 
             <div
