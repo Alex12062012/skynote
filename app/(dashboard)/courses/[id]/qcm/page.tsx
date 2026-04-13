@@ -27,27 +27,43 @@ export default async function QcmPage({ params }: Props) {
     redirect(`/courses/${id}`)
   }
 
-  // Si les QCM sont encore en cours de génération → page de chargement avec auto-refresh
+  // Si les QCM sont encore en cours de génération → vérifier si des questions existent quand même
   if ((course as any).qcm_status === 'processing') {
-    return (
-      <div className="flex min-h-[60vh] flex-col items-center justify-center gap-6 text-center px-4">
-        <QcmProcessingPoller courseId={id} />
-        <div className="flex h-20 w-20 items-center justify-center rounded-full bg-brand-soft dark:bg-brand-dark-soft">
-          <div className="h-10 w-10 animate-spin rounded-full border-4 border-brand border-t-transparent dark:border-brand-dark" />
+    // Vérifier si des questions existent déjà (cas élève : le prof a généré mais qcm_status pas encore à jour)
+    const flashcardsForCheck = await getCourseFlashcards(id)
+    const flashcardIdsForCheck = flashcardsForCheck.map((f) => f.id)
+    let hasExistingQuestions = false
+    if (flashcardIdsForCheck.length > 0) {
+      const { count } = await supabase
+        .from('qcm_questions')
+        .select('*', { count: 'exact', head: true })
+        .in('flashcard_id', flashcardIdsForCheck)
+        .eq('user_id', course.user_id)
+      hasExistingQuestions = (count ?? 0) > 0
+    }
+
+    if (!hasExistingQuestions) {
+      return (
+        <div className="flex min-h-[60vh] flex-col items-center justify-center gap-6 text-center px-4">
+          <QcmProcessingPoller courseId={id} />
+          <div className="flex h-20 w-20 items-center justify-center rounded-full bg-brand-soft dark:bg-brand-dark-soft">
+            <div className="h-10 w-10 animate-spin rounded-full border-4 border-brand border-t-transparent dark:border-brand-dark" />
+          </div>
+          <div>
+            <h2 className="font-display text-h3 text-text-main dark:text-text-dark-main mb-2">
+              QCM en cours de génération...
+            </h2>
+            <p className="font-body text-[14px] text-text-secondary dark:text-text-dark-secondary max-w-sm">
+              L'IA crée tes questions. La page se met à jour automatiquement ✨
+            </p>
+          </div>
+          <Link href={`/courses/${id}`} className="font-body text-[13px] text-text-secondary hover:text-text-main dark:text-text-dark-secondary transition-colors">
+            <ArrowLeft className="inline h-3.5 w-3.5 mr-1" />Retour aux fiches
+          </Link>
         </div>
-        <div>
-          <h2 className="font-display text-h3 text-text-main dark:text-text-dark-main mb-2">
-            QCM en cours de génération...
-          </h2>
-          <p className="font-body text-[14px] text-text-secondary dark:text-text-dark-secondary max-w-sm">
-            L'IA crée tes questions. La page se met à jour automatiquement ✨
-          </p>
-        </div>
-        <Link href={`/courses/${id}`} className="font-body text-[13px] text-text-secondary hover:text-text-main dark:text-text-dark-secondary transition-colors">
-          <ArrowLeft className="inline h-3.5 w-3.5 mr-1" />Retour aux fiches
-        </Link>
-      </div>
-    )
+      )
+    }
+    // Des questions existent → continuer comme si le QCM était prêt
   }
 
   const flashcards = await getCourseFlashcards(id)

@@ -112,12 +112,12 @@ export default async function CourseDetailPage({ params }: Props) {
         </div>
       )}
 
-      {course.status === 'ready' && <ReadyCourse courseId={id} userId={user.id} courseTitle={course.title} qcmStatus={(course as any).qcm_status} isTeacher={isTeacher} />}
+      {course.status === 'ready' && <ReadyCourse courseId={id} userId={user.id} courseTitle={course.title} qcmStatus={(course as any).qcm_status} isTeacher={isTeacher} isStudent={isStudent} />}
     </div>
   )
 }
 
-async function ReadyCourse({ courseId, userId, courseTitle, qcmStatus, isTeacher }: { courseId: string; userId: string; courseTitle: string; qcmStatus?: string; isTeacher: boolean }) {
+async function ReadyCourse({ courseId, userId, courseTitle, qcmStatus, isTeacher, isStudent }: { courseId: string; userId: string; courseTitle: string; qcmStatus?: string; isTeacher: boolean; isStudent: boolean }) {
   const supabase = await createClient()
   const flashcards = await getCourseFlashcards(courseId)
   const qcmReady = qcmStatus === 'ready' || !qcmStatus
@@ -138,9 +138,31 @@ async function ReadyCourse({ courseId, userId, courseTitle, qcmStatus, isTeacher
       {/* Vue PROF : stats des élèves */}
       {isTeacher ? (
         <TeacherCourseStats courseId={courseId} flashcardsCount={flashcards.length} />
+      ) : isStudent ? (
+        /* Vue ÉLÈVE : jamais de QcmGenerator, le QCM appartient au prof */
+        qcmReady ? (
+          <div className="flex items-center justify-between rounded-card border border-sky-border bg-sky-surface-2 px-5 py-4 dark:border-night-border dark:bg-night-surface-2">
+            <p className="font-body text-[14px] font-semibold text-text-main dark:text-text-dark-main">
+              {flashcards.length} fiches générées ✨
+            </p>
+            <Link href={`/courses/${courseId}/qcm`}>
+              <Button size="sm" className="gap-1.5 flex-shrink-0">
+                <Zap className="h-4 w-4" />
+                Faire le QCM
+              </Button>
+            </Link>
+          </div>
+        ) : (
+          <div className="flex items-center gap-3 rounded-card border border-sky-border bg-sky-surface-2 px-5 py-4 dark:border-night-border dark:bg-night-surface-2">
+            <div className="h-4 w-4 animate-spin rounded-full border-2 border-brand border-t-transparent dark:border-brand-dark flex-shrink-0" />
+            <p className="font-body text-[14px] text-text-secondary dark:text-text-dark-secondary">
+              Le QCM est en cours de préparation par ton prof...
+            </p>
+          </div>
+        )
       ) : (
         <>
-          {/* QCM en cours ou prêt */}
+          {/* Vue PARTICULIER : QCM en cours ou prêt */}
           {!qcmReady ? (
             <QcmGenerator
               courseId={courseId}
