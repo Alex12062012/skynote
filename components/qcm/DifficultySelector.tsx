@@ -1,8 +1,8 @@
 'use client'
 
+import { Leaf, Target, Flame, Trophy } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { SkyCoin } from '@/components/ui/SkyCoin'
-import { Button } from '@/components/ui/Button'
 import type { QcmDifficulty } from '@/lib/supabase/qcm-actions'
 
 interface DifficultySelectorProps {
@@ -14,7 +14,7 @@ interface DifficultySelectorProps {
 const DIFFICULTIES: {
   key: QcmDifficulty
   label: string
-  emoji: string
+  Icon: React.ElementType
   description: string
   coins: number
   color: string
@@ -24,10 +24,10 @@ const DIFFICULTIES: {
   borderDark: string
 }[] = [
   {
-    key: 'easy',
+    key: 'peaceful',
     label: 'Paisible',
-    emoji: '🌿',
-    description: 'Questions directes sur les définitions et faits principaux.',
+    Icon: Leaf,
+    description: 'Questions tres directes sur les definitions. Zero piege.',
     coins: 1,
     color: 'text-emerald-600 dark:text-emerald-400',
     bgLight: 'bg-emerald-50',
@@ -36,11 +36,11 @@ const DIFFICULTIES: {
     borderDark: 'dark:border-emerald-800/40',
   },
   {
-    key: 'medium',
+    key: 'easy',
     label: 'Normal',
-    emoji: '⚡',
-    description: 'Questions de compréhension avec des pièges plausibles.',
-    coins: 3,
+    Icon: Target,
+    description: 'Questions de cours avec quelques pieges simples.',
+    coins: 2,
     color: 'text-brand dark:text-brand-dark',
     bgLight: 'bg-brand-soft',
     bgDark: 'dark:bg-brand-dark-soft',
@@ -48,10 +48,22 @@ const DIFFICULTIES: {
     borderDark: 'dark:border-brand-dark/30',
   },
   {
-    key: 'hard',
+    key: 'medium',
     label: 'Hardcore',
-    emoji: '💀',
-    description: 'Questions avancées avec pièges subtils. Maîtrise totale requise.',
+    Icon: Flame,
+    description: 'Pieges subtils + quelques connaissances supplementaires.',
+    coins: 3,
+    color: 'text-orange-600 dark:text-orange-400',
+    bgLight: 'bg-orange-50',
+    bgDark: 'dark:bg-orange-950/20',
+    borderLight: 'border-orange-200',
+    borderDark: 'dark:border-orange-800/40',
+  },
+  {
+    key: 'hard',
+    label: 'Teste tes parents',
+    Icon: Trophy,
+    description: 'Niveau expert : pieges avances + culture generale du domaine.',
     coins: 5,
     color: 'text-red-600 dark:text-red-400',
     bgLight: 'bg-red-50',
@@ -67,13 +79,14 @@ export function DifficultySelector({ flashcardTitle, onSelect, isLoading }: Diff
       {/* Header */}
       <div className="text-center">
         <div className="flex h-16 w-16 items-center justify-center rounded-full bg-brand-soft dark:bg-brand-dark-soft mx-auto mb-4">
-          <span className="text-3xl">🎯</span>
+          <Target className="h-8 w-8 text-brand dark:text-brand-dark" />
         </div>
         <h2 className="font-display text-h3 font-semibold text-text-main dark:text-text-dark-main">
           Choisis ton niveau
         </h2>
         <p className="mt-1 font-body text-[14px] text-text-secondary dark:text-text-dark-secondary max-w-xs mx-auto">
-          Les questions seront adaptées à ta fiche <strong className="text-text-main dark:text-text-dark-main">{flashcardTitle}</strong>
+          Questions adaptees a ta fiche{' '}
+          <strong className="text-text-main dark:text-text-dark-main">{flashcardTitle}</strong>
         </p>
       </div>
 
@@ -91,19 +104,17 @@ export function DifficultySelector({ flashcardTitle, onSelect, isLoading }: Diff
               isLoading && 'opacity-50 cursor-not-allowed'
             )}
           >
-            {/* Emoji */}
-            <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-white/60 dark:bg-white/5 shadow-sm text-2xl">
-              {d.emoji}
+            {/* Icon */}
+            <div className={cn('flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-white/60 dark:bg-white/5 shadow-sm', d.color)}>
+              <d.Icon className="h-6 w-6" />
             </div>
 
             {/* Info */}
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-0.5">
-                <span className={cn('font-display text-[16px] font-bold', d.color)}>
-                  {d.label}
-                </span>
-              </div>
-              <p className="font-body text-[13px] text-text-secondary dark:text-text-dark-secondary leading-snug">
+              <span className={cn('font-display text-[16px] font-bold', d.color)}>
+                {d.label}
+              </span>
+              <p className="font-body text-[13px] text-text-secondary dark:text-text-dark-secondary leading-snug mt-0.5">
                 {d.description}
               </p>
             </div>
@@ -124,9 +135,8 @@ export function DifficultySelector({ flashcardTitle, onSelect, isLoading }: Diff
         ))}
       </div>
 
-      {/* Footer hint */}
       <p className="text-center font-body text-[12px] text-text-tertiary dark:text-text-dark-tertiary">
-        Les questions seront générées par l'IA selon le niveau choisi ✨
+        Les questions sont deja generees — lance-toi
       </p>
     </div>
   )

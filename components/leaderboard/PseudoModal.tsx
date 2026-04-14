@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { X } from 'lucide-react'
+import { X, Trophy } from 'lucide-react'
 
 export function PseudoModal({ userId }: { userId: string }) {
   const [pseudo, setPseudo] = useState('')
@@ -15,7 +15,7 @@ export function PseudoModal({ userId }: { userId: string }) {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!pseudo.trim() || pseudo.trim().length < 2) {
-      setError('Le pseudo doit faire au moins 2 caractères')
+      setError('Le pseudo doit faire au moins 2 caracteres')
       return
     }
     setLoading(true)
@@ -34,7 +34,7 @@ export function PseudoModal({ userId }: { userId: string }) {
         window.location.reload()
       }
     } catch {
-      setError('Erreur réseau')
+      setError('Erreur reseau')
     }
     setLoading(false)
   }
@@ -43,7 +43,6 @@ export function PseudoModal({ userId }: { userId: string }) {
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
       <div className="relative z-10 w-full max-w-sm rounded-card-login border border-sky-border bg-sky-surface p-6 shadow-2xl dark:border-night-border dark:bg-night-surface animate-slide-in">
-        {/* Croix discrète pour fermer */}
         <button
           onClick={() => setDismissed(true)}
           className="absolute top-3 right-3 flex h-7 w-7 items-center justify-center rounded-full text-text-tertiary/40 transition-colors hover:text-text-tertiary dark:text-text-dark-tertiary/30 dark:hover:text-text-dark-tertiary"
@@ -52,7 +51,9 @@ export function PseudoModal({ userId }: { userId: string }) {
         </button>
 
         <div className="mb-4 flex items-center gap-3">
-          <span className="text-2xl">🏆</span>
+          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-soft dark:bg-brand-dark-soft">
+            <Trophy className="h-5 w-5 text-brand dark:text-brand-dark" />
+          </div>
           <div>
             <h3 className="font-display text-[17px] font-bold text-text-main dark:text-text-dark-main">
               Choisis ton pseudo
@@ -82,10 +83,9 @@ export function PseudoModal({ userId }: { userId: string }) {
           )}
           <button
             type="submit"
-            disabled={loading || !pseudo.trim()}
+            disabled={loading || pseudo.trim().length === 0}
             className="h-11 w-full rounded-input bg-brand font-body text-[14px] font-semibold text-white transition-all hover:bg-brand-hover disabled:opacity-50 dark:bg-brand-dark dark:text-night-bg dark:hover:bg-brand-dark-hover"
-          >
-            {loading ? 'Validation...' : 'Valider mon pseudo'}
+          >            {loading ? 'Validation...' : 'Valider mon pseudo'}
           </button>
         </form>
       </div>

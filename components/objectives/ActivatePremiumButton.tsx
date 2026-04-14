@@ -3,6 +3,7 @@
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { Star } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { SkyCoin } from '@/components/ui/SkyCoin'
 import { activatePremiumWithCoins } from '@/lib/supabase/objectives-actions'
@@ -49,7 +50,9 @@ export function ActivatePremiumButton({ coins }: { coins: number }) {
 
             {success ? (
               <div className="flex flex-col items-center gap-4 py-6 text-center">
-                <span className="text-6xl animate-pop-in">⭐</span>
+                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900/30 animate-pop-in">
+                  <Star className="h-8 w-8 text-amber-500" />
+                </div>
                 <div>
                   <p className="font-display text-h3 text-success dark:text-success-dark">Plus activé !</p>
                   <p className="mt-1 font-body text-[14px] text-text-secondary dark:text-text-dark-secondary">
@@ -62,7 +65,7 @@ export function ActivatePremiumButton({ coins }: { coins: number }) {
                 {/* Header */}
                 <div className="mb-5 flex items-center justify-between">
                   <h3 className="font-display text-h4 text-text-main dark:text-text-dark-main">
-                    Activer le plan Plus ⭐
+                    Activer le plan Plus
                   </h3>
                   <button onClick={() => setOpen(false)} className="text-text-tertiary hover:text-text-main dark:hover:text-text-dark-main text-xl">×</button>
                 </div>
@@ -123,8 +126,7 @@ export function ActivatePremiumButton({ coins }: { coins: number }) {
                 {/* Lien vers pricing */}
                 <p className="mt-3 text-center font-body text-[12px] text-text-tertiary dark:text-text-dark-tertiary">
                   Préfères-tu payer par carte ?{' '}
-                  <Link href="/pricing" className="text-brand hover:underline dark:text-brand-dark" onClick={() => setOpen(false)}>
-                    Voir les forfaits →
+                  <Link href="/pricing" className="text-brand hover:underline dark:text-brand-dark" onClick={() => setOpen(false)}>Voir les tarifs
                   </Link>
                 </p>
               </>

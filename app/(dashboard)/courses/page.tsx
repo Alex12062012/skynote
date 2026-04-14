@@ -55,7 +55,7 @@ export default async function CoursesPage() {
         </div>
 
         {teacherCourses.length === 0 ? (
-          <EmptyState icon="📚" title="Aucun cours pour l'instant" description="Ton professeur n'a pas encore ajouté de cours." />
+          <EmptyState  title="Aucun cours pour l'instant" description="Ton professeur n'a pas encore ajouté de cours." />
         ) : (
           Object.entries(grouped).map(([folderName, courses]) => (
             <div key={folderName}>
@@ -96,7 +96,7 @@ export default async function CoursesPage() {
       </div>
 
       {courses.length === 0 ? (
-        <EmptyState icon="📚" title="Aucun cours pour l'instant"
+        <EmptyState  title="Aucun cours pour l'instant"
           description="Crée ton premier cours pour que l'IA génère tes fiches de révision."
           action={<Link href="/courses/new"><Button className="gap-2"><Plus className="h-4 w-4" />Créer mon premier cours</Button></Link>}
         />

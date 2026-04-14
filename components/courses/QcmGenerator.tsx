@@ -52,7 +52,7 @@ export function QcmGenerator({ courseId, flashcards }: QcmGeneratorProps) {
     return (
       <div className="flex items-center justify-between rounded-card border border-sky-border bg-sky-surface-2 px-5 py-4 dark:border-night-border dark:bg-night-surface-2">
         <p className="font-body text-[14px] font-semibold text-text-main dark:text-text-dark-main">
-          {total} fiches générées ✨
+          {total} fiches — QCM prêts
         </p>
         <a href={`/courses/${courseId}/qcm`} className="flex items-center gap-1.5 rounded-input bg-brand px-4 py-2 font-body text-[13px] font-semibold text-white transition-opacity hover:opacity-90 flex-shrink-0 dark:bg-brand-dark">
           <Zap className="h-4 w-4" />
@@ -68,7 +68,7 @@ export function QcmGenerator({ courseId, flashcards }: QcmGeneratorProps) {
         <div className="flex items-center gap-2">
           <div className="h-4 w-4 animate-spin rounded-full border-2 border-brand border-t-transparent dark:border-brand-dark" />
           <p className="font-body text-[14px] font-semibold text-text-main dark:text-text-dark-main">
-            Génération des QCM en cours...
+            Génération des QCM (4 niveaux) en cours...
           </p>
         </div>
         <span className="font-display text-[14px] font-bold text-brand dark:text-brand-dark">
@@ -85,7 +85,7 @@ export function QcmGenerator({ courseId, flashcards }: QcmGeneratorProps) {
       </div>
       
       <p className="mt-2 font-body text-[12px] text-text-tertiary dark:text-text-dark-tertiary">
-        Lis tes fiches pendant ce temps ! 📖
+        Lis tes fiches pendant ce temps !
       </p>
 
       {error && (

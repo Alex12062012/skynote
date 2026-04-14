@@ -54,7 +54,7 @@ export default async function QcmPage({ params }: Props) {
               QCM en cours de génération...
             </h2>
             <p className="font-body text-[14px] text-text-secondary dark:text-text-dark-secondary max-w-sm">
-              L'IA crée tes questions. La page se met à jour automatiquement ✨
+              L'IA crée tes questions. La page se met à jour automatiquement.
             </p>
           </div>
           <Link href={`/courses/${id}`} className="font-body text-[13px] text-text-secondary hover:text-text-main dark:text-text-dark-secondary transition-colors">
@@ -74,26 +74,21 @@ export default async function QcmPage({ params }: Props) {
         <Link href={`/courses/${id}`} className="mb-6 inline-flex items-center gap-2 font-body text-[14px] text-text-secondary hover:text-text-main dark:text-text-dark-secondary dark:hover:text-text-dark-main transition-colors">
           <ArrowLeft className="h-4 w-4" /> Retour aux fiches
         </Link>
-        <EmptyState icon="📭" title="Aucune fiche disponible" description="Les fiches doivent être générées avant de pouvoir faire le QCM." />
+        <EmptyState title="Aucune fiche disponible" description="Les fiches doivent être générées avant de pouvoir faire le QCM." />
       </div>
     )
   }
 
-  // Récupérer toutes les questions pour toutes les fiches
+  // Récupérer toutes les questions pour toutes les fiches et tous les niveaux
   // Pour les élèves, les questions sont celles du prof (user_id = course.user_id)
   const flashcardIds = flashcards.map((f) => f.id)
-  const { data: allQuestions } = await supabase
+  const { data: rawQuestions } = await supabase
     .from('qcm_questions')
     .select('*')
     .in('flashcard_id', flashcardIds)
     .eq('user_id', course.user_id)
 
-  // Grouper par fiche
-  const questions = (allQuestions ?? []) as QcmQuestion[]
-  const questionsByFlashcard: Record<string, QcmQuestion[]> = {}
-  for (const fid of flashcardIds) {
-    questionsByFlashcard[fid] = questions.filter((q) => q.flashcard_id === fid)
-  }
+  const allQuestions = (rawQuestions ?? []) as QcmQuestion[]
 
   return (
     <div className="mx-auto max-w-2xl animate-fade-in">
@@ -121,14 +116,14 @@ export default async function QcmPage({ params }: Props) {
           </span>
         </div>
         <p className="mt-2 font-body text-[14px] text-text-secondary dark:text-text-dark-secondary">
-          Réponds aux questions générées par l'IA ⚡
+          Réponds aux questions générées par l'IA
         </p>
       </div>
 
       {/* QCM Engine */}
       <QcmPageClient
         flashcards={flashcards}
-        questionsByFlashcard={questionsByFlashcard}
+        allQuestions={allQuestions}
         courseId={id}
       />
     </div>

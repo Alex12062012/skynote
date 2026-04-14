@@ -41,11 +41,15 @@ function parseClaudeJSON<T>(raw: string): T | null {
 function deduplicateFlashcards(flashcards: GeneratedFlashcard[]): GeneratedFlashcard[] {
   const seen = new Set<string>()
   return flashcards.filter((f) => {
-    const normalized = f.title.toLowerCase()
-      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-      .replace(/[^a-z0-9\s]/g, '').replace(/\s+/g, ' ').trim()
+    const normalized = f.title
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9\s]/g, '')
+      .replace(/\s+/g, ' ')
+      .trim()
     const prefix = normalized.slice(0, 20)
-    if (seen.has(normalized) || [...seen].some(s => s.startsWith(prefix) && prefix.length > 8)) {
+    if (seen.has(normalized) || [...seen].some((s) => s.startsWith(prefix) && prefix.length > 8)) {
       return false
     }
     seen.add(normalized)
@@ -56,7 +60,9 @@ function deduplicateFlashcards(flashcards: GeneratedFlashcard[]): GeneratedFlash
 const MAX_FLASHCARDS = 6
 
 export async function generateFlashcards(
-  courseTitle: string, subject: string, content: string
+  courseTitle: string,
+  subject: string,
+  content: string
 ): Promise<GeneratedFlashcard[]> {
   const message = await anthropic.messages.create({
     model: 'claude-sonnet-4-20250514',
@@ -72,7 +78,7 @@ export async function generateFlashcards(
 
   const parsed = parseClaudeJSON<{ flashcards: GeneratedFlashcard[] }>(raw)
   if (!parsed?.flashcards || !Array.isArray(parsed.flashcards)) {
-    throw new Error('Reponse IA invalide pour les fiches')
+    throw new Error('Réponse IA invalide pour les fiches')
   }
 
   const cleaned = parsed.flashcards
@@ -90,15 +96,21 @@ export async function generateFlashcards(
   const limited = deduped.slice(0, MAX_FLASHCARDS)
 
   if (limited.length === 0) {
-    throw new Error('Aucune fiche valide generee par l IA')
+    throw new Error("Aucune fiche valide générée par l'IA")
   }
 
   return limited
 }
 
 export async function generateQcmQuestions(
+<<<<<<< HEAD
   flashcardTitle: string, summary: string, keyPoints: string[],
   difficulty: QcmDifficulty = 'medium'
+=======
+  flashcardTitle: string,
+  summary: string,
+  keyPoints: string[]
+>>>>>>> 79e36e2 (fix: dashboard corrigé + landing page et UI pro pour la prod)
 ): Promise<GeneratedQuestion[]> {
   const message = await anthropic.messages.create({
     model: 'claude-sonnet-4-20250514',
@@ -114,14 +126,19 @@ export async function generateQcmQuestions(
 
   const parsed = parseClaudeJSON<{ questions: GeneratedQuestion[] }>(raw)
   if (!parsed?.questions || !Array.isArray(parsed.questions)) {
-    throw new Error('Reponse IA invalide pour le QCM')
+    throw new Error('Réponse IA invalide pour le QCM')
   }
 
   return parsed.questions
-    .filter((q) =>
-      q.question && Array.isArray(q.options) && q.options.length === 4 &&
-      typeof q.correct_index === 'number' && q.correct_index >= 0 &&
-      q.correct_index <= 3 && q.explanation
+    .filter(
+      (q) =>
+        q.question &&
+        Array.isArray(q.options) &&
+        q.options.length === 4 &&
+        typeof q.correct_index === 'number' &&
+        q.correct_index >= 0 &&
+        q.correct_index <= 3 &&
+        q.explanation
     )
     .map((q) => ({
       question: String(q.question).trim(),

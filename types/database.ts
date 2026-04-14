@@ -39,7 +39,8 @@ export interface Flashcard {
 
 export interface QcmQuestion {
   id: string; flashcard_id: string; course_id: string; user_id: string
-  question: string; options: string[]; correct_index: number; explanation: string; created_at: string
+  question: string; options: string[]; correct_index: number; explanation: string
+  difficulty: 'peaceful' | 'easy' | 'medium' | 'hard'; created_at: string
 }
 
 export interface QcmAttempt {

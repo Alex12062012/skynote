@@ -3,6 +3,7 @@
 import { useState, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
+import { Trophy, ThumbsUp, BookOpen } from "lucide-react"
 
 type Pair = { q: string; a: string }
 
@@ -27,10 +28,8 @@ interface Question {
 const QUESTION_COUNT = 20
 
 function buildQuestions(pairs: Pair[]): Question[] {
-  // Si moins de 4 paires, on ne peut pas generer 3 distracteurs distincts
   const allAnswers = pairs.map(p => p.a)
 
-  // Melange Fisher-Yates
   function shuffle<T>(arr: T[]): T[] {
     const a = [...arr]
     for (let i = a.length - 1; i > 0; i--) {
@@ -40,7 +39,6 @@ function buildQuestions(pairs: Pair[]): Question[] {
     return a
   }
 
-  // Echantillonner N questions depuis les paires (avec repetition si < 20 paires)
   const pool: Pair[] = []
   while (pool.length < QUESTION_COUNT) {
     pool.push(...shuffle(pairs))
@@ -49,7 +47,6 @@ function buildQuestions(pairs: Pair[]): Question[] {
 
   return selected.map(pair => {
     const distractors = shuffle(allAnswers.filter(a => a !== pair.a)).slice(0, 3)
-    // Completer avec des variantes si pas assez de distracteurs
     while (distractors.length < 3) distractors.push("—")
     const choices = shuffle([pair.a, ...distractors])
     return { question: pair.q, correct: pair.a, choices }
@@ -80,20 +77,17 @@ export function ListQuizPlayer({ quiz, userId, currentCoins }: Props) {
 
   async function next() {
     if (current + 1 >= QUESTION_COUNT) {
-      // Fin du quiz
       setSubmitting(true)
       try {
         const res = await fetch("/api/list-quiz/complete", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ quizId: quiz.id, score: selected === q.correct ? score : score, total: QUESTION_COUNT }),
+          body: JSON.stringify({ quizId: quiz.id, score, total: QUESTION_COUNT }),
         })
-        // Score final (la derniere reponse est deja comptee)
-        const finalScore = selected === q.correct ? score : score
         const data = await res.json()
         setCoinsEarned(data.coinsEarned ?? 0)
       } catch {
-        // On affiche quand meme les resultats
+        // afficher resultats quand meme
       } finally {
         setSubmitting(false)
         setPhase("result")
@@ -117,7 +111,13 @@ export function ListQuizPlayer({ quiz, userId, currentCoins }: Props) {
     return (
       <div style={{ minHeight: "100vh", background: "#060D1A", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
         <div style={{ maxWidth: 420, width: "100%", textAlign: "center" }}>
-          <p style={{ fontSize: 56, marginBottom: 8 }}>{isPerfect ? "🏆" : score >= QUESTION_COUNT * 0.7 ? "👏" : "📚"}</p>
+          <div style={{ display: "flex", justifyContent: "center", marginBottom: 8 }}>
+            {isPerfect
+              ? <Trophy style={{ width: 56, height: 56, color: "#F59E0B" }} />
+              : score >= QUESTION_COUNT * 0.7
+                ? <ThumbsUp style={{ width: 56, height: 56, color: "#60A5FA" }} />
+                : <BookOpen style={{ width: 56, height: 56, color: "#94A3B8" }} />}
+          </div>
           <h2 style={{ color: "#F0F6FF", fontSize: 26, fontWeight: 700, marginBottom: 6 }}>
             {score} / {QUESTION_COUNT}
           </h2>
@@ -128,7 +128,7 @@ export function ListQuizPlayer({ quiz, userId, currentCoins }: Props) {
           {coinsEarned > 0 && (
             <div style={{ background: "rgba(37,99,235,0.12)", border: "1px solid rgba(96,165,250,0.3)", borderRadius: 12, padding: "14px 20px", marginBottom: 24 }}>
               <p style={{ color: "#60A5FA", fontSize: 15, fontWeight: 600, margin: 0 }}>
-                +{coinsEarned} Sky Coins gagnés 🪙
+                +{coinsEarned} Sky Coins gagnes
               </p>
             </div>
           )}
@@ -148,7 +148,7 @@ export function ListQuizPlayer({ quiz, userId, currentCoins }: Props) {
               Modifier les paires
             </Link>
             <Link href="/dashboard" style={{ color: "#475569", fontSize: 13, textDecoration: "none", marginTop: 4 }}>
-              ← Retour au dashboard
+              Retour au dashboard
             </Link>
           </div>
         </div>
@@ -228,7 +228,7 @@ export function ListQuizPlayer({ quiz, userId, currentCoins }: Props) {
               color: "#fff", fontWeight: 600, fontSize: 15, cursor: submitting ? "default" : "pointer",
             }}
           >
-            {current + 1 >= QUESTION_COUNT ? (submitting ? "Calcul en cours..." : "Voir les resultats") : "Question suivante →"}
+            {current + 1 >= QUESTION_COUNT ? (submitting ? "Calcul en cours..." : "Voir les resultats") : "Question suivante"}
           </button>
         )}
       </div>

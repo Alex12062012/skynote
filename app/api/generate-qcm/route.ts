@@ -58,6 +58,7 @@ export async function POST(request: NextRequest) {
         options: q.options,
         correct_index: q.correct_index,
         explanation: q.explanation,
+        difficulty,
       }))
     )
 

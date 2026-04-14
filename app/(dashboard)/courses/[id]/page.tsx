@@ -1,6 +1,6 @@
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Zap, AlertCircle } from 'lucide-react'
+import { ArrowLeft, Zap, AlertCircle, BarChart2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { getCourse, getCourseFlashcards } from '@/lib/supabase/queries'
 import { EditableTitle } from '@/components/courses/EditableTitle'
@@ -154,7 +154,7 @@ async function ReadyCourse({ courseId, userId, courseOwnerId, courseTitle, qcmSt
         qcmReady ? (
           <div className="flex items-center justify-between rounded-card border border-sky-border bg-sky-surface-2 px-5 py-4 dark:border-night-border dark:bg-night-surface-2">
             <p className="font-body text-[14px] font-semibold text-text-main dark:text-text-dark-main">
-              {flashcards.length} fiches générées ✨
+              {flashcards.length} fiches générées
             </p>
             <Link href={`/courses/${courseId}/qcm`}>
               <Button size="sm" className="gap-1.5 flex-shrink-0">
@@ -182,7 +182,7 @@ async function ReadyCourse({ courseId, userId, courseOwnerId, courseTitle, qcmSt
           ) : (
             <div className="flex items-center justify-between rounded-card border border-sky-border bg-sky-surface-2 px-5 py-4 dark:border-night-border dark:bg-night-surface-2">
               <p className="font-body text-[14px] font-semibold text-text-main dark:text-text-dark-main">
-                {flashcards.length} fiches générées ✨
+                {flashcards.length} fiches générées
               </p>
               <Link href={`/courses/${courseId}/qcm`}>
                 <Button size="sm" className="gap-1.5 flex-shrink-0">
@@ -261,7 +261,7 @@ async function TeacherCourseStats({ courseId, flashcardsCount }: { courseId: str
     <div className="rounded-card bg-sky-surface p-6 shadow-card dark:bg-night-surface">
       <div className="mb-4 flex items-center gap-3">
         <div className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-soft dark:bg-brand-dark-soft">
-          <span className="text-lg">📊</span>
+          <BarChart2 className="h-5 w-5 text-brand dark:text-brand-dark" />
         </div>
         <div>
           <h2 className="font-display text-[18px] font-semibold text-text-main dark:text-text-dark-main">
@@ -303,7 +303,7 @@ async function TeacherCourseStats({ courseId, flashcardsCount }: { courseId: str
                     </span>
                     {bestAttempt.perfect && (
                       <span className="rounded-pill bg-success/10 px-2 py-0.5 font-body text-[11px] font-medium text-success">
-                        Parfait ⭐
+                        Parfait
                       </span>
                     )}
                   </>

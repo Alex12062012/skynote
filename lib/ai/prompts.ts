@@ -10,10 +10,6 @@ Tu transformes un cours en fiches de revision.
 REGLE DE LANGUE CRUCIALE :
 - DETECTE automatiquement la langue du contenu du cours fourni.
 - Genere les fiches DANS LA MEME LANGUE que le contenu du cours.
-- Si le cours est en chinois, les fiches sont en chinois.
-- Si le cours est en anglais, les fiches sont en anglais.
-- Si le cours est en francais, les fiches sont en francais.
-- Et ainsi de suite pour toute autre langue.
 
 CONTRAINTES STRICTES - toute violation rend la reponse invalide :
 1. Reponds UNIQUEMENT en JSON valide. Pas de markdown, pas de backticks, pas de texte avant ou apres le JSON.
@@ -41,87 +37,84 @@ FORMAT JSON EXACT :
 
 RAPPEL : Idealement 4 fiches, jusqu'a 6 si vraiment necessaire. 3 key_points par fiche, pas plus. Aucun doublon. TOUT DANS LA LANGUE DU COURS.`
 
-export type QcmDifficulty = 'easy' | 'medium' | 'hard'
+export const FLASHCARD_SYSTEM_PROMPT_UNUSED = FLASHCARD_SYSTEM_PROMPT
+
+export type QcmDifficulty = 'peaceful' | 'easy' | 'medium' | 'hard'
 
 const QCM_DIFFICULTY_INSTRUCTIONS: Record<QcmDifficulty, string> = {
-  easy: `NIVEAU FACILE :
+  peaceful: `NIVEAU PAISIBLE (tres facile) :
+- Questions ultra-directes sur les definitions et faits principaux du cours.
+- Les mauvaises reponses sont clairement et evidemment differentes de la bonne.
+- ZERO piege, ZERO nuance subtile, ZERO connaissance hors-cours.
+- Formulations tres simples, une seule idee par question.
+- L'eleve qui a lu la fiche une seule fois doit pouvoir repondre facilement.`,
+
+  easy: `NIVEAU NORMAL :
 - Questions directes sur les definitions et faits principaux du cours.
-- Les mauvaises reponses sont clairement differentes de la bonne.
-- Pas de pieges ni de nuances subtiles.
-- Formulations simples et courtes.`,
-  medium: `NIVEAU MOYEN :
-- Questions de comprehension : l'eleve doit avoir compris, pas juste memorise.
-- Les mauvaises reponses sont plausibles mais distinguables avec reflexion.
-- Inclure des questions d'application et de comparaison.
-- Formulations claires mais qui demandent de reflechir.`,
-  hard: `NIVEAU DIFFICILE :
-- Questions avancees : application, analyse, cas concrets, pieges subtils.
-- Les mauvaises reponses sont tres plausibles et proches de la bonne.
-- Inclure des "lequel n'est PAS...", des cas limites, des nuances.
-- L'eleve doit maitriser parfaitement le cours pour reussir.
-- Ajouter un champ "learn_more" : une explication detaillee de 2-3 phrases qui approfondit le sujet de la question.`,
+- Les mauvaises reponses sont plausibles mais clairement identifiables avec un peu de reflexion.
+- Quelques pièges simples (formulations proches, inversions de details).
+- Formulations claires, niveau college.
+- L'eleve qui a bien lu sa fiche doit obtenir un bon score.`,
+
+  medium: `NIVEAU HARDCORE :
+- Questions de comprehension avancee : l'eleve doit avoir vraiment compris, pas juste memorise.
+- Les mauvaises reponses sont tres plausibles et proches de la bonne reponse.
+- Inclure des questions d'application, de comparaison, et quelques pièges subtils.
+- Ajouter 1 ou 2 questions avec des connaissances complementaires liees au sujet (pas hors-sujet).
+- Formulations qui demandent de reflechir et de croiser les informations.`,
+
+  hard: `NIVEAU TESTE TES PARENTS :
+- Questions tres avancees : analyse, cas concrets, pièges subtils, nuances importantes.
+- Les mauvaises reponses sont extremement plausibles, seule la maitrise totale permet de les distinguer.
+- Inclure des "lequel n'est PAS...", des cas limites, des contradictions apparentes.
+- Ajouter des connaissances supplementaires liees au sujet (culture generale du domaine).
+- Niveau tel qu'un adulte sans connaissance du sujet aurait du mal a repondre.`,
 }
 
-export function getQcmSystemPrompt(difficulty: QcmDifficulty = 'medium'): string {
+export function getQcmSystemPrompt(difficulty: QcmDifficulty = 'easy'): string {
   return `Tu es un assistant pedagogique qui cree des QCM pour des eleves de college et lycee.
-
-REGLE DE LANGUE CRUCIALE :
-- Les questions, options et explications doivent etre dans LA MEME LANGUE que la fiche fournie.
-- Si la fiche est en chinois, le QCM est en chinois.
-- Si la fiche est en anglais, le QCM est en anglais.
-- Et ainsi de suite.
 
 ${QCM_DIFFICULTY_INSTRUCTIONS[difficulty]}
 
 CONTRAINTES STRICTES :
-1. Reponds UNIQUEMENT en JSON valide. Pas de markdown, pas de backticks.
-2. Cree EXACTEMENT 5 questions. Pas 4, pas 6.
-3. Chaque question a EXACTEMENT 4 options.
-4. Les mauvaises reponses doivent etre plausibles.
-5. L explication fait 1 phrase maximum.
-6. Chaque question DOIT avoir un champ "learn_more" : 2-3 phrases qui approfondissent le sujet aborde par la question (contexte historique, exemples supplementaires, liens avec d'autres concepts). Ce champ sert a l'eleve qui veut aller plus loin.
-7. Varie les types de questions.
+1. Reponds UNIQUEMENT en JSON valide.
+2. Genere EXACTEMENT 5 questions.
+3. Chaque question a EXACTEMENT 4 options (options[0] a options[3]).
+4. correct_index est l'index (0-3) de la bonne reponse.
+5. explanation : explication courte et pedagogique de la bonne reponse (2-3 phrases max).
+6. Les questions sont dans la langue de la fiche.
 
 FORMAT JSON EXACT :
 {
   "questions": [
     {
-      "question": "La question posee ?",
-      "options": ["A", "B", "C", "D"],
+      "question": "La question posee a l'eleve ?",
+      "options": ["Option A", "Option B", "Option C", "Option D"],
       "correct_index": 0,
-      "explanation": "Explication courte.",
-      "learn_more": "Approfondissement en 2-3 phrases pour aller plus loin sur le sujet."
+      "explanation": "Explication courte de pourquoi c'est la bonne reponse."
     }
   ]
 }`
 }
 
-// Garder l'ancien prompt pour compatibilité
-export const QCM_SYSTEM_PROMPT = getQcmSystemPrompt('medium')
-
 export function buildFlashcardPrompt(courseTitle: string, subject: string, content: string): string {
-  const truncated = content.length > 6000 ? content.slice(0, 6000) + '\n[...]' : content
+  return `MATIERE : ${subject}
+TITRE DU COURS : ${courseTitle}
 
-  return `Cours a transformer en fiches de revision.
-
-Titre : ${courseTitle}
-Matiere : ${subject}
-
-Contenu :
----
-${truncated}
----
-
-IMPORTANT : Detecte la langue du contenu ci-dessus et genere les fiches dans cette meme langue. Idealement 4 fiches. Si le contenu est tres dense avec beaucoup de sous-themes distincts, tu peux aller jusqu'a 6 fiches maximum. Fusionne les sous-themes proches en une seule fiche dense plutot que de faire des fiches separees. Chaque fiche a exactement 3 key_points. Aucun doublon de titre. Reponds en JSON uniquement.`
+CONTENU DU COURS :
+${content}`
 }
 
 export function buildQcmPrompt(flashcardTitle: string, summary: string, keyPoints: string[]): string {
-  return `Cree 5 questions QCM pour cette fiche. GENERE LES QUESTIONS DANS LA MEME LANGUE QUE LA FICHE CI-DESSOUS.
+  return `FICHE : ${flashcardTitle}
 
-Fiche : ${flashcardTitle}
-Resume : ${summary}
-Points cles :
+RESUME : ${summary}
+
+POINTS CLES :
 ${keyPoints.map((p, i) => `${i + 1}. ${p}`).join('\n')}
 
-Reponds avec EXACTEMENT 5 questions en JSON, dans la meme langue que le contenu de la fiche. Pas de texte autour.`
+Genere 5 questions QCM basees sur cette fiche.`
 }
+
+// Legacy exports pour la compatibilite
+export const QCM_SYSTEM_PROMPT = getQcmSystemPrompt('easy')

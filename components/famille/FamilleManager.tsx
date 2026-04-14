@@ -12,9 +12,9 @@ interface FamilleManagerProps {
 }
 
 const SUBJECT_EMOJIS: Record<string, string> = {
-  'Mathématiques': '🧮', 'Français': '📝', 'Histoire': '🏛️', 'Géographie': '🌍',
-  'SVT': '🌱', 'Physique': '⚗️', 'Chimie': '🧪', 'Anglais': '🇬🇧',
-  'Espagnol': '🇪🇸', 'Philosophie': '🤔', 'Général': '📚',
+  'Mathematiques': 'M', 'Francais': 'Fr', 'Histoire': 'H', 'Geographie': 'G',
+  'SVT': 'SVT', 'Physique': 'Ph', 'Chimie': 'Ch', 'Anglais': 'EN',
+  'Espagnol': 'ES', 'Philosophie': 'Phi', 'General': 'G',
 }
 
 const CHILD_COLORS = [
@@ -75,19 +75,18 @@ export function FamilleManager({ parentId, initialGroup, initialChildren }: Fami
     else { setFamilyCodeCopied(true); setTimeout(() => setFamilyCodeCopied(false), 2000) }
   }
 
-  // === PAGE DE CRÉATION ===
   if (!group) {
     return (
       <div className="flex flex-col items-center gap-8 py-12">
-        <div className="flex h-24 w-24 items-center justify-center rounded-3xl bg-gradient-to-br from-purple-400 to-purple-600 shadow-xl text-5xl">
-          👨‍👩‍👧
+        <div className="flex h-24 w-24 items-center justify-center rounded-3xl bg-gradient-to-br from-purple-400 to-purple-600 shadow-xl">
+          <Users className="h-12 w-12 text-white" />
         </div>
         <div className="text-center max-w-sm">
           <h2 className="font-display text-h2 text-text-main dark:text-text-dark-main mb-2">
-            Créer votre espace familial
+            Creer votre espace familial
           </h2>
           <p className="font-body text-[14px] text-text-secondary dark:text-text-dark-secondary">
-            Ajoutez jusqu'à 6 enfants et suivez leur progression scolaire.
+            Ajoutez jusqu'a 6 enfants et suivez leur progression scolaire.
           </p>
         </div>
         <div className="w-full max-w-sm space-y-3">
@@ -99,7 +98,7 @@ export function FamilleManager({ parentId, initialGroup, initialChildren }: Fami
           />
           <button onClick={handleCreateGroup} disabled={isPending}
             className="flex h-12 w-full items-center justify-center rounded-input bg-gradient-to-r from-purple-500 to-purple-600 font-body text-[15px] font-semibold text-white shadow-md hover:from-purple-600 hover:to-purple-700 disabled:opacity-60 transition-all">
-            {isPending ? 'Création...' : '✨ Créer l\'espace familial'}
+            {isPending ? 'Creation...' : "Creer l'espace familial"}
           </button>
         </div>
       </div>
@@ -132,25 +131,25 @@ export function FamilleManager({ parentId, initialGroup, initialChildren }: Fami
         </div>
       </div>
 
-      {/* Code enfant après création */}
+      {/* Code enfant apres creation */}
       {newChildInfo && (
         <div className="rounded-card border border-emerald-200 bg-emerald-50 p-5 dark:border-emerald-800/30 dark:bg-emerald-950/20">
           <div className="flex items-start justify-between">
             <div>
               <p className="font-body text-[14px] font-semibold text-emerald-700 dark:text-emerald-400 mb-1">
-                ✅ Compte créé pour {newChildInfo.pseudo} !
+                Compte cree pour {newChildInfo.pseudo}
               </p>
               <p className="font-body text-[13px] text-text-secondary dark:text-text-dark-secondary">
                 Code personnel : <span className="font-mono text-[20px] font-bold text-text-main dark:text-text-dark-main">{newChildInfo.code}</span>
               </p>
-              <p className="font-body text-[11px] text-text-tertiary mt-1">⚠️ Note ce code — il ne sera plus affiché</p>
+              <p className="font-body text-[11px] text-text-tertiary mt-1">Note ce code — il ne sera plus affiche</p>
             </div>
             <button onClick={() => copyCode(newChildInfo.code, 'child')} className="flex items-center gap-1.5 rounded-input border border-emerald-300 bg-white px-3 py-1.5 font-body text-[12px] font-medium text-emerald-700 hover:bg-emerald-50 dark:border-emerald-700 dark:bg-night-surface dark:text-emerald-400">
-              {codeCopied ? <><Check className="h-3.5 w-3.5" /> Copié</> : <><Copy className="h-3.5 w-3.5" /> Copier</>}
+              {codeCopied ? <><Check className="h-3.5 w-3.5" /> Copie</> : <><Copy className="h-3.5 w-3.5" /> Copier</>}
             </button>
           </div>
           <button onClick={() => setNewChildInfo(null)} className="mt-3 font-body text-[12px] text-text-tertiary hover:text-text-main dark:hover:text-text-dark-main">
-            Fermer ×
+            Fermer x
           </button>
         </div>
       )}
@@ -176,21 +175,20 @@ export function FamilleManager({ parentId, initialGroup, initialChildren }: Fami
               <div className="flex-1 min-w-0">
                 <p className="font-body text-[14px] font-semibold text-text-main dark:text-text-dark-main truncate">{child.pseudo}</p>
                 <div className="flex items-center gap-2 mt-0.5">
-                  <span className="font-body text-[11px] text-orange-500">🔥 {child.streak_days}j</span>
+                  <span className="inline-flex items-center gap-0.5 font-body text-[11px] text-orange-500"><Flame className="h-3 w-3" />{child.streak_days}j</span>
                   <span className="font-body text-[11px] text-text-tertiary">·</span>
-                  <span className="font-body text-[11px] text-text-tertiary dark:text-text-dark-tertiary">{child.sky_coins} 🪙</span>
+                  <span className="font-body text-[11px] text-text-tertiary dark:text-text-dark-tertiary">{child.sky_coins} coins</span>
                 </div>
               </div>
               <ChevronRight className="h-4 w-4 text-text-tertiary flex-shrink-0" />
             </button>
           ))}
 
-          {/* Ajouter enfant */}
           {children.length < 6 && (
             showAddChild ? (
               <div className="rounded-card border border-sky-border bg-sky-surface p-4 dark:border-night-border dark:bg-night-surface space-y-3">
                 <input
-                  placeholder="Prénom de l'enfant"
+                  placeholder="Prenom de l'enfant"
                   value={childPseudo}
                   onChange={(e) => setChildPseudo(e.target.value)}
                   autoFocus
@@ -219,21 +217,21 @@ export function FamilleManager({ parentId, initialGroup, initialChildren }: Fami
             <div className="rounded-card border border-dashed border-sky-border py-8 text-center dark:border-night-border">
               <Users className="h-8 w-8 text-text-tertiary mx-auto mb-2" />
               <p className="font-body text-[13px] text-text-secondary dark:text-text-dark-secondary">
-                Aucun enfant ajouté
+                Aucun enfant ajoute
               </p>
             </div>
           )}
         </div>
 
-        {/* Dashboard enfant sélectionné */}
+        {/* Dashboard enfant selectionne */}
         <div className="lg:col-span-2">
           {!selectedChild ? (
             <div className="flex h-full min-h-[300px] flex-col items-center justify-center rounded-card border-2 border-dashed border-sky-border dark:border-night-border gap-3">
-              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-purple-100 dark:bg-purple-950/30 text-3xl">
-                👆
+              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-purple-100 dark:bg-purple-950/30">
+                <Users className="h-8 w-8 text-purple-400" />
               </div>
               <p className="font-body text-[14px] text-text-secondary dark:text-text-dark-secondary">
-                Sélectionne un enfant pour voir ses statistiques
+                Selectionne un enfant pour voir ses statistiques
               </p>
             </div>
           ) : (
@@ -261,15 +259,15 @@ export function FamilleManager({ parentId, initialGroup, initialChildren }: Fami
               {selectedChildTalent && (
                 <div className="rounded-card border border-amber-200 bg-gradient-to-r from-amber-50 to-yellow-50 p-5 dark:border-amber-800/30 dark:from-amber-950/20 dark:to-yellow-950/10">
                   <div className="flex items-center gap-3">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-100 dark:bg-amber-950/40 text-2xl">
-                      🏆
+                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-100 dark:bg-amber-950/40">
+                      <Trophy className="h-6 w-6 text-amber-600 dark:text-amber-400" />
                     </div>
                     <div>
                       <p className="font-body text-[12px] font-semibold uppercase tracking-wider text-amber-600 dark:text-amber-400">
                         Talent dominant
                       </p>
                       <p className="font-display text-[17px] font-bold text-text-main dark:text-text-dark-main">
-                        {SUBJECT_EMOJIS[selectedChildTalent.subject] || '📚'} {selectedChild.pseudo} excelle en {selectedChildTalent.subject}
+                        {selectedChild.pseudo} excelle en {selectedChildTalent.subject}
                       </p>
                     </div>
                   </div>
@@ -278,29 +276,29 @@ export function FamilleManager({ parentId, initialGroup, initialChildren }: Fami
 
               {/* Stats */}
               <div className="grid grid-cols-3 gap-3">
-                {[
-                  { icon: '🔥', label: 'Streak', value: `${selectedChild.streak_days}j`, color: 'text-orange-500' },
-                  { icon: '📚', label: 'Cours/sem', value: `${selectedChild.courses_this_week ?? 0}/3`, color: 'text-brand dark:text-brand-dark' },
-                  { icon: '🪙', label: 'Sky Coins', value: selectedChild.sky_coins, color: 'text-amber-500' },
-                ].map((s) => (
+                {([
+                  { Icon: Flame, label: 'Streak', value: `${selectedChild.streak_days}j`, color: 'text-orange-500', iconColor: 'text-orange-500' },
+                  { Icon: BookOpen, label: 'Cours/sem', value: `${selectedChild.courses_this_week ?? 0}/3`, color: 'text-brand', iconColor: 'text-brand dark:text-brand-dark' },
+                  { Icon: Trophy, label: 'Sky Coins', value: selectedChild.sky_coins, color: 'text-amber-500', iconColor: 'text-amber-500' },
+                ] as const).map((s) => (
                   <div key={s.label} className="rounded-card border border-sky-border bg-sky-surface p-4 text-center dark:border-night-border dark:bg-night-surface">
-                    <p className="text-2xl mb-1">{s.icon}</p>
+                    <div className="flex justify-center mb-1"><s.Icon className={cn('h-6 w-6', s.iconColor)} /></div>
                     <p className={cn('font-display text-[20px] font-bold leading-none', s.color)}>{s.value}</p>
                     <p className="font-body text-[11px] text-text-tertiary dark:text-text-dark-tertiary mt-1">{s.label}</p>
                   </div>
                 ))}
               </div>
 
-              {/* Stats par matière */}
+              {/* Stats par matiere */}
               {selectedChild.child_stats?.length > 0 ? (
                 <div className="rounded-card border border-sky-border bg-sky-surface p-5 dark:border-night-border dark:bg-night-surface">
-                  <h4 className="font-display text-[15px] font-bold text-text-main dark:text-text-dark-main mb-4">Par matière</h4>
+                  <h4 className="font-display text-[15px] font-bold text-text-main dark:text-text-dark-main mb-4">Par matiere</h4>
                   <div className="space-y-3">
                     {selectedChild.child_stats.map((s: any) => {
                       const rate = s.qcm_count > 0 ? Math.round((s.qcm_perfect / s.qcm_count) * 100) : 0
                       return (
                         <div key={s.subject} className="flex items-center gap-3">
-                          <span className="text-lg w-6 flex-shrink-0">{SUBJECT_EMOJIS[s.subject] || '📚'}</span>
+                          <span className="font-body text-[12px] text-text-tertiary w-6 flex-shrink-0 text-center">{SUBJECT_EMOJIS[s.subject] || s.subject.slice(0, 2)}</span>
                           <div className="flex-1">
                             <div className="flex items-center justify-between mb-1">
                               <p className="font-body text-[13px] font-medium text-text-main dark:text-text-dark-main">{s.subject}</p>

@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
   const flashcardId = searchParams.get('flashcardId')
+  const difficulty = searchParams.get('difficulty')
 
   if (!flashcardId) return NextResponse.json({ error: 'flashcardId requis' }, { status: 400 })
 
@@ -11,11 +12,17 @@ export async function GET(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
 
-  const { data: questions } = await supabase
+  let query = supabase
     .from('qcm_questions')
     .select('*')
     .eq('flashcard_id', flashcardId)
     .eq('user_id', user.id)
+
+  if (difficulty) {
+    query = query.eq('difficulty', difficulty)
+  }
+
+  const { data: questions } = await query
 
   return NextResponse.json({ questions: questions || [] })
 }

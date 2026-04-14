@@ -3,10 +3,11 @@
 import { createClient } from './server'
 import { revalidatePath } from 'next/cache'
 
-export type QcmDifficulty = 'easy' | 'medium' | 'hard'
+export type QcmDifficulty = 'peaceful' | 'easy' | 'medium' | 'hard'
 
 const COINS_BY_DIFFICULTY: Record<QcmDifficulty, number> = {
-  easy: 1,
+  peaceful: 1,
+  easy: 2,
   medium: 3,
   hard: 5,
 }
@@ -61,11 +62,12 @@ export async function saveQcmAttempt(input: SaveAttemptInput): Promise<{
         .eq('id', user.id)
 
       // Enregistrer la transaction
-      const difficultyLabel = input.difficulty === 'easy' ? 'Paisible' : input.difficulty === 'hard' ? 'Hardcore' : 'Normal'
+      const difficultyLabels: Record<QcmDifficulty, string> = { peaceful: 'Paisible', easy: 'Normal', medium: 'Hardcore', hard: 'Teste tes parents' }
+    const difficultyLabel = difficultyLabels[input.difficulty ?? 'easy']
       await supabase.from('coin_transactions').insert({
         user_id: user.id,
         amount: coinsEarned,
-        reason: `Score parfait au QCM ${difficultyLabel} ⚡`,
+        reason: `Score parfait au QCM ${difficultyLabel}`,
       })
     }
   }
@@ -158,7 +160,7 @@ async function checkQcmObjectives(userId: string) {
         await supabase.from('coin_transactions').insert({
           user_id: userId,
           amount: obj.reward_coins,
-          reason: `Objectif complété : ${obj.title} 🏆`,
+          reason: `Objectif complete : ${obj.title}`,
         })
       }
     }

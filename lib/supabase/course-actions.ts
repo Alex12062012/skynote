@@ -31,6 +31,9 @@ export async function createCourse(formData: FormData): Promise<{ courseId: stri
     Espagnol: '#DC2626', Philosophie: '#4338CA', Général: '#2563EB',
   }
 
+  const folderId = formData.get('folderId') as string | null
+  const classroomId = formData.get('classroomId') as string | null
+
   const { data: course, error } = await supabase.from('courses').insert({
     user_id: user.id, title: title.trim(), subject: subject.trim(),
     color: subjectColors[subject] || '#2563EB', source_type: sourceType,
@@ -39,7 +42,11 @@ export async function createCourse(formData: FormData): Promise<{ courseId: stri
     folder_id: folderId || null, classroom_id: classroomId || null,
   }).select('id').single()
 
+<<<<<<< HEAD
   if (error || !course) return { courseId: null, error: `Erreur: ${error?.message || error?.code || 'inconnue'}` }
+=======
+  if (error || !course) return { courseId: null, error: `Erreur création cours: ${error?.message || error?.code || 'inconnue'}` }
+>>>>>>> 79e36e2 (fix: dashboard corrigé + landing page et UI pro pour la prod)
   // Incrémenter le compteur hebdomadaire
   await incrementWeeklyCourseCount(user.id)
   revalidatePath('/courses')

@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
+import { Flame, Star } from 'lucide-react'
 import { SkyCoin } from '@/components/ui/SkyCoin'
 import { PseudoModal } from '@/components/leaderboard/PseudoModal'
 import { cn } from '@/lib/utils'
@@ -18,6 +19,7 @@ export default async function LeaderboardPage() {
   const { data: { user } } = await authClient.auth.getUser()
   if (!user) redirect('/login')
 
+<<<<<<< HEAD
   // Récupérer le rôle pour adapter l'affichage
   const { data: currentProfile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
   const isObserver = currentProfile?.role === 'teacher' || currentProfile?.role === 'student'
@@ -32,6 +34,9 @@ export default async function LeaderboardPage() {
 
   // Top 100 — exclure les élèves des classes qui ont désactivé l'option
   let query = supabase
+=======
+  const { data: top100 } = await supabase
+>>>>>>> 79e36e2 (fix: dashboard corrigé + landing page et UI pro pour la prod)
     .from('profiles')
     .select('id, full_name, pseudo, user_number, sky_coins, plan, streak_days, classroom_id, role')
     .order('sky_coins', { ascending: false })
@@ -49,16 +54,14 @@ export default async function LeaderboardPage() {
     })
     .slice(0, 100)
 
-  const myRankInTop100 = (top100 || []).findIndex(p => p.id === user.id)
+  const myRankInTop100 = (top100 || []).findIndex((p) => p.id === user.id)
   const myRank = myRankInTop100 >= 0 ? myRankInTop100 + 1 : null
   const isInTop100 = myRankInTop100 >= 0
-  const myProfile = (top100 || []).find(p => p.id === user.id)
+  const myProfile = (top100 || []).find((p) => p.id === user.id)
 
-  // Si pas dans le top 100, chercher les infos de l'utilisateur
   let myCoins = 0
-  let myPseudo = null
-  let myUserNumber = 0
   let needsPseudo = false
+
   if (!isInTop100) {
     const { data: mp } = await supabase
       .from('profiles')
@@ -66,12 +69,8 @@ export default async function LeaderboardPage() {
       .eq('id', user.id)
       .single()
     myCoins = mp?.sky_coins ?? 0
-    myPseudo = mp?.pseudo
-    myUserNumber = mp?.user_number ?? 0
   } else {
     needsPseudo = !myProfile?.pseudo
-    myPseudo = myProfile?.pseudo
-    myUserNumber = myProfile?.user_number ?? 0
   }
 
   function getDisplayName(profile: any, isMe: boolean): string {
@@ -89,14 +88,13 @@ export default async function LeaderboardPage() {
   return (
     <div className="mx-auto max-w-2xl animate-fade-in">
       <div className="mb-8">
-        <h1 className="font-display text-h2 text-text-main dark:text-text-dark-main">
-          Classement
-        </h1>
+        <h1 className="font-display text-h2 text-text-main dark:text-text-dark-main">Classement</h1>
         <p className="mt-1 font-body text-[14px] text-text-secondary dark:text-text-dark-secondary">
           Top 100 des meilleurs collecteurs de Sky Coins
         </p>
       </div>
 
+<<<<<<< HEAD
       {/* Profs et élèves : spectateurs uniquement */}
       {isObserver && (
         <div className="mb-6 flex items-center gap-3 rounded-card border border-sky-border bg-sky-surface px-5 py-3.5 dark:border-night-border dark:bg-night-surface">
@@ -114,6 +112,15 @@ export default async function LeaderboardPage() {
 
       {/* Ma position si pas dans le top 100 (utilisateurs normaux uniquement) */}
       {!isObserver && !isInTop100 && (
+=======
+      {/* Demande de pseudo */}
+      {isInTop100 && needsPseudo && (
+        <PseudoForm userId={user.id} />
+      )}
+
+      {/* Hors top 100 */}
+      {!isInTop100 && (
+>>>>>>> 79e36e2 (fix: dashboard corrigé + landing page et UI pro pour la prod)
         <div className="mb-6 flex items-center gap-4 rounded-card border border-brand/20 bg-brand-soft px-5 py-4 dark:border-brand-dark/20 dark:bg-brand-dark-soft">
           <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-brand/10 font-display text-[16px] font-bold text-brand dark:text-brand-dark">
             ?
@@ -124,17 +131,15 @@ export default async function LeaderboardPage() {
             </p>
             <p className="font-body text-[13px] text-text-secondary dark:text-text-dark-secondary">
               Tu as{' '}
-              <span className="font-bold text-brand dark:text-brand-dark">
-                {myCoins} coins
-              </span>
-              {' '}— continue de reviser pour monter !
+              <span className="font-bold text-brand dark:text-brand-dark">{myCoins} coins</span>
+              {' '}— continue de réviser pour monter !
             </p>
           </div>
           <SkyCoin size={32} />
         </div>
       )}
 
-      {/* Classement */}
+      {/* Tableau */}
       <div className="rounded-card border border-sky-border bg-sky-surface overflow-hidden dark:border-night-border dark:bg-night-surface">
         {(top100 || []).map((profile, index) => {
           const rank = index + 1
@@ -143,12 +148,15 @@ export default async function LeaderboardPage() {
           const displayName = getDisplayName(profile, isMe)
 
           return (
-            <div key={profile.id}
+            <div
+              key={profile.id}
               className={cn(
                 'flex items-center gap-4 px-5 py-3.5 transition-colors',
                 index > 0 && 'border-t border-sky-border dark:border-night-border',
                 isMe && 'bg-brand-soft dark:bg-brand-dark-soft'
-              )}>
+              )}
+            >
+              {/* Rang */}
               <div className="flex w-10 flex-shrink-0 items-center justify-center">
                 {medal ? (
                   <span className="text-[20px]">{medal}</span>
@@ -161,14 +169,18 @@ export default async function LeaderboardPage() {
                   </span>
                 )}
               </div>
+
+              {/* Avatar */}
               <div className={cn(
                 'flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full font-display text-[14px] font-bold',
                 isMe
                   ? 'bg-brand text-white dark:bg-brand-dark dark:text-night-bg'
                   : 'bg-sky-cloud text-text-secondary dark:bg-night-border dark:text-text-dark-secondary'
               )}>
-                {(displayName)[0].toUpperCase()}
+                {displayName[0].toUpperCase()}
               </div>
+
+              {/* Nom */}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
                   <p className={cn(
@@ -178,12 +190,15 @@ export default async function LeaderboardPage() {
                     {displayName}
                   </p>
                   {profile.streak_days >= 7 && (
-                    <span className="text-[12px]" title={profile.streak_days + ' jours de streak'}>🔥</span>
+                    <Flame className="h-3.5 w-3.5 text-orange-500" title={`${profile.streak_days} jours de streak`} />
                   )}
-                  {(profile.plan === 'plus' || profile.plan === 'premium') && <span className="text-[11px]">⭐</span>}
-                  {profile.plan === 'famille' && <span className="text-[11px]">👨‍👩‍👧</span>}
+                  {(profile.plan === 'plus' || profile.plan === 'premium' || profile.plan === 'famille') && (
+                    <Star className="h-3.5 w-3.5 text-amber-500" />
+                  )}
                 </div>
               </div>
+
+              {/* Coins */}
               <div className="flex items-center gap-1.5 flex-shrink-0">
                 <SkyCoin size={18} />
                 <span className={cn(
@@ -198,22 +213,21 @@ export default async function LeaderboardPage() {
         })}
       </div>
 
+      {/* Position dans le top */}
       {isInTop100 && myRank && (
         <p className="mt-4 text-center font-body text-[13px] text-text-secondary dark:text-text-dark-secondary">
-          {myRank === 1 ? 'Tu es 1er du classement !' :
-           myRank === 2 ? 'Tu es 2eme du classement !' :
-           myRank === 3 ? 'Tu es 3eme du classement !' :
-           myRank <= 10 ? 'Tu es #' + myRank + ' du classement — dans le top 10 !' :
-           'Tu es #' + myRank + ' du classement'}
+          {myRank === 1
+            ? 'Tu es 1er du classement !'
+            : myRank <= 3
+            ? `Tu es ${myRank}ème du classement !`
+            : myRank <= 10
+            ? `Tu es #${myRank} du classement — dans le top 10 !`
+            : `Tu es #${myRank} du classement`}
         </p>
       )}
-
       <p className="mt-6 text-center font-body text-[12px] text-text-tertiary dark:text-text-dark-tertiary">
-        Mis a jour en temps reel · Seul le pseudo est affiche
+        Mis a jour en temps reel
       </p>
     </div>
   )
 }
-
-// PseudoForm est maintenant le composant client PseudoModal importé depuis components/leaderboard/PseudoModal.tsx
-

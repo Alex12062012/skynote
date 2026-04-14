@@ -1,5 +1,8 @@
 import { generateFlashcards, generateQcmQuestions } from './generate'
 import { createClient } from '@/lib/supabase/server'
+import type { QcmDifficulty } from './prompts'
+
+const ALL_DIFFICULTIES: QcmDifficulty[] = ['peaceful', 'easy', 'medium', 'hard']
 
 export async function processCourse(courseId: string): Promise<void> {
   const supabase = await createClient()
@@ -34,6 +37,7 @@ export async function processCourse(courseId: string): Promise<void> {
   }
 
   try {
+    // ── Etape 1 : generation des fiches (0 → 40%) ──────────────────────────
     await supabase
       .from('courses')
       .update({ status: 'processing', progress: 10 })
@@ -67,24 +71,73 @@ export async function processCourse(courseId: string): Promise<void> {
 
     await supabase
       .from('courses')
-      .update({ progress: 60 })
+      .update({ progress: 50, qcm_status: 'processing' })
       .eq('id', courseId)
 
+    // ── Etape 2 : generation des QCM pour les 4 niveaux (50 → 90%) ────────
+    // On genere toutes les difficultes pour chaque fiche en parallele
+    const total = insertedFlashcards.length
+    let done = 0
+
+    for (const flashcard of insertedFlashcards) {
+      const keyPoints: string[] = Array.isArray(flashcard.key_points)
+        ? flashcard.key_points
+        : (() => { try { return JSON.parse(String(flashcard.key_points || '[]')) } catch { return [] } })()
+
+      // 4 niveaux en parallele pour cette fiche
+      await Promise.allSettled(
+        ALL_DIFFICULTIES.map(async (difficulty) => {
+          try {
+            const questions = await generateQcmQuestions(
+              flashcard.title,
+              flashcard.summary,
+              keyPoints,
+              difficulty
+            )
+            if (questions.length > 0) {
+              await supabase.from('qcm_questions').insert(
+                questions.map((q) => ({
+                  flashcard_id: flashcard.id,
+                  course_id: courseId,
+                  user_id: course.user_id,
+                  question: q.question,
+                  options: q.options,
+                  correct_index: q.correct_index,
+                  explanation: q.explanation,
+                  difficulty,
+                }))
+              )
+            }
+          } catch (err) {
+            console.error(`[AI Pipeline] QCM ${difficulty} pour fiche ${flashcard.id}:`, err)
+            // On continue meme si un niveau echoue
+          }
+        })
+      )
+
+      done++
+      // Progression de 50% a 90% au fil des fiches
+      const progress = 50 + Math.round((done / total) * 40)
+      await supabase
+        .from('courses')
+        .update({ progress })
+        .eq('id', courseId)
+    }
+
+    // ── Etape 3 : marquer le cours comme pret ──────────────────────────────
     await supabase
       .from('courses')
-      .update({ status: 'ready', progress: 0, qcm_status: 'processing' })
+      .update({ status: 'ready', progress: 0, qcm_status: 'ready' })
       .eq('id', courseId)
 
     await checkAndAwardObjectives(courseId, course.user_id)
 
   } catch (error) {
     console.error(`[AI Pipeline] Erreur pour le cours ${courseId}:`, error)
-
     await supabase
       .from('courses')
       .update({ status: 'error', progress: 0 })
       .eq('id', courseId)
-
     throw error
   }
 }
@@ -139,7 +192,6 @@ async function checkAndAwardObjectives(courseId: string, userId: string): Promis
 
     if (isCompleted) {
       await supabase.rpc('increment_coins', { p_user_id: userId, p_amount: obj.reward_coins })
-
       await supabase.from('coin_transactions').insert({
         user_id: userId,
         amount: obj.reward_coins,

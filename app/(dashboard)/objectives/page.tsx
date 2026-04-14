@@ -54,7 +54,7 @@ export default async function ObjectivesPage() {
       <div>
         <h1 className="font-display text-h2 text-text-main dark:text-text-dark-main">Objectifs</h1>
         <p className="mt-1 font-body text-[14px] text-text-secondary dark:text-text-dark-secondary">
-          Complète des défis, récupère tes coins ⚡
+          Complète des défis, récupère tes coins
         </p>
       </div>
 
@@ -72,7 +72,7 @@ export default async function ObjectivesPage() {
         {!isPremium ? (
           <div className="flex flex-col gap-2 sm:items-end">
             <div className="rounded-card-sm border border-brand/20 bg-brand-soft px-4 py-3 dark:border-brand-dark/20 dark:bg-brand-dark-soft sm:text-right">
-              <p className="font-display text-[15px] font-bold text-brand dark:text-brand-dark">⭐ Débloquer Plus</p>
+              <p className="font-display text-[15px] font-bold text-brand dark:text-brand-dark">Débloquer Plus</p>
               <p className="font-body text-[13px] text-brand/70 dark:text-brand-dark/70">750 Sky Coins = 1 mois</p>
               <div className="mt-2">
                 {coins >= 750 ? (

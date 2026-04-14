@@ -261,7 +261,7 @@ export function CreateCourseForm({
               Lecture de ta photo...
             </p>
             <p className="font-body text-[13px] text-text-secondary dark:text-text-dark-secondary">
-              L'IA analyse et transcrit ton cours ✨
+              L'IA analyse et transcrit ton cours
             </p>
           </div>
         </div>
@@ -422,7 +422,7 @@ export function CreateCourseForm({
         {sourceType !== 'list' && (
           <Button type="submit" loading={isPending} size="lg" className="w-full"
             disabled={sourceType === 'photo' && !showExtracted}>
-            {isPending ? 'Generation en cours...' : 'Creer le cours ✨'}
+            {isPending ? 'Generation en cours...' : 'Creer le cours'}
           </Button>
         )}
       </form>

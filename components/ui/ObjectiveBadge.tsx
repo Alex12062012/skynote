@@ -1,11 +1,11 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import React, { useEffect } from 'react'
 import { SkyCoin } from './SkyCoin'
 
 interface ObjectiveBadgeProps {
   title: string
-  icon: string
+  icon: React.ReactNode
   coins: number
   visible: boolean
   onHide: () => void
@@ -23,7 +23,7 @@ export function ObjectiveBadge({ title, icon, coins, visible, onHide }: Objectiv
   return (
     <div className="fixed bottom-6 right-4 z-50 max-w-xs animate-pop-in sm:right-6">
       <div className="flex items-start gap-3 rounded-card border border-success/20 bg-sky-surface p-4 shadow-2xl dark:border-emerald-800/30 dark:bg-night-surface">
-        <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-success-soft text-2xl">
+        <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-success-soft">
           {icon}
         </div>
         <div>

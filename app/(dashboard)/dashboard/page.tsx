@@ -1,22 +1,33 @@
 import Link from 'next/link'
+<<<<<<< HEAD
 import { Plus, ArrowRight, Flame } from 'lucide-react'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdminClient } from '@supabase/supabase-js'
 import { getDashboardStats, getProfileWithCoins } from '@/lib/supabase/queries'
+=======
+import { Plus, ArrowRight, BookOpen } from 'lucide-react'
+import { redirect } from 'next/navigation'
+import { createClient } from '@/lib/supabase/server'
+import { getUserCourses } from '@/lib/supabase/queries'
+import { getProfileWithCoins } from '@/lib/supabase/queries'
+>>>>>>> 79e36e2 (fix: dashboard corrigé + landing page et UI pro pour la prod)
 import { StatsBar } from '@/components/dashboard/StatsBar'
 import { CourseCard } from '@/components/dashboard/CourseCard'
 import { Button } from '@/components/ui/Button'
 import { EmptyState } from '@/components/ui/EmptyState'
+<<<<<<< HEAD
 import { SkyCoin } from '@/components/ui/SkyCoin'
 import { ProgressBar } from '@/components/ui/ProgressBar'
 import { PseudoModal } from '@/components/leaderboard/PseudoModal'
 import { ClassroomSetup } from '@/components/classroom/ClassroomSetup'
 import { TeacherDashboardClient } from '@/components/classroom/TeacherDashboardClient'
 import { StudentCourseFolders } from '@/components/courses/StudentCourseFolders'
+=======
+>>>>>>> 79e36e2 (fix: dashboard corrigé + landing page et UI pro pour la prod)
 import type { Metadata } from 'next'
 
-export const metadata: Metadata = { title: 'Tableau de bord' }
+export const metadata: Metadata = { title: 'Accueil — Skynote' }
 
 export default async function DashboardPage({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
   const { tab } = await searchParams
@@ -25,24 +36,25 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const [stats, profile] = await Promise.all([
-    getDashboardStats(user.id),
+  const [profile, courses] = await Promise.all([
     getProfileWithCoins(user.id),
+    getUserCourses(user.id),
   ])
 
-  const { count: totalCourses } = await supabase
-    .from('courses')
-    .select('id', { count: 'exact' })
-    .eq('user_id', user.id)
+  const [{ count: qcmCount }] = await Promise.all([
+    supabase
+      .from('qcm_attempts')
+      .select('id', { count: 'exact' })
+      .eq('user_id', user.id),
+  ])
 
-  const { count: totalQcm } = await supabase
-    .from('qcm_attempts')
-    .select('id', { count: 'exact' })
-    .eq('user_id', user.id)
+  const firstName = profile?.full_name?.split(' ')[0]
+    ?? user.email?.split('@')[0]
+    ?? 'toi'
 
-  const firstName = profile?.full_name?.split(' ')[0] ?? 'toi'
   const coins = profile?.sky_coins ?? 0
   const streak = profile?.streak_days ?? 0
+<<<<<<< HEAD
   const isPremium = profile?.plan === 'plus' || profile?.plan === 'famille'
   const isTeacher = (profile as any)?.role === 'teacher'
   const isStudent = (profile as any)?.role === 'student'
@@ -331,7 +343,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         <div className="flex flex-col gap-4">
           <h2 className="font-display text-h3 text-text-main dark:text-text-dark-main">Cours de la classe</h2>
           {foldersWithCourses.length === 0 ? (
-            <EmptyState icon="📚" title="Aucun cours" description="Ton professeur n'a pas encore ajouté de cours." />
+            <EmptyState title="Aucun cours" description="Ton professeur n'a pas encore ajouté de cours." />
           ) : (
             <StudentCourseFolders folders={foldersWithCourses} />
           )}
@@ -358,10 +370,21 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   return (
     <div className="flex flex-col gap-8 animate-fade-in">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+=======
+  const readyCourses = courses.filter((c) => c.status === 'ready')
+  const recentCourses = courses.slice(0, 6)
+
+  return (
+    <div className="flex flex-col gap-8 animate-fade-in">
+
+      {/* Salutation */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+>>>>>>> 79e36e2 (fix: dashboard corrigé + landing page et UI pro pour la prod)
         <div>
           <h1 className="font-display text-h2 text-text-main dark:text-text-dark-main">
-            {greeting}, {firstName}
+            Bonjour, {firstName} 👋
           </h1>
+<<<<<<< HEAD
           <p className="mt-1 font-body text-[15px] text-text-secondary dark:text-text-dark-secondary">
             {streak > 1 ? `\uD83D\uDD25 ${streak} jours de suite !` : 'Pret a reviser ?'}
           </p>
@@ -369,10 +392,23 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         <Link href="/courses/new">
           <Button size="lg" className="gap-2 w-full sm:w-auto">
             <Plus className="h-5 w-5" />Nouveau cours
+=======
+          <p className="mt-1 font-body text-[14px] text-text-secondary dark:text-text-dark-secondary">
+            {readyCourses.length === 0
+              ? 'Crée ton premier cours pour commencer à réviser.'
+              : `Tu as ${readyCourses.length} cours prêt${readyCourses.length > 1 ? 's' : ''}.`}
+          </p>
+        </div>
+        <Link href="/courses/new">
+          <Button className="gap-2 flex-shrink-0">
+            <Plus className="h-4 w-4" />
+            Nouveau cours
+>>>>>>> 79e36e2 (fix: dashboard corrigé + landing page et UI pro pour la prod)
           </Button>
         </Link>
       </div>
 
+<<<<<<< HEAD
       {needsPseudo && (
         <PseudoModal userId={user.id} />
       )}
@@ -408,57 +444,32 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {stats.recentCourses.map((course) => (<CourseCard key={course.id} {...course} />))}
-          </div>
-        )}
-      </div>
+=======
+      {/* Stats */}
+      <StatsBar
+        coursesCount={readyCourses.length}
+        qcmCount={qcmCount ?? 0}
+        streak={streak}
+        coins={coins}
+      />
 
-      <ObjectivesSummary userId={user.id} />
-    </div>
-  )
-}
+      {/* Cours récents */}
+      <div>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="font-display text-h3 text-text-main dark:text-text-dark-main">
+            Cours récents
+          </h2>
+          {courses.length > 6 && (
+            <Link
+              href="/courses"
+              className="flex items-center gap-1 font-body text-[13px] text-brand hover:underline dark:text-brand-dark"
+            >
+              Voir tout <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+          )}
+        </div>
 
-async function ObjectivesSummary({ userId }: { userId: string }) {
-  const supabase = await createClient()
-  const { data: objectives } = await supabase.from('objectives').select('*')
-  const { data: userObjectives } = await supabase
-    .from('user_objectives').select('*').eq('user_id', userId).eq('completed', false)
-
-  if (!objectives || !userObjectives || userObjectives.length === 0) return null
-
-  const inProgress = userObjectives
-    .map((uo: any) => {
-      const obj = objectives.find((o: any) => o.id === uo.objective_id)
-      if (!obj) return null
-      return { ...obj, current: uo.current_value }
-    })
-    .filter(Boolean).slice(0, 3)
-
-  if (inProgress.length === 0) return null
-
-  return (
-    <div>
-      <div className="mb-4 flex items-center justify-between">
-        <h2 className="font-display text-h3 text-text-main dark:text-text-dark-main">Objectifs en cours</h2>
-        <Link href="/objectives" className="flex items-center gap-1 font-body text-[14px] text-brand hover:underline dark:text-brand-dark">
-          Voir tout <ArrowRight className="h-4 w-4" />
-        </Link>
-      </div>
-      <div className="grid gap-3 sm:grid-cols-3">
-        {inProgress.map((obj: any) => (
-          <div key={obj.id} className="flex items-start gap-3 rounded-card border border-sky-border bg-sky-surface p-4 shadow-card dark:border-night-border dark:bg-night-surface dark:shadow-card-dark">
-            <span className="text-2xl flex-shrink-0">{obj.icon}</span>
-            <div className="flex-1 min-w-0">
-              <p className="font-body text-[13px] font-semibold text-text-main dark:text-text-dark-main truncate">{obj.title}</p>
-              <div className="mt-1.5 space-y-1">
-                <ProgressBar value={obj.current} max={obj.target_value} />
-                <p className="font-body text-[11px] text-text-tertiary dark:text-text-dark-tertiary">
-                  {obj.current}/{obj.target_value} · <span className="text-brand dark:text-brand-dark">+{obj.reward_coins} coins</span>
-                </p>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-}
+        {courses.length === 0 ? (
+          <EmptyState
+            icon="📚"
+   

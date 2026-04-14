@@ -95,7 +95,7 @@ export function ReferralCard({ userId, initialCode, referralsCount }: ReferralCa
         </div>
       ) : (
         <Button onClick={handleGenerate} loading={isPending} className="w-full gap-2">
-          <span>✨</span> Générer mon code
+          Générer mon code
         </Button>
       )}
     </div>
