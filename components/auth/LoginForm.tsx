@@ -1,8 +1,5 @@
 'use client'
-<<<<<<< HEAD
-=======
 
->>>>>>> 79e36e2 (fix: dashboard corrigé + landing page et UI pro pour la prod)
 import { useState } from 'react'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
@@ -62,14 +59,4 @@ export function LoginForm() {
         label="Email"
         placeholder="toi@exemple.com"
         value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        required
-        autoComplete="email"
-        error={error}
-      />
-      <Button type="submit" loading={loading} size="lg" className="w-full mt-1">
-        Recevoir le code
-      </Button>
-    </form>
-  )
-}
+        onChange={(e)

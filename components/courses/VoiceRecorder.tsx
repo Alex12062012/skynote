@@ -1,8 +1,5 @@
 'use client'
-<<<<<<< HEAD
-=======
 
->>>>>>> 79e36e2 (fix: dashboard corrigé + landing page et UI pro pour la prod)
 import { useState, useRef } from 'react'
 import { Mic, Square, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -110,18 +107,4 @@ export function VoiceRecorder({ onTranscript, onChange, transcript, value, error
             value={currentTranscript}
             onChange={(e) => handleChange(e.target.value)}
             rows={8}
-            className="w-full resize-none rounded-input border border-sky-border bg-sky-surface px-4 py-3 font-body text-[14px] text-text-main placeholder:text-text-tertiary focus:border-brand focus:outline-none dark:border-night-border dark:bg-night-surface dark:text-text-dark-main dark:focus:border-brand-dark"
-          />
-        </div>
-      )}
-
-      {recording && currentTranscript && (
-        <div className="rounded-input border border-brand/30 bg-brand-soft p-4 dark:border-brand-dark/30 dark:bg-brand-dark-soft max-h-48 overflow-y-auto">
-          <p className="font-body text-[14px] text-text-main dark:text-text-dark-main whitespace-pre-wrap">
-            {currentTranscript}
-          </p>
-        </div>
-      )}
-    </div>
-  )
-}
+            className="w-full resize-none rounded-input border border-sky-border bg-sky-surface px-4 py-3 font-body text-[14px] text-text-main placeholder:text-text-tertiary focus:border-brand focus:outline-none dark:border-night-border dark:bg-night-surface 

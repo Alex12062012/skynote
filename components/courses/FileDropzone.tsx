@@ -1,8 +1,5 @@
 'use client'
-<<<<<<< HEAD
-=======
 
->>>>>>> 79e36e2 (fix: dashboard corrigé + landing page et UI pro pour la prod)
 import { useState, useRef } from 'react'
 import { Upload, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -69,19 +66,4 @@ export function FileDropzone({ accept, label, onFile, onChange, file, value, err
         >
           <Upload className="h-8 w-8 text-text-tertiary dark:text-text-dark-tertiary" />
           <div className="text-center">
-            <p className="font-body text-[14px] font-medium text-text-main dark:text-text-dark-main">
-              {label}
-            </p>
-            <p className="font-body text-[12px] text-text-tertiary dark:text-text-dark-tertiary mt-1">
-              ou glisse-dépose ici
-            </p>
-          </div>
-        </div>
-      )}
-
-      {error && (
-        <p className="mt-1 font-body text-[12px] text-error">{error}</p>
-      )}
-    </div>
-  )
-}
+            <p className="font-body text-[14px] font-medium text-text-main dark:text-text-

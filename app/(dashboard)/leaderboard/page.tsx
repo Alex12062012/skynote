@@ -19,24 +19,7 @@ export default async function LeaderboardPage() {
   const { data: { user } } = await authClient.auth.getUser()
   if (!user) redirect('/login')
 
-<<<<<<< HEAD
-  // Récupérer le rôle pour adapter l'affichage
-  const { data: currentProfile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
-  const isObserver = currentProfile?.role === 'teacher' || currentProfile?.role === 'student'
-
-  // Récupérer les classroom_ids où skycoins_in_ranking = false
-  const { data: hiddenSettings } = await supabase
-    .from('classroom_settings')
-    .select('classroom_id')
-    .eq('skycoins_in_ranking', false)
-
-  const hiddenClassroomIds = (hiddenSettings || []).map((s: any) => s.classroom_id)
-
-  // Top 100 — exclure les élèves des classes qui ont désactivé l'option
-  let query = supabase
-=======
   const { data: top100 } = await supabase
->>>>>>> 79e36e2 (fix: dashboard corrigé + landing page et UI pro pour la prod)
     .from('profiles')
     .select('id, full_name, pseudo, user_number, sky_coins, plan, streak_days, classroom_id, role')
     .order('sky_coins', { ascending: false })
@@ -94,25 +77,6 @@ export default async function LeaderboardPage() {
         </p>
       </div>
 
-<<<<<<< HEAD
-      {/* Profs et élèves : spectateurs uniquement */}
-      {isObserver && (
-        <div className="mb-6 flex items-center gap-3 rounded-card border border-sky-border bg-sky-surface px-5 py-3.5 dark:border-night-border dark:bg-night-surface">
-          <span className="text-lg">👀</span>
-          <p className="font-body text-[13px] text-text-secondary dark:text-text-dark-secondary">
-            Vous consultez le classement en mode spectateur.
-          </p>
-        </div>
-      )}
-
-      {/* Demande de pseudo si dans le top 100 sans pseudo (utilisateurs normaux uniquement) */}
-      {!isObserver && isInTop100 && needsPseudo && (
-        <PseudoModal userId={user.id} />
-      )}
-
-      {/* Ma position si pas dans le top 100 (utilisateurs normaux uniquement) */}
-      {!isObserver && !isInTop100 && (
-=======
       {/* Demande de pseudo */}
       {isInTop100 && needsPseudo && (
         <PseudoForm userId={user.id} />
@@ -120,7 +84,6 @@ export default async function LeaderboardPage() {
 
       {/* Hors top 100 */}
       {!isInTop100 && (
->>>>>>> 79e36e2 (fix: dashboard corrigé + landing page et UI pro pour la prod)
         <div className="mb-6 flex items-center gap-4 rounded-card border border-brand/20 bg-brand-soft px-5 py-4 dark:border-brand-dark/20 dark:bg-brand-dark-soft">
           <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-brand/10 font-display text-[16px] font-bold text-brand dark:text-brand-dark">
             ?

@@ -213,12 +213,7 @@ export function PricingClient({ currentPlan, planExpiresAt, hasStripeSubscriptio
           {PLANS.map((plan) => {
             const price = billing === 'yearly' ? plan.price.yearly : plan.price.monthly
             const isLoading = loadingPlan === plan.id
-<<<<<<< HEAD
-            const isCurrentPlan = plan.id === currentPlan || (false)
-            const canUpgrade = !isCurrentPlan && plan.id !== 'free'
-=======
             const isCurrentPlan = plan.id === currentPlan || (plan.id === 'plus' && currentPlan === 'premium')
->>>>>>> 79e36e2 (fix: dashboard corrigé + landing page et UI pro pour la prod)
             const isDowngrade = (currentPlan === 'famille' && plan.id === 'plus') || (isPaid && plan.id === 'free')
             const PlanIcon = plan.Icon
 
@@ -338,59 +333,4 @@ export function PricingClient({ currentPlan, planExpiresAt, hasStripeSubscriptio
                       disabled={isLoading}
                       className={cn(
                         'flex items-center justify-center h-11 w-full rounded-input font-body text-[14px] font-semibold transition-all disabled:opacity-60 active:scale-95',
-                        plan.id === 'plus'
-                          ? 'bg-brand text-white hover:bg-brand-hover shadow-btn dark:bg-brand-dark dark:text-night-bg'
-                          : 'bg-purple-600 text-white hover:bg-purple-700'
-                      )}
-                    >
-                      {isLoading
-                        ? 'Chargement...'
-                        : `S'abonner — ${price.toFixed(2)}€/mois`}
-                    </button>
-                  )}
-                </div>
-              </div>
-            )
-          })}
-        </div>
-
-        {/* FAQ */}
-        <div className="mt-10 grid gap-4 sm:grid-cols-2">
-          {[
-            [
-              'Comment annuler mon abonnement ?',
-              "Clique sur \"Gérer mon abonnement\". Tu seras redirigé vers le portail Stripe où tu peux annuler en un clic. Ton plan reste actif jusqu'à la fin de la période payée.",
-            ],
-            [
-              'Comment changer de forfait ?',
-              'Tu peux passer de Plus à Famille (ou l\'inverse) depuis le portail Stripe. Le changement prend effet immédiatement avec un prorata.',
-            ],
-            [
-              "C'est quoi les Sky Coins ?",
-              'Monnaie virtuelle gagnée en révisant. 750 coins = 1 mois Plus.',
-            ],
-            [
-              'Je peux payer avec des Sky Coins ?',
-              'Oui ! Quand tu as 750 Sky Coins, tu peux activer 1 mois de Plus gratuitement depuis la page Objectifs.',
-            ],
-          ].map(([q, a]) => (
-            <div
-              key={q}
-              className="rounded-card border border-sky-border bg-sky-surface p-4 dark:border-night-border dark:bg-night-surface"
-            >
-              <p className="font-body text-[14px] font-semibold text-text-main dark:text-text-dark-main mb-1">{q}</p>
-              <p className="font-body text-[13px] text-text-secondary dark:text-text-dark-secondary">{a}</p>
-            </div>
-          ))}
-        </div>
-
-        <p className="mt-8 text-center font-body text-[12px] text-text-tertiary">
-          Paiement sécurisé par Stripe · Annulation à tout moment ·{' '}
-          <Link href="/privacy" className="hover:underline">
-            Politique de confidentialité
-          </Link>
-        </p>
-      </div>
-    </div>
-  )
-}
+               

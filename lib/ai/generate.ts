@@ -103,14 +103,9 @@ export async function generateFlashcards(
 }
 
 export async function generateQcmQuestions(
-<<<<<<< HEAD
-  flashcardTitle: string, summary: string, keyPoints: string[],
-  difficulty: QcmDifficulty = 'medium'
-=======
   flashcardTitle: string,
   summary: string,
   keyPoints: string[]
->>>>>>> 79e36e2 (fix: dashboard corrigé + landing page et UI pro pour la prod)
 ): Promise<GeneratedQuestion[]> {
   const message = await anthropic.messages.create({
     model: 'claude-sonnet-4-20250514',

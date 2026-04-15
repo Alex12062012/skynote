@@ -42,11 +42,7 @@ export async function createCourse(formData: FormData): Promise<{ courseId: stri
     folder_id: folderId || null, classroom_id: classroomId || null,
   }).select('id').single()
 
-<<<<<<< HEAD
-  if (error || !course) return { courseId: null, error: `Erreur: ${error?.message || error?.code || 'inconnue'}` }
-=======
   if (error || !course) return { courseId: null, error: `Erreur création cours: ${error?.message || error?.code || 'inconnue'}` }
->>>>>>> 79e36e2 (fix: dashboard corrigé + landing page et UI pro pour la prod)
   // Incrémenter le compteur hebdomadaire
   await incrementWeeklyCourseCount(user.id)
   revalidatePath('/courses')
@@ -84,12 +80,4 @@ export async function toggleFlashcardMastered(flashcardId: string, isMastered: b
   await supabase.from('flashcards').update({ is_mastered: isMastered }).eq('id', flashcardId).eq('user_id', user.id)
   const { data: flashcard } = await supabase.from('flashcards').select('course_id').eq('id', flashcardId).single()
   if (flashcard) {
-    const { data: all } = await supabase.from('flashcards').select('is_mastered').eq('course_id', flashcard.course_id)
-    if (all) {
-      const progress = Math.round((all.filter((f) => f.is_mastered).length / all.length) * 100)
-      await supabase.from('courses').update({ progress }).eq('id', flashcard.course_id)
-    }
-  }
-  revalidatePath('/courses')
-  return { error: null }
-}
+    const { data: all } =
