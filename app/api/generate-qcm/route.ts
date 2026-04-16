@@ -9,7 +9,7 @@ export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
+    if (!user) return NextResponse.json({ error: 'Non autorise' }, { status: 401 })
 
     const body = await request.json()
     const { flashcardId, regenerate, difficulty = 'medium' } = body
@@ -23,15 +23,20 @@ export async function POST(request: NextRequest) {
 
     if (!flashcard) return NextResponse.json({ error: 'Fiche introuvable' }, { status: 404 })
 
-    // Si régénération demandée, supprimer les anciennes questions
     if (regenerate) {
-      await supabase.from('qcm_questions').delete().eq('flashcard_id', flashcardId)
+      // Supprimer uniquement les questions pour ce niveau
+      await supabase
+        .from('qcm_questions')
+        .delete()
+        .eq('flashcard_id', flashcardId)
+        .eq('difficulty', difficulty)
     } else {
-      // Vérifier si les QCM existent déjà pour cette fiche
+      // Verifier si les QCM existent deja pour ce niveau specifique
       const { count } = await supabase
         .from('qcm_questions')
         .select('id', { count: 'exact' })
         .eq('flashcard_id', flashcardId)
+        .eq('difficulty', difficulty)
 
       if ((count ?? 0) > 0) {
         return NextResponse.json({ ok: true, skipped: true })
