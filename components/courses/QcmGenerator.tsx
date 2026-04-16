@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 
+const DIFFICULTIES = ['peaceful', 'easy', 'medium', 'hard']
+
 interface QcmGeneratorProps {
   courseId: string
   flashcards: { id: string; title: string }[]
@@ -27,27 +29,31 @@ export function QcmGenerator({ courseId, flashcards }: QcmGeneratorProps) {
       const flashcard = flashcards[i]
       setCurrentTitle(flashcard.title)
 
-      try {
-        await fetch('/api/generate-qcm/batch', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ flashcardId: flashcard.id, courseId }),
-        })
-      } catch {
-        setError(true)
-      }
+      // 4 niveaux en parallele via la route existante et testee
+      await Promise.allSettled(
+        DIFFICULTIES.map((difficulty) =>
+          fetch('/api/generate-qcm', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              flashcardId: flashcard.id,
+              difficulty,
+              regenerate: false,
+            }),
+          }).catch(() => setError(true))
+        )
+      )
 
       setDone(i + 1)
     }
 
-    // Marquer ready AVANT le refresh — toujours, meme si certaines fiches ont echoue
+    // Marquer pret puis recharger
     await fetch('/api/mark-qcm-ready', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ courseId }),
     }).catch(() => {})
 
-    // Le refresh recharge la page : qcm_status='ready' affiche le bouton QCM directement
     router.refresh()
   }
 
