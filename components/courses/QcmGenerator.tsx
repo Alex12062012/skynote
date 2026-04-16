@@ -2,8 +2,6 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Zap } from 'lucide-react'
-import Link from 'next/link'
 
 interface QcmGeneratorProps {
   courseId: string
@@ -42,34 +40,18 @@ export function QcmGenerator({ courseId, flashcards }: QcmGeneratorProps) {
       setDone(i + 1)
     }
 
+    // Marquer ready AVANT le refresh — toujours, meme si certaines fiches ont echoue
     await fetch('/api/mark-qcm-ready', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ courseId }),
     }).catch(() => {})
 
+    // Le refresh recharge la page : qcm_status='ready' affiche le bouton QCM directement
     router.refresh()
   }
 
   const percent = total > 0 ? Math.round((done / total) * 100) : 0
-  const isFinished = done === total && done > 0
-
-  if (isFinished) {
-    return (
-      <div className="flex items-center justify-between rounded-card border border-sky-border bg-sky-surface-2 px-5 py-4 dark:border-night-border dark:bg-night-surface-2">
-        <p className="font-body text-[14px] font-semibold text-text-main dark:text-text-dark-main">
-          {total} fiches — QCM prets
-        </p>
-        <Link
-          href={`/courses/${courseId}/qcm`}
-          className="flex items-center gap-1.5 rounded-input bg-brand px-4 py-2 font-body text-[13px] font-semibold text-white transition-opacity hover:opacity-90 flex-shrink-0 dark:bg-brand-dark"
-        >
-          <Zap className="h-4 w-4" />
-          Faire le QCM
-        </Link>
-      </div>
-    )
-  }
 
   return (
     <div className="rounded-card border border-sky-border bg-sky-surface px-5 py-4 dark:border-night-border dark:bg-night-surface">
@@ -92,17 +74,9 @@ export function QcmGenerator({ courseId, flashcards }: QcmGeneratorProps) {
         />
       </div>
 
-      <div className="mt-2 flex items-center justify-between">
-        <p className="font-body text-[12px] text-text-tertiary dark:text-text-dark-tertiary">
-          Lis tes fiches pendant ce temps !
-        </p>
-        <Link
-          href={`/courses/${courseId}/qcm`}
-          className="font-body text-[12px] text-brand underline-offset-2 hover:underline dark:text-brand-dark"
-        >
-          Essayer quand meme
-        </Link>
-      </div>
+      <p className="mt-2 font-body text-[12px] text-text-tertiary dark:text-text-dark-tertiary">
+        Lis tes fiches pendant ce temps !
+      </p>
 
       {error && (
         <p className="mt-2 font-body text-[12px] text-amber-600 dark:text-amber-400">
