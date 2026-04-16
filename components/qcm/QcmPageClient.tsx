@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { RefreshCw, AlertCircle, Loader2 } from 'lucide-react'
 import { QcmEngine } from './QcmEngine'
 import { FlashcardQcmSelector } from './FlashcardQcmSelector'
@@ -58,7 +58,7 @@ export function QcmPageClient({ flashcards, allQuestions, courseId }: QcmPageCli
       const res = await fetch('/api/generate-qcm', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ flashcardId: selectedFlashcardId, regenerate: true, difficulty }),
+        body: JSON.stringify({ flashcardId: selectedFlashcardId, regenerate: false, difficulty }),
       })
       if (!res.ok) throw new Error('Erreur lors de la regeneration')
       const reloadRes = await fetch(`/api/qcm-questions?flashcardId=${selectedFlashcardId}&difficulty=${difficulty}`)
@@ -87,6 +87,14 @@ export function QcmPageClient({ flashcards, allQuestions, courseId }: QcmPageCli
   const currentQuestions = selectedFlashcardId && difficulty
     ? getQuestions(selectedFlashcardId, difficulty)
     : []
+
+  // Auto-generer si aucune question disponible pour ce niveau
+  useEffect(() => {
+    if (difficulty && selectedFlashcardId && currentQuestions.length === 0 && !isRegenerating) {
+      handleRegenerate()
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [difficulty, selectedFlashcardId])
 
   return (
     <div className="flex flex-col gap-6">
@@ -158,26 +166,15 @@ export function QcmPageClient({ flashcards, allQuestions, courseId }: QcmPageCli
               onChangeDifficulty={handleRestartWithNewDifficulty}
             />
           ) : (
-            /* Aucune question — fallback */
-            <div className="flex flex-col items-center justify-center py-16 text-center gap-4">
-              <AlertCircle className="h-10 w-10 text-text-tertiary dark:text-text-dark-tertiary" />
-              <div>
-                <h3 className="font-display text-h4 font-semibold text-text-main dark:text-text-dark-main">
-                  Questions non disponibles
-                </h3>
-                <p className="mt-1 max-w-xs font-body text-[14px] text-text-secondary dark:text-text-dark-secondary">
-                  Les questions pour ce niveau n'ont pas pu etre generees.
-                </p>
-              </div>
-              <Button
-                onClick={handleRegenerate}
-                loading={isRegenerating}
-                variant="secondary"
-                className="gap-2"
-              >
-                <RefreshCw className="h-4 w-4" />
-                Generer les questions
-              </Button>
+            /* Aucune question — generation automatique */
+            <div className="flex flex-col items-center justify-center py-16 text-center gap-4 animate-fade-in">
+              <div className="h-10 w-10 rounded-full border-[3px] border-brand border-t-transparent animate-spin dark:border-brand-dark" />
+              <p className="font-display text-[16px] font-bold text-text-main dark:text-text-dark-main">
+                Generation des questions...
+              </p>
+              <p className="font-body text-[13px] text-text-secondary dark:text-text-dark-secondary">
+                Quelques secondes suffisent
+              </p>
             </div>
           )}
         </div>

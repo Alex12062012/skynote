@@ -142,13 +142,15 @@ export async function processQcmsForCourse(courseId: string): Promise<void> {
   }
 
   try {
+    let totalInserted = 0
+
     for (const flashcard of flashcards) {
       const keyPoints: string[] = Array.isArray(flashcard.key_points)
         ? flashcard.key_points
         : (() => { try { return JSON.parse(String(flashcard.key_points || '[]')) } catch { return [] } })()
 
       // 4 niveaux en parallele pour cette fiche
-      await Promise.allSettled(
+      const results = await Promise.allSettled(
         ALL_DIFFICULTIES.map(async (difficulty) => {
           try {
             const questions = await generateQcmQuestions(
@@ -158,7 +160,7 @@ export async function processQcmsForCourse(courseId: string): Promise<void> {
               difficulty
             )
             if (questions.length > 0) {
-              await supabase.from('qcm_questions').insert(
+              const { error } = await supabase.from('qcm_questions').insert(
                 questions.map((q) => ({
                   flashcard_id: flashcard.id,
                   course_id: courseId,
@@ -170,20 +172,25 @@ export async function processQcmsForCourse(courseId: string): Promise<void> {
                   difficulty,
                 }))
               )
+              if (!error) return questions.length
             }
+            return 0
           } catch (err) {
             console.error(`[QCM Pipeline] ${difficulty} pour fiche ${flashcard.id}:`, err)
+            return 0
           }
         })
       )
+      totalInserted += results.reduce((sum, r) => sum + (r.status === 'fulfilled' ? (r.value ?? 0) : 0), 0)
     }
 
-    await supabase
-      .from('courses')
-      .update({ qcm_status: 'ready' })
-      .eq('id', courseId)
-
-    console.log(`[QCM Pipeline] QCM generes pour ${courseId} (${flashcards.length} fiches)`)
+    // Marquer ready seulement si des questions ont ete inserees
+    if (totalInserted > 0) {
+      await supabase.from('courses').update({ qcm_status: 'ready' }).eq('id', courseId)
+      console.log(`[QCM Pipeline] ${totalInserted} questions generees pour ${courseId}`)
+    } else {
+      console.warn(`[QCM Pipeline] Aucune question generee pour ${courseId} — qcm_status reste processing`)
+    }
 
   } catch (error) {
     console.error(`[QCM Pipeline] Erreur pour le cours ${courseId}:`, error)
