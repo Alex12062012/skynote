@@ -4,6 +4,11 @@ import type { QcmDifficulty } from './prompts'
 
 const ALL_DIFFICULTIES: QcmDifficulty[] = ['peaceful', 'easy', 'medium', 'hard']
 
+/**
+ * PHASE 1 — Genere les fiches et marque le cours comme pret.
+ * Les QCM restent en qcm_status='processing' pour etre generes en arriere-plan.
+ * Rapide : 1 seul appel Claude (~15s).
+ */
 export async function processCourse(courseId: string): Promise<void> {
   const supabase = await createClient()
 
@@ -37,7 +42,7 @@ export async function processCourse(courseId: string): Promise<void> {
   }
 
   try {
-    // ── Etape 1 : generation des fiches (0 → 40%) ──────────────────────────
+    // Etape 1 : generation des fiches
     await supabase
       .from('courses')
       .update({ status: 'processing', progress: 10 })
@@ -47,7 +52,7 @@ export async function processCourse(courseId: string): Promise<void> {
 
     await supabase
       .from('courses')
-      .update({ progress: 40 })
+      .update({ progress: 70 })
       .eq('id', courseId)
 
     const flashcardInserts = flashcardsData.map((f, index) => ({
@@ -60,26 +65,84 @@ export async function processCourse(courseId: string): Promise<void> {
       order_index: index,
     }))
 
-    const { data: insertedFlashcards, error: fcError } = await supabase
+    const { error: fcError } = await supabase
       .from('flashcards')
       .insert(flashcardInserts)
-      .select('id, title, summary, key_points')
 
-    if (fcError || !insertedFlashcards) {
+    if (fcError) {
       throw new Error(`Erreur insertion fiches : ${fcError?.message}`)
     }
 
+    // Cours marque comme pret — les QCM seront generes en arriere-plan
     await supabase
       .from('courses')
-      .update({ progress: 50, qcm_status: 'processing' })
+      .update({ status: 'ready', progress: 0, qcm_status: 'processing' })
       .eq('id', courseId)
 
-    // ── Etape 2 : generation des QCM pour les 4 niveaux (50 → 90%) ────────
-    // On genere toutes les difficultes pour chaque fiche en parallele
-    const total = insertedFlashcards.length
-    let done = 0
+    await checkAndAwardObjectives(courseId, course.user_id)
 
-    for (const flashcard of insertedFlashcards) {
+  } catch (error) {
+    console.error(`[AI Pipeline] Erreur pour le cours ${courseId}:`, error)
+    await supabase
+      .from('courses')
+      .update({ status: 'error', progress: 0 })
+      .eq('id', courseId)
+    throw error
+  }
+}
+
+/**
+ * PHASE 2 — Genere les QCM (4 niveaux) pour toutes les fiches du cours.
+ * Appelee en arriere-plan apres que le cours est deja marque 'ready'.
+ * Peut prendre jusqu'a 60s selon le nombre de fiches.
+ */
+export async function processQcmsForCourse(courseId: string): Promise<void> {
+  const supabase = await createClient()
+
+  const { data: course } = await supabase
+    .from('courses')
+    .select('user_id, qcm_status')
+    .eq('id', courseId)
+    .single()
+
+  if (!course) {
+    console.warn('[QCM Pipeline] Cours introuvable :', courseId)
+    return
+  }
+
+  if (course.qcm_status === 'ready') {
+    console.log('[QCM Pipeline] QCM deja generes pour', courseId)
+    return
+  }
+
+  const { data: flashcards } = await supabase
+    .from('flashcards')
+    .select('id, title, summary, key_points')
+    .eq('course_id', courseId)
+    .order('order_index')
+
+  if (!flashcards || flashcards.length === 0) {
+    console.warn('[QCM Pipeline] Aucune fiche pour', courseId)
+    return
+  }
+
+  // Verifier si des QCM existent deja (anti-doublon)
+  const { count: existingQcm } = await supabase
+    .from('qcm_questions')
+    .select('id', { count: 'exact' })
+    .eq('course_id', courseId)
+
+  if ((existingQcm ?? 0) > 0) {
+    // QCM partiellement ou completement generes — on marque ready
+    await supabase
+      .from('courses')
+      .update({ qcm_status: 'ready' })
+      .eq('id', courseId)
+    return
+  }
+
+  try {
+    for (const flashcard of flashcards) {
       const keyPoints: string[] = Array.isArray(flashcard.key_points)
         ? flashcard.key_points
         : (() => { try { return JSON.parse(String(flashcard.key_points || '[]')) } catch { return [] } })()
@@ -109,35 +172,22 @@ export async function processCourse(courseId: string): Promise<void> {
               )
             }
           } catch (err) {
-            console.error(`[AI Pipeline] QCM ${difficulty} pour fiche ${flashcard.id}:`, err)
-            // On continue meme si un niveau echoue
+            console.error(`[QCM Pipeline] ${difficulty} pour fiche ${flashcard.id}:`, err)
           }
         })
       )
-
-      done++
-      // Progression de 50% a 90% au fil des fiches
-      const progress = 50 + Math.round((done / total) * 40)
-      await supabase
-        .from('courses')
-        .update({ progress })
-        .eq('id', courseId)
     }
 
-    // ── Etape 3 : marquer le cours comme pret ──────────────────────────────
     await supabase
       .from('courses')
-      .update({ status: 'ready', progress: 0, qcm_status: 'ready' })
+      .update({ qcm_status: 'ready' })
       .eq('id', courseId)
 
-    await checkAndAwardObjectives(courseId, course.user_id)
+    console.log(`[QCM Pipeline] QCM generes pour ${courseId} (${flashcards.length} fiches)`)
 
   } catch (error) {
-    console.error(`[AI Pipeline] Erreur pour le cours ${courseId}:`, error)
-    await supabase
-      .from('courses')
-      .update({ status: 'error', progress: 0 })
-      .eq('id', courseId)
+    console.error(`[QCM Pipeline] Erreur pour le cours ${courseId}:`, error)
+    // On ne marque pas en erreur — les QCM peuvent etre regeneres via QcmGenerator
     throw error
   }
 }
