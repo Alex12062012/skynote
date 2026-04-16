@@ -121,9 +121,9 @@ async function ReadyCourse({ courseId, userId, courseOwnerId, courseTitle, qcmSt
   const supabase = await createClient()
   const flashcards = await getCourseFlashcards(courseId)
 
-  // Pour les élèves : vérifier si des questions existent réellement (qcm_status peut être 'processing' même si le prof a tout généré)
-  let qcmReady = qcmStatus === 'ready' || !qcmStatus
-  if (isStudent && !qcmReady && flashcards.length > 0) {
+  // Vérifier si des questions existent réellement (ne pas faire confiance à qcm_status)
+  let qcmReady = false
+  if (flashcards.length > 0) {
     const flashcardIds = flashcards.map((f) => f.id)
     const { count } = await supabase
       .from('qcm_questions')
@@ -320,3 +320,4 @@ async function TeacherCourseStats({ courseId, flashcardsCount }: { courseId: str
     </div>
   )
 }
+                                                                                                            
