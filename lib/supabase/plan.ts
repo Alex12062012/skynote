@@ -143,7 +143,7 @@ export async function incrementWeeklyCourseCount(userId: string): Promise<void> 
     .update({ courses_this_week: newCount })
     .eq('id', userId)
 
-  if (newCount >= 3) {
+  if (newCount === 3) {
     const loyaltyWeeks = (profile.total_loyalty_weeks || 0) + 1
     await supabase
       .from('profiles')

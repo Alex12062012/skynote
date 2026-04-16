@@ -30,12 +30,12 @@ export default async function LeaderboardPage() {
 
   const hiddenClassroomIds = (hiddenSettings || []).map((s: any) => s.classroom_id)
 
-  // Top 100 — exclure les élèves des classes qui ont désactivé l'option
+  // Top 10 — exclure les élèves des classes qui ont désactivé l'option
   let query = supabase
     .from('profiles')
     .select('id, full_name, pseudo, user_number, sky_coins, plan, streak_days, classroom_id, role')
     .order('sky_coins', { ascending: false })
-    .limit(200) // on récupère plus pour pouvoir filtrer et garder 100
+    .limit(20) // on récupère plus pour pouvoir filtrer et garder 10
 
   const { data: rawTop } = await query
 
@@ -47,19 +47,19 @@ export default async function LeaderboardPage() {
       }
       return true
     })
-    .slice(0, 100)
+    .slice(0, 10)
 
-  const myRankInTop100 = (top100 || []).findIndex(p => p.id === user.id)
-  const myRank = myRankInTop100 >= 0 ? myRankInTop100 + 1 : null
-  const isInTop100 = myRankInTop100 >= 0
+  const myRankInTop10 = (top100 || []).findIndex(p => p.id === user.id)
+  const myRank = myRankInTop10 >= 0 ? myRankInTop10 + 1 : null
+  const isInTop10 = myRankInTop10 >= 0
   const myProfile = (top100 || []).find(p => p.id === user.id)
 
-  // Si pas dans le top 100, chercher les infos de l'utilisateur
+  // Si pas dans le top 10, chercher les infos de l'utilisateur
   let myCoins = 0
   let myPseudo = null
   let myUserNumber = 0
   let needsPseudo = false
-  if (!isInTop100) {
+  if (!isInTop10) {
     const { data: mp } = await supabase
       .from('profiles')
       .select('sky_coins, pseudo, user_number')
@@ -93,7 +93,7 @@ export default async function LeaderboardPage() {
           Classement
         </h1>
         <p className="mt-1 font-body text-[14px] text-text-secondary dark:text-text-dark-secondary">
-          Top 100 des meilleurs collecteurs de Sky Coins
+          Top 10 des meilleurs collecteurs de Sky Coins
         </p>
       </div>
 
@@ -107,20 +107,20 @@ export default async function LeaderboardPage() {
         </div>
       )}
 
-      {/* Demande de pseudo si dans le top 100 sans pseudo (utilisateurs normaux uniquement) */}
-      {!isObserver && isInTop100 && needsPseudo && (
+      {/* Demande de pseudo si dans le top 10 sans pseudo */}
+      {!isObserver && isInTop10 && needsPseudo && (
         <PseudoModal userId={user.id} />
       )}
 
-      {/* Ma position si pas dans le top 100 (utilisateurs normaux uniquement) */}
-      {!isObserver && !isInTop100 && (
+      {/* Ma position si pas dans le top 10 */}
+      {!isObserver && !isInTop10 && (
         <div className="mb-6 flex items-center gap-4 rounded-card border border-brand/20 bg-brand-soft px-5 py-4 dark:border-brand-dark/20 dark:bg-brand-dark-soft">
           <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-brand/10 font-display text-[16px] font-bold text-brand dark:text-brand-dark">
             ?
           </div>
           <div className="flex-1">
             <p className="font-body text-[14px] font-semibold text-text-main dark:text-text-dark-main">
-              Tu n'es pas encore dans le top 100
+              Tu n'es pas encore dans le top 10
             </p>
             <p className="font-body text-[13px] text-text-secondary dark:text-text-dark-secondary">
               Tu as{' '}
@@ -198,7 +198,7 @@ export default async function LeaderboardPage() {
         })}
       </div>
 
-      {isInTop100 && myRank && (
+      {isInTop10 && myRank && (
         <p className="mt-4 text-center font-body text-[13px] text-text-secondary dark:text-text-dark-secondary">
           {myRank === 1 ? 'Tu es 1er du classement !' :
            myRank === 2 ? 'Tu es 2eme du classement !' :
