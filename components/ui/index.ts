@@ -1,7 +1,7 @@
 export { Button } from './Button'
 export { Input } from './Input'
 export { Modal } from './Modal'
-export { Badge, SubjectBadge, PlanBadge } from './Badge'
+export { SubjectBadge, BetaBadge, PlanBadge } from './Badge'
 export { EmptyState } from './EmptyState'
 export { Skeleton } from './Skeleton'
 export { ProgressBar } from './ProgressBar'

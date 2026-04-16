@@ -31,9 +31,6 @@ export async function createCourse(formData: FormData): Promise<{ courseId: stri
     Espagnol: '#DC2626', Philosophie: '#4338CA', Général: '#2563EB',
   }
 
-  const folderId = formData.get('folderId') as string | null
-  const classroomId = formData.get('classroomId') as string | null
-
   const { data: course, error } = await supabase.from('courses').insert({
     user_id: user.id, title: title.trim(), subject: subject.trim(),
     color: subjectColors[subject] || '#2563EB', source_type: sourceType,
@@ -42,7 +39,7 @@ export async function createCourse(formData: FormData): Promise<{ courseId: stri
     folder_id: folderId || null, classroom_id: classroomId || null,
   }).select('id').single()
 
-  if (error || !course) return { courseId: null, error: `Erreur création cours: ${error?.message || error?.code || 'inconnue'}` }
+  if (error || !course) return { courseId: null, error: `Erreur: ${error?.message || error?.code || 'inconnue'}` }
   // Incrémenter le compteur hebdomadaire
   await incrementWeeklyCourseCount(user.id)
   revalidatePath('/courses')
@@ -80,4 +77,12 @@ export async function toggleFlashcardMastered(flashcardId: string, isMastered: b
   await supabase.from('flashcards').update({ is_mastered: isMastered }).eq('id', flashcardId).eq('user_id', user.id)
   const { data: flashcard } = await supabase.from('flashcards').select('course_id').eq('id', flashcardId).single()
   if (flashcard) {
-    const { data: all } =
+    const { data: all } = await supabase.from('flashcards').select('is_mastered').eq('course_id', flashcard.course_id)
+    if (all) {
+      const progress = Math.round((all.filter((f) => f.is_mastered).length / all.length) * 100)
+      await supabase.from('courses').update({ progress }).eq('id', flashcard.course_id)
+    }
+  }
+  revalidatePath('/courses')
+  return { error: null }
+}

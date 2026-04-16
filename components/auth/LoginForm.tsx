@@ -1,5 +1,4 @@
 'use client'
-
 import { useState } from 'react'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
@@ -25,19 +24,11 @@ export function LoginForm() {
 
     if (error) {
       if (error.message.includes('Email rate limit exceeded')) {
-        setError('Trop de tentatives. Attends quelques minutes avant de réessayer.')
-      } else if (
-        error.message.includes('Unable to validate') ||
-        error.message.includes('User not found') ||
-        error.message.includes('Signups not allowed')
-      ) {
-        setError("Aucun compte avec cet email. Crée un compte d'abord.")
-      } else if (
-        error.message.includes('SMTP') ||
-        error.message.includes('email') ||
-        error.message.includes('send')
-      ) {
-        setError("Erreur d'envoi du mail. Réessaie dans quelques instants.")
+        setError('Trop de tentatives. Attends quelques minutes avant de reessayer.')
+      } else if (error.message.includes('Unable to validate') || error.message.includes('User not found') || error.message.includes('Signups not allowed')) {
+        setError('Aucun compte avec cet email. Cree un compte d\'abord.')
+      } else if (error.message.includes('SMTP') || error.message.includes('email') || error.message.includes('send')) {
+        setError('Erreur d\'envoi du mail. Reessaie dans quelques instants.')
       } else {
         setError(error.message)
       }
@@ -53,10 +44,11 @@ export function LoginForm() {
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-      <Input
-        id="email"
-        type="email"
-        label="Email"
-        placeholder="toi@exemple.com"
-        value={email}
-        onChange={(e)
+      <Input id="email" type="email" label="Email" placeholder="toi@exemple.com"
+        value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="email" error={error} />
+      <Button type="submit" loading={loading} size="lg" className="w-full mt-1">
+        Recevoir le code
+      </Button>
+    </form>
+  )
+}
