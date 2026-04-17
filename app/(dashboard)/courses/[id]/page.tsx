@@ -320,4 +320,3 @@ async function TeacherCourseStats({ courseId, flashcardsCount }: { courseId: str
     </div>
   )
 }
-                                                                                                            

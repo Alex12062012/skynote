@@ -1,7 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useEffect, useRef, useState } from 'react'
 
 const DIFFICULTIES = ['peaceful', 'easy', 'medium', 'hard']
 
@@ -11,18 +10,22 @@ interface QcmGeneratorProps {
 }
 
 export function QcmGenerator({ courseId, flashcards }: QcmGeneratorProps) {
-  const router = useRouter()
   const [done, setDone] = useState(0)
   const [error, setError] = useState(false)
+  const [complete, setComplete] = useState(false)
+  const started = useRef(false)
   const total = flashcards.length
 
-  useEffect(() => { generateAll() }, []) // eslint-disable-line
+  useEffect(() => {
+    if (started.current) return
+    started.current = true
+    generateAll()
+  }, []) // eslint-disable-line
 
   async function generateAll() {
     let completed = 0
     for (const flashcard of flashcards) {
       try {
-        // Meme chose qu'avant, mais 4 niveaux au lieu d'un seul
         await Promise.all(
           DIFFICULTIES.map((difficulty) =>
             fetch('/api/generate-qcm', {
@@ -45,10 +48,26 @@ export function QcmGenerator({ courseId, flashcards }: QcmGeneratorProps) {
       body: JSON.stringify({ courseId }),
     }).catch(() => {})
 
-    setTimeout(() => router.refresh(), 500)
+    setComplete(true)
+    setTimeout(() => {
+      window.location.reload()
+    }, 800)
   }
 
   const percent = total > 0 ? Math.round((done / total) * 100) : 0
+
+  if (complete) {
+    return (
+      <div className="rounded-card border border-sky-border bg-sky-surface px-5 py-4 dark:border-night-border dark:bg-night-surface">
+        <div className="flex items-center gap-2">
+          <div className="h-4 w-4 animate-spin rounded-full border-2 border-brand border-t-transparent dark:border-brand-dark" />
+          <p className="font-body text-[14px] font-semibold text-text-main dark:text-text-dark-main">
+            QCM prêt ! Chargement...
+          </p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="rounded-card border border-sky-border bg-sky-surface px-5 py-4 dark:border-night-border dark:bg-night-surface">
