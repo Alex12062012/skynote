@@ -54,7 +54,15 @@ export async function POST(request: NextRequest) {
       difficulty
     )
 
-    await supabase.from('qcm_questions').insert(
+    if (!questions || questions.length === 0) {
+      console.error('[generate-qcm] Zero questions generated', { flashcardId, difficulty })
+      return NextResponse.json(
+        { error: "Aucune question générée par l'IA" },
+        { status: 500 }
+      )
+    }
+
+    const { error: insertError } = await supabase.from('qcm_questions').insert(
       questions.map((q) => ({
         flashcard_id: flashcard.id,
         course_id: flashcard.course_id,
@@ -67,8 +75,17 @@ export async function POST(request: NextRequest) {
       }))
     )
 
-    return NextResponse.json({ ok: true })
+    if (insertError) {
+      console.error('[generate-qcm] Supabase insert failed:', insertError)
+      return NextResponse.json(
+        { error: `Insert DB: ${insertError.message}` },
+        { status: 500 }
+      )
+    }
+
+    return NextResponse.json({ ok: true, inserted: questions.length })
   } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    console.error('[generate-qcm] Error:', error)
+    return NextResponse.json({ error: error.message || 'Erreur inconnue' }, { status: 500 })
   }
 }

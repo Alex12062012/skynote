@@ -120,27 +120,47 @@ export async function generateQcmQuestions(
     .map((b) => (b as { type: 'text'; text: string }).text)
     .join('')
 
-  const parsed = parseClaudeJSON<{ questions: GeneratedQuestion[] }>(raw)
+  const parsed = parseClaudeJSON<{ questions: any[] }>(raw)
   if (!parsed?.questions || !Array.isArray(parsed.questions)) {
+    console.error('[generateQcmQuestions] Parse failed. Raw (first 500):', raw.slice(0, 500))
     throw new Error('Réponse IA invalide pour le QCM')
   }
 
-  return parsed.questions
-    .filter(
-      (q) =>
-        q.question &&
-        Array.isArray(q.options) &&
-        q.options.length === 4 &&
-        typeof q.correct_index === 'number' &&
-        q.correct_index >= 0 &&
-        q.correct_index <= 3 &&
-        q.explanation
+  // Normalisation permissive : accepte camelCase, snake_case, index en string
+  const normalized = parsed.questions.map((q: any) => {
+    const idxRaw = q.correct_index ?? q.correctIndex ?? q.correct ?? q.answer_index ?? 0
+    const idx = typeof idxRaw === 'string' ? parseInt(idxRaw, 10) : Number(idxRaw)
+    return {
+      question: String(q.question || q.text || '').trim(),
+      options: Array.isArray(q.options)
+        ? q.options.map((o: any) => String(o).trim())
+        : Array.isArray(q.choices)
+          ? q.choices.map((o: any) => String(o).trim())
+          : [],
+      correct_index: Number.isFinite(idx) ? idx : 0,
+      explanation: String(q.explanation || q.explication || q.reason || '').trim(),
+    }
+  })
+
+  const filtered = normalized.filter(
+    (q) =>
+      q.question &&
+      Array.isArray(q.options) &&
+      q.options.length === 4 &&
+      typeof q.correct_index === 'number' &&
+      q.correct_index >= 0 &&
+      q.correct_index <= 3 &&
+      q.explanation
+  )
+
+  if (filtered.length === 0 && parsed.questions.length > 0) {
+    console.error(
+      '[generateQcmQuestions] All filtered out. Parsed:',
+      parsed.questions.length,
+      'First:',
+      JSON.stringify(parsed.questions[0] || {}).slice(0, 400)
     )
-    .map((q) => ({
-      question: String(q.question).trim(),
-      options: q.options.map((o) => String(o).trim()),
-      correct_index: Number(q.correct_index),
-      explanation: String(q.explanation).trim(),
-    }))
-    .slice(0, 5)
+  }
+
+  return filtered.slice(0, 5)
 }

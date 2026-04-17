@@ -11,7 +11,7 @@ interface QcmGeneratorProps {
 
 export function QcmGenerator({ courseId, flashcards }: QcmGeneratorProps) {
   const [done, setDone] = useState(0)
-  const [error, setError] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const [complete, setComplete] = useState(false)
   const started = useRef(false)
   const total = flashcards.length
@@ -24,22 +24,39 @@ export function QcmGenerator({ courseId, flashcards }: QcmGeneratorProps) {
 
   async function generateAll() {
     let completed = 0
+    const failures: string[] = []
+
     for (const flashcard of flashcards) {
-      try {
-        await Promise.all(
-          DIFFICULTIES.map((difficulty) =>
-            fetch('/api/generate-qcm', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ flashcardId: flashcard.id, difficulty }),
-            })
-          )
+      const results = await Promise.allSettled(
+        DIFFICULTIES.map(async (difficulty) => {
+          const res = await fetch('/api/generate-qcm', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ flashcardId: flashcard.id, difficulty }),
+          })
+          if (!res.ok) {
+            const body = await res.text().catch(() => '')
+            throw new Error(`${difficulty}: ${res.status} ${body.slice(0, 200)}`)
+          }
+          return res.json()
+        })
+      )
+
+      const rejected = results.filter((r) => r.status === 'rejected')
+      if (rejected.length > 0) {
+        rejected.forEach((r: any) =>
+          failures.push(`${flashcard.title} — ${r.reason?.message || r.reason}`)
         )
-        completed++
-        setDone(completed)
-      } catch {
-        setError(true)
+        console.error('[QcmGenerator] Failures', flashcard.title, rejected)
       }
+
+      completed++
+      setDone(completed)
+    }
+
+    if (failures.length > 0) {
+      setError(failures.slice(0, 3).join(' | '))
+      return
     }
 
     await fetch('/api/mark-qcm-ready', {
@@ -69,13 +86,32 @@ export function QcmGenerator({ courseId, flashcards }: QcmGeneratorProps) {
     )
   }
 
+  if (error) {
+    return (
+      <div className="rounded-card border border-red-300 bg-red-50 px-5 py-4 dark:border-red-900 dark:bg-red-950">
+        <p className="font-body text-[14px] font-semibold text-red-700 dark:text-red-300 mb-2">
+          Erreur lors de la génération des QCM
+        </p>
+        <p className="font-body text-[12px] text-red-600 dark:text-red-400 mb-3 break-words">
+          {error}
+        </p>
+        <button
+          onClick={() => window.location.reload()}
+          className="font-body text-[13px] font-semibold text-red-700 underline dark:text-red-300"
+        >
+          Réessayer
+        </button>
+      </div>
+    )
+  }
+
   return (
     <div className="rounded-card border border-sky-border bg-sky-surface px-5 py-4 dark:border-night-border dark:bg-night-surface">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <div className="h-4 w-4 animate-spin rounded-full border-2 border-brand border-t-transparent dark:border-brand-dark" />
           <p className="font-body text-[14px] font-semibold text-text-main dark:text-text-dark-main">
-            Generation des QCM (4 niveaux) en cours...
+            Génération des QCM (4 niveaux) en cours...
           </p>
         </div>
         <span className="font-display text-[14px] font-bold text-brand dark:text-brand-dark">
@@ -94,11 +130,6 @@ export function QcmGenerator({ courseId, flashcards }: QcmGeneratorProps) {
         Lis tes fiches pendant ce temps !
       </p>
 
-      {error && (
-        <p className="mt-2 font-body text-[12px] text-amber-600 dark:text-amber-400">
-          Une erreur s'est produite sur une fiche — la generation continue.
-        </p>
-      )}
     </div>
   )
 }
