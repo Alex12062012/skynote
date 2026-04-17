@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/Button'
 import { SkyCoin } from '@/components/ui/SkyCoin'
 import { ProgressBar } from '@/components/ui/ProgressBar'
 import { LanguageSection } from '@/components/profile/LanguageSection'
+import { PlayerEmblem } from '@/components/gamification/PlayerEmblem'
 import { getServerLocale, createServerT } from '@/lib/i18n/server'
 import type { Metadata } from 'next'
 
@@ -46,9 +47,14 @@ export default async function ProfilePage() {
     <div className="flex flex-col gap-8 animate-fade-in max-w-4xl mx-auto">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center gap-4">
-          <div className="h-16 w-16 rounded-full bg-gradient-to-br from-brand to-brand-dark flex items-center justify-center text-white text-2xl font-bold shadow-lg">
-            {firstName.charAt(0).toUpperCase()}
-          </div>
+          <PlayerEmblem
+            prestigeLevel={(profile as any)?.prestige_level ?? 0}
+            badgeId={(profile as any)?.active_badge_id ?? 'letter'}
+            letter={firstName.charAt(0).toUpperCase()}
+            size="lg"
+            glow
+            animated
+          />
           <div>
             <h1 className="font-display text-h2 text-text-main dark:text-text-dark-main">{firstName}</h1>
             <div className="flex items-center gap-2 mt-1 text-text-secondary dark:text-text-dark-secondary">

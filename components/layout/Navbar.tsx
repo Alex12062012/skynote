@@ -7,8 +7,8 @@ import { Target, LayoutDashboard, Users, Menu, X, Tag, BookOpen, Key, CreditCard
 import { SkyCoin } from '@/components/ui/SkyCoin'
 import { CoinCounter } from '@/components/ui/CoinCounter'
 import { ThemeToggle } from '@/components/ui/ThemeToggle'
+import { PlayerEmblem } from '@/components/gamification/PlayerEmblem'
 import { cn } from '@/lib/utils'
-import { getInitials } from '@/lib/utils'
 import { useI18n } from '@/lib/i18n/context'
 import type { Profile } from '@/types/database'
 
@@ -124,12 +124,15 @@ function NavbarInner({ profile, isBetaEnabled = false }: { profile: Profile | nu
           {profile && (
             <Link href="/profile"
               className={cn(
-                'flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full font-display text-[14px] font-bold transition-all hover:scale-105',
-                pathname.startsWith('/profile')
-                  ? 'bg-brand text-white dark:bg-brand-dark dark:text-night-bg ring-2 ring-brand/30'
-                  : 'bg-brand text-white dark:bg-brand-dark dark:text-night-bg'
+                'flex flex-shrink-0 items-center justify-center rounded-full transition-all hover:scale-105',
+                pathname.startsWith('/profile') && 'ring-2 ring-brand/30 ring-offset-2 ring-offset-sky-surface dark:ring-offset-night-surface rounded-full',
               )}>
-              {getInitials(profile.full_name || profile.email || 'U')}
+              <PlayerEmblem
+                prestigeLevel={(profile as any).prestige_level ?? 0}
+                badgeId={(profile as any).active_badge_id ?? 'letter'}
+                letter={(profile.pseudo || profile.full_name || profile.email || 'U').charAt(0)}
+                size="sm"
+              />
             </Link>
           )}
           <button onClick={() => setOpen(!open)}
