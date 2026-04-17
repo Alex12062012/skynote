@@ -16,7 +16,6 @@ export default async function BoutiquePage() {
     .eq('id', user.id)
     .single()
 
-  // Derniers tours de roue (table peut ne pas exister encore)
   let recentSpins: { segment_id: string; reward_type: string; net_gain: number; created_at: string }[] = []
   try {
     const { data } = await supabase
@@ -26,8 +25,8 @@ export default async function BoutiquePage() {
       .order('created_at', { ascending: false })
       .limit(5)
     recentSpins = data ?? []
-  } catch {
-    // table pas encore créée → on ignore
+  } catch (_e) {
+    // table pas encore creee
   }
 
   return (
