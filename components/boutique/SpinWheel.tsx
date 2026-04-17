@@ -6,14 +6,14 @@ import { cn } from '@/lib/utils'
 
 // ─── Segments (mirror de l'API) ───────────────────────────────────────────────
 export const WHEEL_SEGMENTS = [
-  { id: 'lost',      label: 'Perdu',        emoji: '💀', type: 'lost',     value: 0,   color: '#EF4444', text: '#fff' },
-  { id: 'coins_20',  label: '+20',          emoji: '🪙', type: 'coins',    value: 20,  color: '#FB923C', text: '#fff' },
-  { id: 'coins_40',  label: '+40',          emoji: '🪙', type: 'coins',    value: 40,  color: '#FBBF24', text: '#fff' },
-  { id: 'coins_60',  label: '+60',          emoji: '🪙', type: 'coins',    value: 60,  color: '#A3E635', text: '#1a2e05' },
-  { id: 'coins_100', label: '+100',         emoji: '🪙', type: 'coins',    value: 100, color: '#34D399', text: '#022c22' },
-  { id: 'coins_200', label: '+200',         emoji: '💎', type: 'coins',    value: 200, color: '#2DD4BF', text: '#042f2e' },
-  { id: 'boost_xp',  label: 'Boost XP',    emoji: '⚡', type: 'boost_xp', value: 0,   color: '#A78BFA', text: '#fff' },
-  { id: 'frame',     label: 'Cadre',        emoji: '✨', type: 'frame',    value: 0,   color: '#F472B6', text: '#fff' },
+  { id: 'lost',      label: 'Perdu',     type: 'lost',     value: 0,   color: '#EF4444', text: '#fff' },
+  { id: 'coins_20',  label: '+20',       type: 'coins',    value: 20,  color: '#FB923C', text: '#fff' },
+  { id: 'coins_40',  label: '+40',       type: 'coins',    value: 40,  color: '#FBBF24', text: '#fff' },
+  { id: 'coins_60',  label: '+60',       type: 'coins',    value: 60,  color: '#A3E635', text: '#1a2e05' },
+  { id: 'coins_100', label: '+100',      type: 'coins',    value: 100, color: '#34D399', text: '#022c22' },
+  { id: 'coins_200', label: '+200',      type: 'coins',    value: 200, color: '#2DD4BF', text: '#042f2e' },
+  { id: 'boost_xp',  label: 'Boost XP', type: 'boost_xp', value: 0,   color: '#A78BFA', text: '#fff' },
+  { id: 'frame',     label: 'Cadre',     type: 'frame',    value: 0,   color: '#F472B6', text: '#fff' },
 ] as const
 
 const NUM_SEGMENTS = WHEEL_SEGMENTS.length
@@ -173,30 +173,19 @@ export function SpinWheel({ coins, onBalanceUpdate }: SpinWheelProps) {
               const labelAngle = i * SEG_ANGLE + SEG_ANGLE / 2
               return (
                 <g key={seg.id}>
-                  {/* Slice */}
                   <path
                     d={segPath(cx, cy, r, i)}
                     fill={seg.color}
                     stroke="#fff"
                     strokeWidth={2}
                   />
-                  {/* Texte rotatif centré dans le segment */}
                   <g transform={`translate(${lp.x}, ${lp.y}) rotate(${labelAngle})`}>
                     <text
                       textAnchor="middle"
                       dominantBaseline="central"
-                      fontSize={18}
-                      dy={-6}
-                    >
-                      {seg.emoji}
-                    </text>
-                    <text
-                      textAnchor="middle"
-                      dominantBaseline="central"
-                      fontSize={10}
+                      fontSize={11}
                       fontWeight="bold"
                       fill={seg.text}
-                      dy={10}
                       fontFamily="sans-serif"
                     >
                       {seg.label}
@@ -213,14 +202,12 @@ export function SpinWheel({ coins, onBalanceUpdate }: SpinWheelProps) {
               strokeWidth={3}
               style={{ filter: 'drop-shadow(0 2px 6px rgba(37,99,235,0.15))' }}
             />
-            <text
-              x={cx} y={cy}
-              textAnchor="middle"
-              dominantBaseline="central"
-              fontSize={22}
-            >
-              🌟
-            </text>
+            {/* Étoile SVG au centre */}
+            <path
+              d="M150 130 l4.5 9 10 1.5 -7 7 1.5 10 -9 -4.5 -9 4.5 1.5 -10 -7 -7 10 -1.5z"
+              fill="#2563EB"
+              opacity={0.85}
+            />
           </svg>
         </div>
       </div>
@@ -238,7 +225,7 @@ export function SpinWheel({ coins, onBalanceUpdate }: SpinWheelProps) {
       >
         {spinning ? (
           <>
-            <span className="animate-spin">🌀</span>
+            <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
             La roue tourne…
           </>
         ) : (
@@ -280,20 +267,25 @@ function ResultBanner({ result, onClose }: { result: SpinResult; onClose: () => 
         background: isSpecial ? '#F5F3FF' : isWin ? '#F0FDF4' : isLoss ? '#FFF1F2' : '#F8FAFF',
       }}
     >
-      <span className="text-4xl">{seg.emoji}</span>
+      <div
+        className="flex h-12 w-12 items-center justify-center rounded-full"
+        style={{ background: seg.color + '22', border: `2px solid ${seg.color}` }}
+      >
+        <div className="h-3 w-3 rounded-full" style={{ background: seg.color }} />
+      </div>
       <p
         className="font-display text-[20px] font-bold"
         style={{ color: isSpecial ? '#7C3AED' : isWin ? '#059669' : isLoss ? '#DC2626' : '#2563EB' }}
       >
-        {seg.label === 'Perdu'
+        {seg.type === 'lost'
           ? 'Pas de chance…'
           : seg.type === 'coins'
           ? result.netGain > 0
-            ? `+${result.netGain} coins nets 🎉`
+            ? `+${result.netGain} coins nets`
             : `${result.netGain} coins nets`
           : seg.type === 'boost_xp'
-          ? 'Boost XP ×2 activé ! ⚡'
-          : 'Cadre rare débloqué ! ✨'}
+          ? 'Boost XP ×2 activé'
+          : 'Cadre rare débloqué'}
       </p>
       <p className="font-body text-[13px] text-text-secondary dark:text-text-dark-secondary">
         {seg.type === 'coins' && `Tu as reçu ${seg.value} coins pour un coût de ${SPIN_COST} coins.`}

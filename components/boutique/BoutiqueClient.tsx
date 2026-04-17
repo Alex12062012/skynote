@@ -2,7 +2,7 @@
 
 import { useState, type ElementType } from 'react'
 import { SpinWheel, WHEEL_SEGMENTS } from './SpinWheel'
-import { Lock, Palette, UserCircle2, Award, Tag } from 'lucide-react'
+import { Lock, Palette, UserCircle2, Award, Tag, FerrisWheel, ShoppingBag, Handshake, RotateCcw } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { SkyCoin } from '@/components/ui/SkyCoin'
 
@@ -28,21 +28,21 @@ const THEMES = [
 ]
 
 const AVATARS = [
-  { id: 'rocket',  emoji: '🚀', name: 'Roquette',   price: 100, available: false },
-  { id: 'star',    emoji: '⭐', name: 'Étoile',     price: 100, available: false },
-  { id: 'brain',   emoji: '🧠', name: 'Cerveau',    price: 100, available: false },
-  { id: 'owl',     emoji: '🦉', name: 'Chouette',   price: 100, available: false },
-  { id: 'gem',     emoji: '💎', name: 'Gemme',      price: 200, available: false },
-  { id: 'crown',   emoji: '👑', name: 'Couronne',   price: 300, available: false },
+  { id: 'rocket',  color: '#2563EB', name: 'Roquette',  price: 100, available: false },
+  { id: 'star',    color: '#F59E0B', name: 'Étoile',    price: 100, available: false },
+  { id: 'brain',   color: '#8B5CF6', name: 'Cerveau',   price: 100, available: false },
+  { id: 'owl',     color: '#10B981', name: 'Chouette',  price: 100, available: false },
+  { id: 'gem',     color: '#2DD4BF', name: 'Gemme',     price: 200, available: false },
+  { id: 'crown',   color: '#F472B6', name: 'Couronne',  price: 300, available: false },
 ]
 
 const TITLES = [
-  { id: 'studious',   label: '📚 Studieux',        desc: 'Pour les travailleurs acharnés',    price: 80,  available: false },
-  { id: 'curious',    label: '🔭 Curieux',         desc: 'Pour les explorateurs du savoir',   price: 80,  available: false },
-  { id: 'champion',   label: '🏆 Champion',        desc: 'Pour ceux qui dominent le classement', price: 150, available: false },
-  { id: 'legend',     label: '🌟 Légende',         desc: 'Le titre ultime — très rare',       price: 400, available: false },
-  { id: 'lucky',      label: '🍀 Chanceux',        desc: 'Pour les maîtres de la roue',       price: 0,   available: false, wheel: true },
-  { id: 'shooting',   label: '☄️ Étoile filante',  desc: 'Décroché depuis la roue',           price: 0,   available: false, wheel: true },
+  { id: 'studious', label: 'Studieux',       desc: 'Pour les travailleurs acharnés',       price: 80,  available: false },
+  { id: 'curious',  label: 'Curieux',        desc: 'Pour les explorateurs du savoir',      price: 80,  available: false },
+  { id: 'champion', label: 'Champion',       desc: 'Pour ceux qui dominent le classement', price: 150, available: false },
+  { id: 'legend',   label: 'Légende',        desc: 'Le titre ultime — très rare',          price: 400, available: false },
+  { id: 'lucky',    label: 'Chanceux',       desc: 'Pour les maîtres de la roue',          price: 0,   available: false, wheel: true },
+  { id: 'shooting', label: 'Étoile filante', desc: 'Décroché depuis la roue',              price: 0,   available: false, wheel: true },
 ]
 
 type ShopTab = 'themes' | 'avatars' | 'titles'
@@ -68,7 +68,7 @@ export function BoutiqueClient({ initialCoins, recentSpins }: BoutiqueClientProp
       {/* ── SECTION : Roue de la fortune ── */}
       <section>
         <SectionHeader
-          icon="🎡"
+          icon={FerrisWheel}
           title="Roue de la fortune"
           badge="NOUVEAU"
           desc="Tente ta chance ! 50 coins par tour — tu peux gagner plus… ou moins."
@@ -90,9 +90,9 @@ export function BoutiqueClient({ initialCoins, recentSpins }: BoutiqueClientProp
                 <div className="grid grid-cols-2 gap-2">
                   {WHEEL_SEGMENTS.map((seg) => (
                     <div key={seg.id} className="flex items-center gap-2 rounded-input border border-sky-border bg-sky-surface-2 px-3 py-2 dark:border-night-border dark:bg-night-surface-2">
-                      <span className="text-base">{seg.emoji}</span>
+                      <span className="h-2.5 w-2.5 flex-shrink-0 rounded-full" style={{ background: seg.color }} />
                       <span className="font-body text-[12px] font-medium text-text-secondary dark:text-text-dark-secondary">
-                        {seg.label === 'Perdu' ? 'Perdu 😢' : seg.label}
+                        {seg.label}
                       </span>
                       {seg.type === 'frame' || seg.type === 'boost_xp' ? (
                         <span className="ml-auto rounded-pill bg-brand-soft px-1.5 py-0.5 font-body text-[10px] font-bold text-brand dark:bg-brand-dark-soft dark:text-brand-dark">
@@ -118,7 +118,7 @@ export function BoutiqueClient({ initialCoins, recentSpins }: BoutiqueClientProp
                       return (
                         <div key={i} className="flex items-center justify-between rounded-input border border-sky-border bg-sky-surface-2 px-3 py-1.5 dark:border-night-border dark:bg-night-surface-2">
                           <div className="flex items-center gap-2">
-                            <span className="text-sm">{seg?.emoji ?? '🎰'}</span>
+                            <span className="h-2 w-2 flex-shrink-0 rounded-full" style={{ background: seg?.color ?? '#94A3B8' }} />
                             <span className="font-body text-[12px] text-text-secondary dark:text-text-dark-secondary">
                               {seg?.label ?? spin.segment_id}
                             </span>
@@ -143,7 +143,7 @@ export function BoutiqueClient({ initialCoins, recentSpins }: BoutiqueClientProp
       {/* ── SECTION : Boutique ── */}
       <section>
         <SectionHeader
-          icon="🛍️"
+          icon={ShoppingBag}
           title="Boutique"
           desc="Dépense tes coins directement pour personnaliser ton profil."
         />
@@ -181,7 +181,7 @@ export function BoutiqueClient({ initialCoins, recentSpins }: BoutiqueClientProp
       {/* ── SECTION : Sponsors (placeholder) ── */}
       <section>
         <SectionHeader
-          icon="🤝"
+          icon={Handshake}
           title="Sponsors"
           desc="Des offres spéciales de nos partenaires arrivent bientôt."
         />
@@ -205,10 +205,12 @@ export function BoutiqueClient({ initialCoins, recentSpins }: BoutiqueClientProp
 }
 
 // ─── En-tête de section ───────────────────────────────────────────────────────
-function SectionHeader({ icon, title, desc, badge }: { icon: string; title: string; desc: string; badge?: string }) {
+function SectionHeader({ icon: Icon, title, desc, badge }: { icon: ElementType; title: string; desc: string; badge?: string }) {
   return (
     <div className="flex items-start gap-3">
-      <span className="mt-0.5 text-2xl">{icon}</span>
+      <div className="mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-input bg-brand-soft dark:bg-brand-dark-soft">
+        <Icon className="h-4 w-4 text-brand dark:text-brand-dark" />
+      </div>
       <div>
         <div className="flex items-center gap-2">
           <h2 className="font-display text-h3 text-text-main dark:text-text-dark-main">{title}</h2>
@@ -262,7 +264,9 @@ function AvatarsGrid() {
           key={av.id}
           className="relative flex flex-col items-center gap-2 rounded-card border border-sky-border bg-sky-surface p-4 shadow-card dark:border-night-border dark:bg-night-surface dark:shadow-card-dark"
         >
-          <span className="text-3xl">{av.emoji}</span>
+          <div className="flex h-10 w-10 items-center justify-center rounded-full" style={{ background: av.color + '22', border: `2px solid ${av.color}` }}>
+            <div className="h-4 w-4 rounded-full" style={{ background: av.color }} />
+          </div>
           <p className="font-body text-[11px] font-medium text-text-main dark:text-text-dark-main">{av.name}</p>
           <div className="flex items-center gap-1">
             <SkyCoin size={11} />
@@ -294,7 +298,7 @@ function TitlesList() {
           <div className="flex items-center gap-2">
             {t.wheel ? (
               <span className="flex items-center gap-1 rounded-pill bg-brand-soft px-2 py-0.5 font-body text-[11px] font-bold text-brand dark:bg-brand-dark-soft dark:text-brand-dark">
-                🎡 Roue
+                <RotateCcw className="h-3 w-3" /> Roue
               </span>
             ) : (
               <div className="flex items-center gap-1">
@@ -311,13 +315,4 @@ function TitlesList() {
   )
 }
 
-// ─── Badge "Bientôt" ──────────────────────────────────────────────────────────
-function ComingSoonBadge() {
-  return (
-    <div className="absolute right-1.5 top-1.5">
-      <span className="rounded-pill bg-sky-cloud px-1.5 py-0.5 font-body text-[9px] font-bold uppercase tracking-wide text-text-tertiary dark:bg-night-border dark:text-text-dark-tertiary">
-        Bientôt
-      </span>
-    </div>
-  )
-}
+// ─── Badge "Bi
