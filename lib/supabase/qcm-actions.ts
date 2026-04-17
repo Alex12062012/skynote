@@ -2,9 +2,11 @@
 
 import { createClient } from './server'
 import { revalidatePath } from 'next/cache'
+import { saveQcmAttemptV2 } from './gamification-actions'
 
 export type QcmDifficulty = 'peaceful' | 'easy' | 'medium' | 'hard'
 
+// Conservé pour rétrocompat : ancien barème (déprécié, utilise gamification-actions)
 const COINS_BY_DIFFICULTY: Record<QcmDifficulty, number> = {
   peaceful: 1,
   easy: 2,
@@ -21,9 +23,33 @@ export interface SaveAttemptInput {
 }
 
 /**
- * Sauvegarder une tentative de QCM et attribuer des coins si score parfait
+ * WRAPPER legacy — délègue au moteur gamification v2 pour conserver l'API publique.
+ * Renvoie juste `coinsEarned` pour la rétrocompatibilité avec les composants existants.
+ * Les nouveaux composants devraient appeler directement `saveQcmAttemptV2`.
  */
 export async function saveQcmAttempt(input: SaveAttemptInput): Promise<{
+  coinsEarned: number
+  error: string | null
+}> {
+  const res = await saveQcmAttemptV2({
+    flashcardId: input.flashcardId,
+    score: input.score,
+    total: input.total,
+    difficulty: input.difficulty ?? 'medium',
+  })
+  if (res.error) return { coinsEarned: 0, error: res.error }
+
+  // Garde la logique objectifs existante (perfect_qcm_10, qcm_50, …)
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (user) await checkQcmObjectives(user.id)
+  revalidatePath('/objectives')
+
+  return { coinsEarned: res.reward?.total ?? 0, error: null }
+}
+
+// ─── Ancienne implémentation conservée comme référence ────────────────────────
+async function _legacySaveQcmAttempt(input: SaveAttemptInput): Promise<{
   coinsEarned: number
   error: string | null
 }> {

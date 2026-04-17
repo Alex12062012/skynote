@@ -13,6 +13,43 @@ export interface Profile {
   classroom_student_id: string | null
   pseudo: string | null
   user_number: number | null
+  // ─── Gamification v2 (migration 016) ─────────────────────────────────────
+  prestige_level: number
+  active_title_id: string | null
+  active_badge_id: string
+  total_coins_earned: number
+  total_qcm_perfect: number
+  total_qcm_attempted: number
+  perfect_streak: number
+  best_perfect_streak: number
+  weekly_coins: number
+  monthly_coins: number
+  week_start: string
+  month_start: string
+  likes_received: number
+  bio: string | null
+}
+
+export interface UserTitle {
+  id: string; user_id: string; title_id: string
+  source: 'unlock' | 'purchase' | 'prestige' | 'wheel' | 'event'
+  unlocked_at: string
+}
+
+export interface UserBadge {
+  id: string; user_id: string; badge_id: string
+  source: 'purchase' | 'unlock' | 'wheel' | 'event'
+  unlocked_at: string
+}
+
+export interface UserBoost {
+  id: string; user_id: string
+  boost_type: 'x2_coins' | 'retry_qcm' | 'skip_question'
+  expires_at: string | null; charges: number; created_at: string
+}
+
+export interface ProfileLike {
+  id: string; liker_id: string; liked_id: string; created_at: string
 }
 
 export interface Classroom {
@@ -115,10 +152,18 @@ export interface Database {
       child_stats: { Row: ChildStat; Insert: Omit<ChildStat,'id'>; Update: Partial<ChildStat> }
       list_quizzes: { Row: ListQuiz; Insert: Omit<ListQuiz,'id'|'created_at'>; Update: Partial<ListQuiz> }
       list_quiz_sessions: { Row: ListQuizSession; Insert: Omit<ListQuizSession,'id'|'completed_at'>; Update: never }
+      user_titles:  { Row: UserTitle;  Insert: Omit<UserTitle,'id'|'unlocked_at'>;  Update: Partial<UserTitle> }
+      user_badges:  { Row: UserBadge;  Insert: Omit<UserBadge,'id'|'unlocked_at'>;  Update: Partial<UserBadge> }
+      user_boosts:  { Row: UserBoost;  Insert: Omit<UserBoost,'id'|'created_at'>;   Update: Partial<UserBoost> }
+      profile_likes:{ Row: ProfileLike;Insert: Omit<ProfileLike,'id'|'created_at'>; Update: never }
     }
     Views: {}
     Functions: {
       increment_coins: { Args: { p_user_id: string; p_amount: number }; Returns: void }
+      award_coins:     { Args: { p_user_id: string; p_amount: number; p_reason: string }; Returns: number }
+      spend_coins:     { Args: { p_user_id: string; p_amount: number; p_reason: string }; Returns: number }
+      perform_prestige:{ Args: { p_user_id: string }; Returns: { new_prestige: number; cost: number }[] }
+      toggle_like:     { Args: { p_liked_id: string }; Returns: boolean }
     }
     Enums: {}
   }
