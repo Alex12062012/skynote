@@ -4,8 +4,7 @@ import Link from 'next/link'
 import { Flame } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { SkyCoin } from '@/components/ui/SkyCoin'
-import { PlayerBadge } from './PlayerBadge'
-import { PrestigeCrest } from './PrestigeCrest'
+import { PlayerEmblem } from './PlayerEmblem'
 import { TITLES } from '@/lib/gamification/config'
 
 export interface PlayerCardData {
@@ -62,18 +61,15 @@ export function PlayerCard({ rank, player, isMe, href }: PlayerCardProps) {
         )}
       </div>
 
-      {/* Badge + prestige */}
-      <div className="relative flex flex-col items-center gap-0.5">
-        {player.prestige_level > 0 && (
-          <PrestigeCrest level={player.prestige_level} size="sm" />
-        )}
-        <PlayerBadge
-          badgeId={player.active_badge_id}
-          letter={displayName[0] ?? '?'}
-          size="md"
-          glow={rank <= 3}
-        />
-      </div>
+      {/* Emblème (badge rond OU hexagone prestige) */}
+      <PlayerEmblem
+        prestigeLevel={player.prestige_level}
+        badgeId={player.active_badge_id}
+        letter={displayName[0] ?? '?'}
+        size="md"
+        glow={rank <= 3}
+        animated={rank <= 3}
+      />
 
       {/* Nom + titre */}
       <div className="min-w-0 flex-1">

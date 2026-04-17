@@ -5,15 +5,22 @@ import { Sparkles } from 'lucide-react'
 import { SkyCoin } from '@/components/ui/SkyCoin'
 import { cn } from '@/lib/utils'
 import { doPrestige } from '@/lib/supabase/gamification-actions'
-import { PrestigeCrest } from './PrestigeCrest'
+import { PrestigeBadge } from './PrestigeBadge'
 
 interface PrestigeButtonProps {
   currentLevel: number
   currentCoins: number
   nextCost: number
+  /** badge équipé actuellement (pour l'aperçu dans l'hexagone) */
+  badgeId?: string
+  /** lettre fallback (première lettre du pseudo) */
+  letter?: string
 }
 
-export function PrestigeButton({ currentLevel, currentCoins, nextCost }: PrestigeButtonProps) {
+export function PrestigeButton({
+  currentLevel, currentCoins, nextCost,
+  badgeId = 'letter', letter = '?',
+}: PrestigeButtonProps) {
   const [pending, start] = useTransition()
   const [confirming, setConfirming] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -35,7 +42,13 @@ export function PrestigeButton({ currentLevel, currentCoins, nextCost }: Prestig
     <div className="rounded-card border-2 border-dashed border-purple-300 bg-gradient-to-br from-purple-50 to-pink-50 p-5 dark:border-purple-800 dark:from-purple-950/30 dark:to-pink-950/30">
       <div className="flex items-start gap-4">
         <div className="flex flex-shrink-0 flex-col items-center gap-1">
-          <PrestigeCrest level={currentLevel + 1} size="lg" />
+          <PrestigeBadge
+            level={currentLevel + 1}
+            badgeId={badgeId}
+            letter={letter}
+            size="lg"
+            animated
+          />
           <p className="font-display text-[12px] font-bold text-purple-700 dark:text-purple-300">
             Prestige {currentLevel + 1}
           </p>

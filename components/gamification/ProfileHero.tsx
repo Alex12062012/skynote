@@ -2,8 +2,7 @@
 
 import { Flame, Trophy, Target, Sparkles } from 'lucide-react'
 import { SkyCoin } from '@/components/ui/SkyCoin'
-import { PlayerBadge } from './PlayerBadge'
-import { PrestigeCrest } from './PrestigeCrest'
+import { PlayerEmblem } from './PlayerEmblem'
 import { LikeButton } from './LikeButton'
 import { TITLES } from '@/lib/gamification/config'
 import type { PublicProfile } from '@/lib/supabase/gamification-actions'
@@ -24,16 +23,15 @@ export function ProfileHero({ profile }: ProfileHeroProps) {
       {/* Hero */}
       <div className="relative overflow-hidden rounded-card border border-sky-border bg-gradient-to-br from-brand-soft via-white to-sky-cloud p-6 shadow-card dark:border-night-border dark:from-brand-dark-soft dark:via-night-surface dark:to-night-bg">
         <div className="flex flex-col items-center gap-3 sm:flex-row sm:items-start sm:gap-6">
-          {/* Badge XL */}
+          {/* Emblème XL (hexagone prestige ou badge rond selon niveau) */}
           <div className="flex flex-col items-center gap-2">
-            {profile.prestige_level > 0 && (
-              <PrestigeCrest level={profile.prestige_level} size="lg" />
-            )}
-            <PlayerBadge
+            <PlayerEmblem
+              prestigeLevel={profile.prestige_level}
               badgeId={profile.active_badge_id}
               letter={displayName[0] ?? '?'}
               size="xl"
               glow
+              animated
             />
           </div>
 

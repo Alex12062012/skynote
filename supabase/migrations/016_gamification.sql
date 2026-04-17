@@ -32,7 +32,7 @@ create index if not exists profiles_pseudo_idx        on public.profiles (lower(
 -- USER_TITLES : titres débloqués par joueur
 -- ------------------------------------------------------------
 create table if not exists public.user_titles (
-  id          uuid        primary key default uuid_generate_v4(),
+  id          uuid        primary key default gen_random_uuid(),
   user_id     uuid        not null references public.profiles(id) on delete cascade,
   title_id    text        not null,          -- ex: 'machine_5_5', 'renaissance_1'
   source      text        not null default 'unlock' check (source in ('unlock','purchase','prestige','wheel','event')),
@@ -48,7 +48,7 @@ create policy "Users insert own titles"    on public.user_titles for insert with
 -- USER_BADGES : badges cosmétiques débloqués
 -- ------------------------------------------------------------
 create table if not exists public.user_badges (
-  id          uuid        primary key default uuid_generate_v4(),
+  id          uuid        primary key default gen_random_uuid(),
   user_id     uuid        not null references public.profiles(id) on delete cascade,
   badge_id    text        not null,          -- ex: 'brain', 'rocket', 'star'
   source      text        not null default 'purchase' check (source in ('purchase','unlock','wheel','event')),
@@ -63,7 +63,7 @@ create policy "Users insert own badges" on public.user_badges for insert with ch
 -- USER_BOOSTS : boosts temporaires (×2 coins, retry QCM, skip question)
 -- ------------------------------------------------------------
 create table if not exists public.user_boosts (
-  id         uuid        primary key default uuid_generate_v4(),
+  id         uuid        primary key default gen_random_uuid(),
   user_id    uuid        not null references public.profiles(id) on delete cascade,
   boost_type text        not null check (boost_type in ('x2_coins','retry_qcm','skip_question')),
   expires_at timestamptz,                     -- null = charge unitaire (retry/skip)
@@ -79,7 +79,7 @@ create index if not exists user_boosts_active_idx on public.user_boosts (user_id
 -- PROFILE_LIKES : 1 like par utilisateur vers un autre
 -- ------------------------------------------------------------
 create table if not exists public.profile_likes (
-  id         uuid        primary key default uuid_generate_v4(),
+  id         uuid        primary key default gen_random_uuid(),
   liker_id   uuid        not null references public.profiles(id) on delete cascade,
   liked_id   uuid        not null references public.profiles(id) on delete cascade,
   created_at timestamptz not null default now(),

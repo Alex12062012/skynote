@@ -33,19 +33,19 @@ export function BoutiqueClientV2({
   const [titles, setTitles] = useState(new Set(ownedTitles))
   const [equippedBadge, setEquippedBadge] = useState(activeBadge)
   const [equippedTitle, setEquippedTitle] = useState(activeTitle)
-  const [feedback, setFeedback] = useState<string | null>(null)
+  const [feedback, setFeedback] = useState<{ msg: string; kind: 'ok' | 'err' } | null>(null)
   const [pending, start] = useTransition()
 
-  const notify = (msg: string) => {
-    setFeedback(msg)
-    setTimeout(() => setFeedback(null), 2200)
+  const notify = (msg: string, kind: 'ok' | 'err' = 'ok') => {
+    setFeedback({ msg, kind })
+    setTimeout(() => setFeedback(null), kind === 'err' ? 5000 : 2500)
   }
 
   const handleBuy = (cat: 'badge' | 'title' | 'consumable', id: string, price: number) => {
-    if (coins < price) { notify('Coins insuffisants'); return }
+    if (coins < price) { notify('Coins insuffisants', 'err'); return }
     start(async () => {
       const res = await buyItem(cat, id)
-      if (res.error) { notify(res.error); return }
+      if (res.error) { notify(res.error, 'err'); return }
       if (typeof res.newBalance === 'number') setCoins(res.newBalance)
       if (cat === 'badge') setBadges(new Set([...badges, id]))
       if (cat === 'title') setTitles(new Set([...titles, id]))
@@ -56,7 +56,7 @@ export function BoutiqueClientV2({
   const handleEquip = (kind: 'badge' | 'title', id: string | null) => {
     start(async () => {
       const res = await equip(kind, id)
-      if (res.error) { notify(res.error); return }
+      if (res.error) { notify(res.error, 'err'); return }
       if (kind === 'badge') setEquippedBadge(id ?? 'letter')
       else setEquippedTitle(id)
       notify(id ? 'Équipé !' : 'Retiré')
@@ -81,8 +81,13 @@ export function BoutiqueClientV2({
           <span className="font-display text-[18px] font-black tabular-nums">{coins.toLocaleString('fr-FR')}</span>
         </div>
         {feedback && (
-          <span className="rounded-pill bg-brand-soft px-3 py-1 font-display text-[12px] font-bold text-brand dark:bg-brand-dark-soft dark:text-brand-dark">
-            {feedback}
+          <span className={cn(
+            'rounded-pill px-3 py-1 font-display text-[12px] font-bold animate-pop-in',
+            feedback.kind === 'err'
+              ? 'bg-red-500 text-white'
+              : 'bg-emerald-500 text-white',
+          )}>
+            {feedback.msg}
           </span>
         )}
       </div>
@@ -96,6 +101,7 @@ export function BoutiqueClientV2({
             currentLevel={prestigeLevel}
             currentCoins={coins}
             nextCost={nextPrestigeCost}
+            badgeId={equippedBadge}
           />
         </div>
       </section>

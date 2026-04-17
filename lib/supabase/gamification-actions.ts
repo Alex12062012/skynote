@@ -371,34 +371,80 @@ export async function buyItem(
     if (owned) return { error: 'Déjà débloqué' }
   }
 
-  // Débiter (atomique)
+  // ─── Débit : tente RPC atomique, fallback manuel si migration 016 non appliquée
+  let newBalance: number | undefined
   const { data: spent, error: errSpend } = await supabase.rpc('spend_coins', {
     p_user_id: user.id, p_amount: price,
     p_reason: `Boutique: ${category} ${itemId}`,
   })
+
   if (errSpend) {
-    if (errSpend.message.includes('insufficient')) return { error: 'Coins insuffisants' }
-    return { error: errSpend.message }
+    if (errSpend.message?.includes('insufficient')) return { error: 'Coins insuffisants' }
+
+    // Fallback manuel (RPC absente = migration pas poussée)
+    const { data: profile } = await supabase
+      .from('profiles').select('sky_coins').eq('id', user.id).single()
+    if (!profile) return { error: 'Profil introuvable' }
+    if ((profile.sky_coins ?? 0) < price) return { error: 'Coins insuffisants' }
+
+    const { error: upErr } = await supabase
+      .from('profiles').update({ sky_coins: profile.sky_coins - price }).eq('id', user.id)
+    if (upErr) return { error: `Débit impossible : ${upErr.message}` }
+
+    await supabase.from('coin_transactions').insert({
+      user_id: user.id, amount: -price, reason: `Boutique: ${category} ${itemId}`,
+    })
+    newBalance = profile.sky_coins - price
+  } else {
+    newBalance = typeof spent === 'number' ? spent : undefined
   }
 
-  // Créditer l'item
+  // ─── Crédit de l'item (avec rollback si échec)
+  const rollback = async () => {
+    // remet les coins
+    const { data: p } = await supabase.from('profiles').select('sky_coins').eq('id', user.id).single()
+    if (p) await supabase.from('profiles').update({ sky_coins: (p.sky_coins ?? 0) + price }).eq('id', user.id)
+    await supabase.from('coin_transactions').insert({
+      user_id: user.id, amount: price, reason: `Rollback: ${category} ${itemId}`,
+    })
+  }
+
+  let grantErr: string | null = null
   if (category === 'badge') {
-    await supabase.from('user_badges').insert({ user_id: user.id, badge_id: itemId, source: 'purchase' })
+    const { error } = await supabase.from('user_badges').insert({
+      user_id: user.id, badge_id: itemId, source: 'purchase',
+    })
+    if (error) grantErr = error.code === '23505' ? 'Déjà débloqué'
+               : error.message?.includes('does not exist') ? 'Migration 016 non appliquée — lance `npx supabase db push`'
+               : error.message
   } else if (category === 'title') {
-    await supabase.from('user_titles').insert({ user_id: user.id, title_id: itemId, source: 'purchase' })
+    const { error } = await supabase.from('user_titles').insert({
+      user_id: user.id, title_id: itemId, source: 'purchase',
+    })
+    if (error) grantErr = error.code === '23505' ? 'Déjà débloqué'
+               : error.message?.includes('does not exist') ? 'Migration 016 non appliquée — lance `npx supabase db push`'
+               : error.message
   } else {
     const c = CONSUMABLES.find(x => x.id === itemId)!
     const expires = c.durationHours > 0
       ? new Date(Date.now() + c.durationHours * 3600 * 1000).toISOString()
       : null
-    await supabase.from('user_boosts').insert({
+    const { error } = await supabase.from('user_boosts').insert({
       user_id: user.id, boost_type: itemId, expires_at: expires, charges: 1,
     })
+    if (error) grantErr = error.message?.includes('does not exist')
+               ? 'Migration 016 non appliquée — lance `npx supabase db push`'
+               : error.message
+  }
+
+  if (grantErr) {
+    await rollback()
+    return { error: grantErr }
   }
 
   revalidatePath('/boutique')
   revalidatePath('/profile')
-  return { error: null, newBalance: typeof spent === 'number' ? spent : undefined }
+  return { error: null, newBalance }
 }
 
 export async function equip(kind: 'badge' | 'title', itemId: string | null): Promise<{ error: string | null }> {

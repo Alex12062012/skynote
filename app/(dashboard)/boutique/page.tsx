@@ -11,28 +11,41 @@ export default async function BoutiquePage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const [{ data: profile }, { data: badges }, { data: titles }, { data: spins }] = await Promise.all([
-    supabase.from('profiles')
-      .select('sky_coins, prestige_level, active_badge_id, active_title_id')
-      .eq('id', user.id).single(),
-    supabase.from('user_badges').select('badge_id').eq('user_id', user.id),
-    supabase.from('user_titles').select('title_id').eq('user_id', user.id),
-    supabase.from('wheel_spins')
-      .select('segment_id, reward_type, net_gain, created_at')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false })
-      .limit(5),
-  ])
+  // `select *` pour ne pas planter si une colonne manque (migration non poussée).
+  const { data: profile } = await supabase
+    .from('profiles').select('*').eq('id', user.id).single()
+
+  // Les tables peuvent ne pas exister : on encapsule en try/catch + coalesce
+  let ownedBadges: string[] = []
+  let ownedTitles: string[] = []
+  let recentSpins: Array<{ segment_id: string; reward_type: string; net_gain: number; created_at: string }> = []
+
+  try {
+    const { data } = await supabase.from('user_badges').select('badge_id').eq('user_id', user.id)
+    ownedBadges = (data ?? []).map((b: any) => b.badge_id)
+  } catch { /* table absente */ }
+
+  try {
+    const { data } = await supabase.from('user_titles').select('title_id').eq('user_id', user.id)
+    ownedTitles = (data ?? []).map((t: any) => t.title_id)
+  } catch { /* table absente */ }
+
+  try {
+    const { data } = await supabase
+      .from('wheel_spins').select('segment_id, reward_type, net_gain, created_at')
+      .eq('user_id', user.id).order('created_at', { ascending: false }).limit(5)
+    recentSpins = data ?? []
+  } catch { /* table absente */ }
 
   return (
     <BoutiqueClientV2
-      initialCoins={profile?.sky_coins ?? 0}
-      prestigeLevel={profile?.prestige_level ?? 0}
-      ownedBadges={(badges ?? []).map((b: any) => b.badge_id)}
-      ownedTitles={(titles ?? []).map((t: any) => t.title_id)}
-      activeBadge={profile?.active_badge_id ?? 'letter'}
-      activeTitle={profile?.active_title_id ?? null}
-      recentSpins={spins ?? []}
+      initialCoins={(profile as any)?.sky_coins ?? 0}
+      prestigeLevel={(profile as any)?.prestige_level ?? 0}
+      ownedBadges={ownedBadges}
+      ownedTitles={ownedTitles}
+      activeBadge={(profile as any)?.active_badge_id ?? 'letter'}
+      activeTitle={(profile as any)?.active_title_id ?? null}
+      recentSpins={recentSpins}
     />
   )
 }

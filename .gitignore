@@ -5,6 +5,12 @@ build/
 .env
 .env.local
 .env.*.local
+.env.local.backup*
+.env.*.backup*
+
+# Supabase CLI internal state (contient project-ref, linked-project.json, etc.)
+supabase/.temp/
+supabase/.branches/
 npm-debug.log*
 .DS_Store
 *.tsbuildinfo
