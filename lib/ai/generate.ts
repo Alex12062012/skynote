@@ -65,7 +65,7 @@ export async function generateFlashcards(
   content: string
 ): Promise<GeneratedFlashcard[]> {
   const message = await anthropic.messages.create({
-    model: 'claude-sonnet-4-20250514',
+    model: 'claude-sonnet-4-6',
     max_tokens: 2048,
     system: FLASHCARD_SYSTEM_PROMPT,
     messages: [{ role: 'user', content: buildFlashcardPrompt(courseTitle, subject, content) }],
@@ -109,7 +109,7 @@ export async function generateQcmQuestions(
   difficulty: QcmDifficulty = 'easy'
 ): Promise<GeneratedQuestion[]> {
   const message = await anthropic.messages.create({
-    model: 'claude-sonnet-4-20250514',
+    model: 'claude-sonnet-4-6',
     max_tokens: 2048,
     system: getQcmSystemPrompt(difficulty),
     messages: [{ role: 'user', content: buildQcmPrompt(flashcardTitle, summary, keyPoints) }],
