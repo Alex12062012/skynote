@@ -16,18 +16,24 @@ export default async function BoutiquePage() {
     .eq('id', user.id)
     .single()
 
-  // Derniers tours de roue
-  const { data: recentSpins } = await supabase
-    .from('wheel_spins')
-    .select('segment_id, reward_type, net_gain, created_at')
-    .eq('user_id', user.id)
-    .order('created_at', { ascending: false })
-    .limit(5)
+  // Derniers tours de roue (table peut ne pas exister encore)
+  let recentSpins: { segment_id: string; reward_type: string; net_gain: number; created_at: string }[] = []
+  try {
+    const { data } = await supabase
+      .from('wheel_spins')
+      .select('segment_id, reward_type, net_gain, created_at')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(5)
+    recentSpins = data ?? []
+  } catch {
+    // table pas encore créée → on ignore
+  }
 
   return (
     <BoutiqueClient
       initialCoins={profile?.sky_coins ?? 0}
-      recentSpins={recentSpins ?? []}
+      recentSpins={recentSpins}
     />
   )
 }

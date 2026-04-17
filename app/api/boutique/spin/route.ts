@@ -6,14 +6,14 @@ import { createClient } from '@/lib/supabase/server'
 // identique à celle du composant client)
 // ──────────────────────────────────────────────
 export const WHEEL_SEGMENTS = [
-  { id: 'lost',      label: 'Perdu',        emoji: '💀', type: 'lost',     value: 0   },
-  { id: 'coins_20',  label: '+20 coins',    emoji: '🪙', type: 'coins',    value: 20  },
-  { id: 'coins_40',  label: '+40 coins',    emoji: '🪙', type: 'coins',    value: 40  },
-  { id: 'coins_60',  label: '+60 coins',    emoji: '🪙', type: 'coins',    value: 60  },
-  { id: 'coins_100', label: '+100 coins',   emoji: '🪙', type: 'coins',    value: 100 },
-  { id: 'coins_200', label: '+200 coins',   emoji: '💎', type: 'coins',    value: 200 },
-  { id: 'boost_xp',  label: 'Boost XP ×2', emoji: '⚡', type: 'boost_xp', value: 0   },
-  { id: 'frame',     label: 'Cadre rare',   emoji: '✨', type: 'frame',    value: 0   },
+  { id: 'lost',      label: 'Perdu',     type: 'lost',     value: 0   },
+  { id: 'coins_20',  label: '+20',       type: 'coins',    value: 20  },
+  { id: 'coins_40',  label: '+40',       type: 'coins',    value: 40  },
+  { id: 'coins_60',  label: '+60',       type: 'coins',    value: 60  },
+  { id: 'coins_100', label: '+100',      type: 'coins',    value: 100 },
+  { id: 'coins_200', label: '+200',      type: 'coins',    value: 200 },
+  { id: 'boost_xp',  label: 'Boost XP', type: 'boost_xp', value: 0   },
+  { id: 'frame',     label: 'Cadre',     type: 'frame',    value: 0   },
 ] as const
 
 // Probabilités cumulatives (doit totaliser 100)

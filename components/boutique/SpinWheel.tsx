@@ -254,9 +254,8 @@ export function SpinWheel({ coins, onBalanceUpdate }: SpinWheelProps) {
 // ─── Bannière résultat ────────────────────────────────────────────────────────
 function ResultBanner({ result, onClose }: { result: SpinResult; onClose: () => void }) {
   const seg = result.segment
-  const isLoss   = seg.type === 'lost' || result.netGain < 0
-  const isNeutral = !isLoss && result.netGain === 0
-  const isWin    = result.netGain > 0
+  const isLoss    = seg.type === 'lost' || result.netGain < 0
+  const isWin     = result.netGain > 0
   const isSpecial = seg.type === 'boost_xp' || seg.type === 'frame'
 
   return (
