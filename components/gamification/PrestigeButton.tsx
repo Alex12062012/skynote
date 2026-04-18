@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import { useRouter } from 'next/navigation'
 import { Sparkles, PartyPopper } from 'lucide-react'
 import { SkyCoin } from '@/components/ui/SkyCoin'
 import { cn } from '@/lib/utils'
@@ -21,6 +22,7 @@ export function PrestigeButton({
   currentLevel, currentCoins, nextCost,
   badgeId = 'letter', letter = '?',
 }: PrestigeButtonProps) {
+  const router = useRouter()
   const [pending, start] = useTransition()
   const [confirming, setConfirming] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -33,7 +35,10 @@ export function PrestigeButton({
       setError(null)
       const res = await doPrestige()
       if (res.error) setError(res.error)
-      else setSuccess(res.newPrestige ?? currentLevel + 1)
+      else {
+        setSuccess(res.newPrestige ?? currentLevel + 1)
+        setTimeout(() => router.refresh(), 1500)
+      }
       setConfirming(false)
     })
   }

@@ -135,6 +135,7 @@ export async function doPrestige(): Promise<{ error: string | null; newPrestige?
   const row = Array.isArray(data) ? data[0] : data
   revalidatePath('/profile')
   revalidatePath('/leaderboard')
+  revalidatePath('/boutique')
   return { error: null, newPrestige: row?.new_prestige, cost: row?.cost }
 }
 
