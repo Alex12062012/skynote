@@ -1,7 +1,11 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Users, BookOpen, Zap, Trophy, DollarSign, LogOut, Search, Trash2, RefreshCw, X, ChevronUp } from 'lucide-react'
+import {
+  Users, BookOpen, Zap, Trophy, DollarSign, LogOut, Search, Trash2, RefreshCw, X, ChevronUp,
+  Star, UserX, Coins, Flame, Sparkles, BarChart3, MessageCircle, Settings,
+  FlaskConical, Check, AlertTriangle, Circle,
+} from 'lucide-react'
 
 const STORAGE_KEY = 'skynote_admin_pin'
 
@@ -109,7 +113,11 @@ function UserListModal({ modal, onClose }: { modal: StatModal; onClose: () => vo
                     return val ? <span key={col.key} className="text-[11px] text-slate-400">{val}</span> : null
                   })}
                   <span className={`text-[10px] px-2 py-0.5 rounded-full ${plan === 'plus' ? 'bg-amber-900/30 text-amber-400' : plan === 'famille' ? 'bg-purple-900/30 text-purple-400' : 'bg-slate-700 text-slate-400'}`}>
-                    {plan === 'plus' ? '⭐' : plan === 'famille' ? '👨‍👩‍👧' : '🆓'}
+                    {plan === 'plus'
+                      ? <Star className="h-3.5 w-3.5 inline fill-yellow-400 text-yellow-400" />
+                      : plan === 'famille'
+                        ? <Users className="h-3.5 w-3.5 inline text-purple-400" />
+                        : <span className="text-[10px]">FREE</span>}
                   </span>
                 </div>
               </div>
@@ -205,7 +213,7 @@ export function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     try {
       const res = await fetch('/api/admin/update-user', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId, action, value }) })
       const data = await res.json()
-      if (data.ok) { setFeedback('✓ Action effectuée'); loadData(); if (action === 'delete_user') setSelectedUser(null) }
+      if (data.ok) { setFeedback('OK: Action effectuée'); loadData(); if (action === 'delete_user') setSelectedUser(null) }
       else setFeedback(`Erreur : ${data.error}`)
     } catch { setFeedback('Erreur réseau') }
     setActionLoading(false)
@@ -231,7 +239,7 @@ export function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   function savePin() {
     if (newPin.length < 4) { setPinFeedback('Code trop court (min 4 caractères)'); return }
     localStorage.setItem(STORAGE_KEY, newPin)
-    setPinFeedback('✓ Code mis à jour — reconnecte-toi')
+    setPinFeedback('OK: Code mis à jour — reconnecte-toi')
     setNewPin('')
     setTimeout(() => { onLogout() }, 2000)
   }
@@ -240,35 +248,35 @@ export function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   const kpiCards = [
     {
       key: 'signups' as ChartKey, icon: <Users className="h-5 w-5" />, label: 'Utilisateurs', value: stats?.totalUsers ?? 0, color: '#60A5FA',
-      modal: { title: '👥 Tous les utilisateurs', users, columns: [{ key: 'sky_coins', label: '🪙', render: (u: any) => `${u.sky_coins} 🪙` }, { key: 'streak_days', render: (u: any) => `🔥${u.streak_days}j` }] }
+      modal: { title: 'Tous les utilisateurs', users, columns: [{ key: 'sky_coins', label: 'Coins', render: (u: any) => `${u.sky_coins} coins` }, { key: 'streak_days', render: (u: any) => `${u.streak_days}j` }] }
     },
     {
       key: null, icon: <Zap className="h-5 w-5" />, label: 'Connectés aujourd\'hui', value: activeUsersToday.length, color: '#34D399',
-      modal: { title: '⚡ Connectés aujourd\'hui', users: activeUsersToday, columns: [{ key: 'last_login_at', label: 'Heure', render: (u: any) => u.last_login_at ? new Date(u.last_login_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : '' }] }
+      modal: { title: 'Connectés aujourd\'hui', users: activeUsersToday, columns: [{ key: 'last_login_at', label: 'Heure', render: (u: any) => u.last_login_at ? new Date(u.last_login_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : '' }] }
     },
     {
       key: 'courses' as ChartKey, icon: <BookOpen className="h-5 w-5" />, label: 'Cours créés', value: stats?.totalCourses ?? 0, color: '#FBBF24',
-      modal: { title: '📚 Utilisateurs ayant créé des cours', users: usersWithCourses, columns: [] }
+      modal: { title: 'Utilisateurs ayant créé des cours', users: usersWithCourses, columns: [] }
     },
     {
       key: 'qcm' as ChartKey, icon: <Zap className="h-5 w-5" />, label: 'QCM faits', value: stats?.totalQcm ?? 0, color: '#34D399',
-      modal: { title: '⚡ Utilisateurs ayant fait des QCM', users: usersWithQcm, columns: [] }
+      modal: { title: 'Utilisateurs ayant fait des QCM', users: usersWithQcm, columns: [] }
     },
     {
       key: 'avgQcm' as ChartKey, icon: <Trophy className="h-5 w-5" />, label: 'Moy. QCM/élève', value: stats?.avgQcmPerUser ?? '0', color: '#F87171',
-      modal: { title: '🏆 Scores parfaits', users: usersWithPerfect, columns: [] }
+      modal: { title: 'Scores parfaits', users: usersWithPerfect, columns: [] }
     },
     {
-      key: 'coins' as ChartKey, icon: <span className="text-base">🪙</span>, label: 'Coins distribués', value: stats?.totalCoinsDistributed ?? 0, color: '#A78BFA',
-      modal: { title: '🪙 Top Sky Coins', users: topUsers, columns: [{ key: 'sky_coins', render: (u: any) => `${u.sky_coins} 🪙` }] }
+      key: 'coins' as ChartKey, icon: <Coins className="h-5 w-5" />, label: 'Coins distribués', value: stats?.totalCoinsDistributed ?? 0, color: '#A78BFA',
+      modal: { title: 'Top Sky Coins', users: topUsers, columns: [{ key: 'sky_coins', render: (u: any) => `${u.sky_coins} coins` }] }
     },
     {
       key: null, icon: <Trophy className="h-5 w-5" />, label: 'Plans payants', value: premiumUsers.length, color: '#FCD34D',
-      modal: { title: '⭐ Utilisateurs Plus / Famille', users: premiumUsers, columns: [{ key: 'plan', render: (u: any) => u.plan }, { key: 'sky_coins', render: (u: any) => `${u.sky_coins} 🪙` }] }
+      modal: { title: 'Utilisateurs Plus / Famille', users: premiumUsers, columns: [{ key: 'plan', render: (u: any) => u.plan }, { key: 'sky_coins', render: (u: any) => `${u.sky_coins} coins` }] }
     },
     {
-      key: null, icon: <span className="text-base">🔥</span>, label: 'Streaks actifs (3j+)', value: streakUsers.length, color: '#FB923C',
-      modal: { title: '🔥 Utilisateurs avec streak 3j+', users: streakUsers, columns: [{ key: 'streak_days', render: (u: any) => `🔥 ${u.streak_days}j` }] }
+      key: null, icon: <Flame className="h-5 w-5" />, label: 'Streaks actifs (3j+)', value: streakUsers.length, color: '#FB923C',
+      modal: { title: 'Utilisateurs avec streak 3j+', users: streakUsers, columns: [{ key: 'streak_days', render: (u: any) => `${u.streak_days}j` }] }
     },
   ]
 
@@ -284,7 +292,7 @@ export function AdminDashboard({ onLogout }: { onLogout: () => void }) {
       {/* Header */}
       <div className="border-b border-slate-800 px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <span className="text-2xl">🌟</span>
+          <Sparkles className="h-6 w-6 text-yellow-400" />
           <div><h1 className="font-bold text-[18px]">Skynote Admin</h1><p className="text-[12px] text-slate-400">Panel de gestion</p></div>
         </div>
         <div className="flex items-center gap-2">
@@ -299,9 +307,15 @@ export function AdminDashboard({ onLogout }: { onLogout: () => void }) {
 
       {/* Tabs */}
       <div className="flex border-b border-slate-800 px-6">
-        {[['stats', '📊 Statistiques'], ['users', '👥 Utilisateurs'], ['feedbacks', '💬 Feedbacks'], ['settings', '⚙️ Paramètres']].map(([id, label]) => (
+        {([
+          ['stats',     'Statistiques', BarChart3],
+          ['users',     'Utilisateurs', Users],
+          ['feedbacks', 'Feedbacks',    MessageCircle],
+          ['settings',  'Paramètres',   Settings],
+        ] as const).map(([id, label, Icon]) => (
           <button key={id} onClick={() => setTab(id as any)}
-            className={`px-4 py-3 text-[14px] font-medium border-b-2 transition-colors ${tab === id ? 'border-blue-500 text-blue-400' : 'border-transparent text-slate-400 hover:text-white'}`}>
+            className={`flex items-center gap-2 px-4 py-3 text-[14px] font-medium border-b-2 transition-colors ${tab === id ? 'border-blue-500 text-blue-400' : 'border-transparent text-slate-400 hover:text-white'}`}>
+            <Icon className="h-4 w-4" />
             {label}
           </button>
         ))}
@@ -371,18 +385,18 @@ export function AdminDashboard({ onLogout }: { onLogout: () => void }) {
 
                 {/* Top utilisateurs */}
                 <div className="rounded-xl border border-slate-800 bg-slate-900 p-6">
-                  <h3 className="font-semibold text-[15px] mb-4 text-white">🏆 Top 10 — Sky Coins</h3>
+                  <h3 className="flex items-center gap-2 font-semibold text-[15px] mb-4 text-white"><Trophy className="h-4 w-4 text-yellow-400" /> Top 10 — Sky Coins</h3>
                   <div className="space-y-2">
                     {topUsers.map((u, i) => (
                       <div key={u.id} className="flex items-center justify-between py-2 border-b border-slate-800 last:border-0">
                         <div className="flex items-center gap-3">
                           <span className="text-[13px] font-bold text-slate-500 w-5">{i + 1}</span>
                           <div><p className="text-[14px] font-medium text-white">{u.full_name || 'Anonyme'}</p><p className="text-[11px] text-slate-400">{u.email}</p></div>
-                          {(u as any).is_beta_tester && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-blue-900/40 text-blue-400">🧪</span>}
+                          {(u as any).is_beta_tester && <span className="inline-flex items-center px-1.5 py-0.5 rounded-full bg-blue-900/40 text-blue-400"><FlaskConical className="h-3 w-3" /></span>}
                         </div>
                         <div className="flex items-center gap-2">
                           <span className={`text-[11px] px-2 py-0.5 rounded-full ${u.plan === 'plus' ? 'bg-amber-900/30 text-amber-400' : 'bg-slate-800 text-slate-400'}`}>{u.plan}</span>
-                          <span className="font-bold text-[14px] text-blue-400">{u.sky_coins} 🪙</span>
+                          <span className="inline-flex items-center gap-1 font-bold text-[14px] text-blue-400">{u.sky_coins} <Coins className="h-3.5 w-3.5" /></span>
                         </div>
                       </div>
                     ))}
@@ -418,12 +432,12 @@ export function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
                           <div><p className="text-[14px] font-medium text-white">{u.full_name || 'Anonyme'}</p><p className="text-[11px] text-slate-400">{u.email}</p></div>
-                          {u.is_beta_tester && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-blue-900/40 text-blue-400 flex-shrink-0">🧪</span>}
+                          {u.is_beta_tester && <span className="inline-flex items-center px-1.5 py-0.5 rounded-full bg-blue-900/40 text-blue-400 flex-shrink-0"><FlaskConical className="h-3 w-3" /></span>}
                         </div>
                       </td>
                       <td className="px-4 py-3"><span className={`text-[11px] px-2 py-1 rounded-full font-medium ${u.plan === 'plus' ? 'bg-amber-900/30 text-amber-400' : u.plan === 'famille' ? 'bg-purple-900/30 text-purple-400' : 'bg-slate-800 text-slate-400'}`}>{u.plan}</span></td>
                       <td className="px-4 py-3"><span className="font-bold text-[14px] text-blue-400">{u.sky_coins}</span></td>
-                      <td className="px-4 py-3"><span className="text-[14px] text-orange-400">🔥 {u.streak_days}j</span></td>
+                      <td className="px-4 py-3"><span className="inline-flex items-center gap-1 text-[14px] text-orange-400"><Flame className="h-3.5 w-3.5" /> {u.streak_days}j</span></td>
                       <td className="px-4 py-3"><span className="text-[13px] text-slate-400">{new Date(u.created_at).toLocaleDateString('fr-FR')}</span></td>
                       <td className="px-4 py-3"><button onClick={() => setSelectedUser(u)} className="rounded-lg bg-blue-600/20 px-3 py-1 text-[12px] font-medium text-blue-400 hover:bg-blue-600/40">Gérer</button></td>
                     </tr>
@@ -442,7 +456,7 @@ export function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                   <div className="space-y-4">
                     <div className="rounded-xl bg-slate-800 p-4">
                       <p className="text-[12px] text-slate-400 mb-1">Sky Coins actuels</p>
-                      <p className="font-bold text-[24px] text-blue-400">{selectedUser.sky_coins} 🪙</p>
+                      <p className="flex items-center gap-1 font-bold text-[24px] text-blue-400">{selectedUser.sky_coins} <Coins className="h-5 w-5" /></p>
                     </div>
                     <div>
                       <p className="text-[13px] font-medium text-white mb-2">Ajouter / retirer des coins</p>
@@ -465,15 +479,20 @@ export function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                     <div>
                       <p className="text-[13px] font-medium text-white mb-2">Plan</p>
                       <div className="flex gap-2">
-                        {[['free', 'Gratuit', 'bg-slate-600'], ['plus', '⭐ Plus', 'bg-amber-600'], ['famille', '👨‍👩‍👧', 'bg-purple-600']].map(([p, l, bg]) => (
+                        {([
+                          ['free',    'Gratuit', 'bg-slate-600',  null],
+                          ['plus',    'Plus',    'bg-amber-600',  Star],
+                          ['famille', 'Famille', 'bg-purple-600', Users],
+                        ] as const).map(([p, l, bg, Icon]) => (
                           <button key={p} onClick={() => doAction(selectedUser.id, 'set_plan', p)} disabled={actionLoading}
-                            className={`flex-1 h-10 rounded-xl text-[13px] font-semibold transition-colors ${selectedUser.plan === p || (p === 'plus' && false) ? `${bg} text-white` : 'border border-slate-700 text-slate-400 hover:bg-slate-800'}`}>
+                            className={`flex flex-1 h-10 items-center justify-center gap-1.5 rounded-xl text-[13px] font-semibold transition-colors ${selectedUser.plan === p || (p === 'plus' && false) ? `${bg} text-white` : 'border border-slate-700 text-slate-400 hover:bg-slate-800'}`}>
+                            {Icon && <Icon className="h-3.5 w-3.5" />}
                             {l}
                           </button>
                         ))}
                       </div>
                     </div>
-                    {feedback && <p className={`text-[13px] font-medium ${feedback.startsWith('✓') ? 'text-green-400' : 'text-red-400'}`}>{feedback}</p>}
+                    {feedback && <p className={`text-[13px] font-medium ${feedback.startsWith('OK:') ? 'text-green-400' : 'text-red-400'}`}>{feedback}</p>}
                     <button onClick={() => { if (confirm(`Supprimer ${selectedUser.email} ?`)) doAction(selectedUser.id, 'delete_user') }} disabled={actionLoading}
                       className="w-full h-10 rounded-xl border border-red-900/50 bg-red-950/20 text-[13px] font-semibold text-red-400 hover:bg-red-950/40 disabled:opacity-50 flex items-center justify-center gap-2">
                       <Trash2 className="h-4 w-4" /> Supprimer ce compte
@@ -525,7 +544,7 @@ export function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                           {f.featured && <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>}
                         </button>
                       )}
-                      <div><p className="text-[14px] font-medium text-white">{f.profiles?.full_name || 'Anonyme'}</p><p className="text-[11px] text-slate-400">{f.profiles?.email}{f.profiles?.is_beta_tester && <span className="text-blue-400"> · 🧪</span>}</p></div>
+                      <div><p className="text-[14px] font-medium text-white">{f.profiles?.full_name || 'Anonyme'}</p><p className="text-[11px] text-slate-400 inline-flex items-center gap-1">{f.profiles?.email}{f.profiles?.is_beta_tester && <><span className="text-blue-400">·</span><FlaskConical className="h-3 w-3 text-blue-400" /></>}</p></div>
                     </div>
                     <div className="flex items-center gap-2">
                       {f.featured && <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-900/40 text-emerald-400">Landing page</span>}
@@ -533,8 +552,8 @@ export function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                       <span className="font-bold text-[20px]" style={{ color: f.score >= 8 ? '#34D399' : '#FBBF24' }}>{f.score}/10</span>
                     </div>
                   </div>
-                  {f.love && <div className="mb-2"><p className="text-[11px] text-emerald-400 font-semibold mb-1">✓ Ce qu&apos;il aime</p><p className="text-[13px] text-slate-300">{f.love}</p></div>}
-                  {f.missing && <div><p className="text-[11px] text-amber-400 font-semibold mb-1">⚠ Ce qui manque</p><p className="text-[13px] text-slate-300">{f.missing}</p></div>}
+                  {f.love && <div className="mb-2"><p className="flex items-center gap-1 text-[11px] text-emerald-400 font-semibold mb-1"><Check className="h-3 w-3" /> Ce qu&apos;il aime</p><p className="text-[13px] text-slate-300">{f.love}</p></div>}
+                  {f.missing && <div><p className="flex items-center gap-1 text-[11px] text-amber-400 font-semibold mb-1"><AlertTriangle className="h-3 w-3" /> Ce qui manque</p><p className="text-[13px] text-slate-300">{f.missing}</p></div>}
                   <p className="text-[11px] text-slate-500 mt-2">{new Date(f.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })}</p>
                 </div>
                 )
@@ -548,7 +567,7 @@ export function AdminDashboard({ onLogout }: { onLogout: () => void }) {
           <div className="max-w-md space-y-6">
             <div className="rounded-xl border border-slate-800 bg-slate-900 p-6">
               <div className="flex items-center justify-between">
-                <div><h3 className="font-semibold text-[15px] text-white">Mode Bêta Testing</h3><p className="text-[13px] text-slate-400 mt-1">{betaEnabled ? '🟢 Activé' : '🔴 Désactivé'}</p></div>
+                <div><h3 className="font-semibold text-[15px] text-white">Mode Bêta Testing</h3><p className="flex items-center gap-1.5 text-[13px] text-slate-400 mt-1"><Circle className={`h-2.5 w-2.5 ${betaEnabled ? 'fill-green-500 text-green-500' : 'fill-red-500 text-red-500'}`} /> {betaEnabled ? 'Activé' : 'Désactivé'}</p></div>
                 <button onClick={toggleBeta} disabled={betaLoading} className={`flex h-6 w-6 items-center justify-center rounded-lg border-2 transition-all duration-200 ${betaEnabled ? "border-blue-500 bg-blue-600" : "border-slate-600 bg-transparent"}`}>
                   {betaEnabled && <svg className="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>}
                 </button>
@@ -561,7 +580,7 @@ export function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                   className="flex-1 h-10 rounded-xl border border-slate-700 bg-slate-800 px-3 text-[14px] text-white focus:border-blue-500 focus:outline-none" />
                 <button onClick={savePin} className="px-4 rounded-xl bg-blue-600 text-[13px] font-semibold text-white hover:bg-blue-500">Sauvegarder</button>
               </div>
-              {pinFeedback && <p className={`mt-2 text-[13px] ${pinFeedback.startsWith('✓') ? 'text-green-400' : 'text-red-400'}`}>{pinFeedback}</p>}
+              {pinFeedback && <p className={`mt-2 text-[13px] ${pinFeedback.startsWith('OK:') ? 'text-green-400' : 'text-red-400'}`}>{pinFeedback}</p>}
             </div>
           </div>
         )}

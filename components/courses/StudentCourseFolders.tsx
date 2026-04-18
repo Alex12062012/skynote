@@ -73,7 +73,7 @@ export function StudentCourseFolders({ folders }: StudentCourseFoldersProps) {
               {selectedFolder.courses.length} cours
               {hasNewCourse && (
                 <span className="inline-flex items-center gap-1 rounded-pill bg-red-100 px-2 py-0.5 text-[11px] font-semibold text-red-600 dark:bg-red-950/30 dark:text-red-400">
-                  🔴 Nouveau
+                  <span className="inline-block h-2 w-2 rounded-full bg-red-500" /> Nouveau
                 </span>
               )}
             </p>

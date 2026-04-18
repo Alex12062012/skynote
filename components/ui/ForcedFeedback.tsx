@@ -48,7 +48,6 @@ export function ForcedFeedback({ userId, milestone, onDone }: ForcedFeedbackProp
 
         {sent ? (
           <div className="flex flex-col items-center gap-4 py-8 text-center">
-            <span className="text-5xl animate-pop-in">{'🙏'}</span>
             <h3 className="font-display text-h3 text-success dark:text-success-dark">Merci pour ton retour !</h3>
             <p className="font-body text-[14px] text-text-secondary dark:text-text-dark-secondary">
               Ton avis nous aide enormement a ameliorer Skynote.

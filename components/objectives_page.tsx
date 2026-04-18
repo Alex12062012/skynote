@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation'
+import { Check } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { SkyCoin } from '@/components/ui/SkyCoin'
 import { ProgressBar } from '@/components/ui/ProgressBar'
@@ -113,12 +114,12 @@ export default async function ObjectivesPage() {
                 <span className="text-3xl flex-shrink-0">{obj.icon}</span>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-1 gap-2">
-                    <p className={cn('font-body text-[14px] font-semibold',
+                    <p className={cn('inline-flex items-center gap-1 font-body text-[14px] font-semibold',
                       canClaim ? 'text-brand dark:text-brand-dark'
                         : claimed ? 'text-success dark:text-success-dark'
                           : 'text-text-main dark:text-text-dark-main')}>
                       {obj.title}
-                      {claimed && ' ✓'}
+                      {claimed && <Check className="h-3.5 w-3.5 text-green-600" />}
                     </p>
                     <div className="flex items-center gap-1 flex-shrink-0">
                       <SkyCoin size={14} />

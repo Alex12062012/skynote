@@ -15,10 +15,10 @@ type Stat     = { value: string; label: string }
 type Testimonial = { text: string; name: string; grade: string }
 
 const FEATURES: Feature[] = [
-  { icon: "📸", title: "Photo, texte, vocal, PDF", desc: "Importe ton cours comme tu veux. L'IA s'adapte." },
-  { icon: "⚡", title: "Fiches en 15 secondes",   desc: "Pas en 15 minutes. En 15 secondes. Chrono en main." },
-  { icon: "🧠", title: "QCM intelligents",         desc: "Des questions qui testent ta comprehension, pas ta memoire." },
-  { icon: "💬", title: "Chatbot par cours",        desc: "Pose tes questions. L'IA connait ton cours par coeur." },
+  { icon: "", title: "Photo, texte, vocal, PDF", desc: "Importe ton cours comme tu veux. L'IA s'adapte." },
+  { icon: "", title: "Fiches en 15 secondes",   desc: "Pas en 15 minutes. En 15 secondes. Chrono en main." },
+  { icon: "", title: "QCM intelligents",         desc: "Des questions qui testent ta comprehension, pas ta memoire." },
+  { icon: "", title: "Chatbot par cours",        desc: "Pose tes questions. L'IA connait ton cours par coeur." },
 ]
 
 const STATS: Stat[] = [

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { MessageSquare, X, Send } from 'lucide-react'
+import { MessageSquare, X, Send, PartyPopper, Crown } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
 export function FeedbackButton({ userId }: { userId: string }) {
@@ -47,7 +47,7 @@ export function FeedbackButton({ userId }: { userId: string }) {
 
             <div className="mb-4 flex items-center justify-between">
               <h3 className="font-display text-h4 text-text-main dark:text-text-dark-main">
-                Ton avis compte 🙏
+                Ton avis compte
               </h3>
               <button onClick={() => setOpen(false)} className="text-text-tertiary hover:text-text-main dark:hover:text-text-dark-main">
                 <X className="h-5 w-5" />
@@ -56,7 +56,7 @@ export function FeedbackButton({ userId }: { userId: string }) {
 
             {sent ? (
               <div className="flex flex-col items-center gap-3 py-6 text-center">
-                <span className="text-4xl animate-pop-in">🎉</span>
+                <PartyPopper className="h-10 w-10 animate-pop-in text-success dark:text-success-dark" />
                 <p className="font-display text-h4 text-success dark:text-success-dark">Merci pour ton retour !</p>
               </div>
             ) : (
@@ -70,8 +70,8 @@ export function FeedbackButton({ userId }: { userId: string }) {
                     {[1,2,3,4,5,6,7,8,9,10].map((n) => (
                       <div key={n} className="relative flex-1">
                         {n === 10 && (
-                          <span className="pointer-events-none absolute -top-2 -right-1 text-[11px]" style={{ transform: 'rotate(25deg)', display: 'inline-block', zIndex: 10 }}>
-                            👑
+                          <span className="pointer-events-none absolute -top-2 -right-1 inline-flex" style={{ transform: 'rotate(25deg)', zIndex: 10 }}>
+                            <Crown className="h-3 w-3 text-amber-500" />
                           </span>
                         )}
                         <button

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { Copy, Check, Users } from 'lucide-react'
+import { Copy, Check, Users, Handshake } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { SkyCoin } from '@/components/ui/SkyCoin'
 import { generateReferralCode } from '@/lib/supabase/referral-actions'
@@ -26,7 +26,7 @@ export function ReferralCard({ userId, initialCode, referralsCount }: ReferralCa
 
   function handleCopy() {
     if (!code) return
-    const message = `Rejoins-moi sur Skynote 🌟\nL'IA transforme tes cours en fiches de révision !\nUtilise mon code ${code} à l'inscription pour gagner +15 Sky Coins 🎁\nhttps://skynote.app`
+    const message = `Rejoins-moi sur Skynote !\nL'IA transforme tes cours en fiches de révision.\nUtilise mon code ${code} à l'inscription pour gagner +15 Sky Coins.\nhttps://skynote.app`
     navigator.clipboard.writeText(message).then(() => {
       setCopied(true)
       setTimeout(() => setCopied(false), 2500)
@@ -39,7 +39,7 @@ export function ReferralCard({ userId, initialCode, referralsCount }: ReferralCa
       <div className="mb-4 flex items-start justify-between">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="text-xl">🤝</span>
+            <Handshake className="h-5 w-5 text-brand dark:text-brand-dark" />
             <h3 className="font-display text-h4 text-text-main dark:text-text-dark-main">
               Parraine un ami
             </h3>
@@ -80,8 +80,8 @@ export function ReferralCard({ userId, initialCode, referralsCount }: ReferralCa
           </div>
 
           {copied && (
-            <p className="font-body text-[12px] text-success dark:text-success-dark animate-slide-in">
-              ✓ Message copié ! Envoie-le à un ami.
+            <p className="flex items-center gap-1 font-body text-[12px] text-success dark:text-success-dark animate-slide-in">
+              <Check className="h-3.5 w-3.5" /> Message copié ! Envoie-le à un ami.
             </p>
           )}
 

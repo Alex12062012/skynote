@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import { Coins } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { PlayerCard } from './PlayerCard'
 import { getLeaderboard, type LeaderboardRow } from '@/lib/supabase/gamification-actions'
@@ -69,10 +70,10 @@ export function LeaderboardClient({
       </div>
 
       {/* Reset info */}
-      <p className="text-center font-body text-[12px] text-text-tertiary dark:text-text-dark-tertiary">
-        {mode === 'weekly'  && '🔄 Reset chaque lundi à minuit'}
-        {mode === 'monthly' && '🔄 Reset le 1er de chaque mois'}
-        {mode === 'all_time' && '💰 Classement par solde actuel'}
+      <p className="flex items-center justify-center gap-1.5 text-center font-body text-[12px] text-text-tertiary dark:text-text-dark-tertiary">
+        {mode === 'weekly'  && 'Reset chaque lundi à minuit'}
+        {mode === 'monthly' && 'Reset le 1er de chaque mois'}
+        {mode === 'all_time' && (<><Coins className="h-3.5 w-3.5" /> Classement par solde actuel</>)}
       </p>
 
       {/* Liste */}

@@ -1,6 +1,6 @@
 'use client'
 
-import { Trophy, Medal } from 'lucide-react'
+import { Trophy, Medal, BarChart3 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface StudentRanking {
@@ -43,7 +43,7 @@ export function CourseRanking({ students, qcmTotal, skycoinsInRanking }: CourseR
   if (sorted.length === 0) {
     return (
       <div className="rounded-card border border-sky-border bg-sky-surface p-8 text-center dark:border-night-border dark:bg-night-surface">
-        <p className="text-4xl mb-3">📊</p>
+        <BarChart3 className="mx-auto mb-3 h-10 w-10 text-text-secondary dark:text-text-dark-secondary" />
         <p className="font-body text-[14px] text-text-secondary dark:text-text-dark-secondary">Aucun eleve dans cette classe</p>
       </div>
     )

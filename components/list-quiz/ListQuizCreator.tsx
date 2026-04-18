@@ -3,6 +3,7 @@
 import { useState, useRef } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
+import { Lock, Lightbulb } from "lucide-react"
 
 type Pair = { q: string; a: string }
 
@@ -76,7 +77,7 @@ export function ListQuizCreator({ isPremium, weeklyCount }: Props) {
     return (
       <div style={{ minHeight: "100vh", background: "#060D1A", display: "flex", alignItems: "center", justifyContent: "center", padding: "24px" }}>
         <div style={{ maxWidth: 400, textAlign: "center" }}>
-          <p style={{ fontSize: 40, marginBottom: 16 }}>🔒</p>
+          <Lock style={{ width: 40, height: 40, marginBottom: 16, color: "#F0F6FF", display: "block", marginLeft: "auto", marginRight: "auto" }} />
           <h2 style={{ color: "#F0F6FF", fontWeight: 700, fontSize: 22, marginBottom: 12 }}>Limite hebdomadaire atteinte</h2>
           <p style={{ color: "#94A3B8", fontSize: 15, lineHeight: 1.6, marginBottom: 24 }}>
             Le plan gratuit permet 1 cours par semaine. Passe en Premium pour en creer autant que tu veux.
@@ -183,7 +184,7 @@ export function ListQuizCreator({ isPremium, weeklyCount }: Props) {
 
         {/* Info */}
         <div style={{ background: "#0D1B2E", border: "1px solid #1E3A5F", borderRadius: 10, padding: "12px 16px", marginBottom: 24, display: "flex", gap: 10, alignItems: "flex-start" }}>
-          <span style={{ fontSize: 16 }}>💡</span>
+          <Lightbulb style={{ width: 16, height: 16, color: "#FACC15", flexShrink: 0, marginTop: 2 }} />
           <p style={{ color: "#64748B", fontSize: 13, lineHeight: 1.5, margin: 0 }}>
             Le questionnaire tirera 20 questions au hasard parmi tes paires, avec des mauvaises reponses generees depuis ta liste. Score parfait = <strong style={{ color: "#60A5FA" }}>+10 Sky Coins</strong>. Pas de limite de regeneration.
           </p>

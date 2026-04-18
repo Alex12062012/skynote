@@ -3,7 +3,7 @@
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Check, X, ArrowLeft, Settings, CreditCard, Calendar } from 'lucide-react'
+import { Check, X, ArrowLeft, Settings, CreditCard, Calendar, BookOpen, Star, Users } from 'lucide-react'
 import { SkyCoin } from '@/components/ui/SkyCoin'
 import { cn } from '@/lib/utils'
 
@@ -11,7 +11,7 @@ type Billing = 'monthly' | 'yearly'
 
 const PLANS = [
   {
-    id: 'free', name: 'Gratuit', icon: '📚',
+    id: 'free', name: 'Gratuit',
     price: { monthly: 0, yearly: 0 },
     description: 'Pour decouvrir Skynote',
     color: 'border-slate-200 dark:border-slate-700',
@@ -26,7 +26,7 @@ const PLANS = [
     ],
   },
   {
-    id: 'plus', name: 'Plus', icon: '⭐',
+    id: 'plus', name: 'Plus',
     price: { monthly: 4.99, yearly: 3.99 },
     yearlyTotal: 47.88,
     description: 'Pour les eleves serieux',
@@ -43,7 +43,7 @@ const PLANS = [
     ],
   },
   {
-    id: 'famille', name: 'Famille', icon: '👨‍👩‍👧',
+    id: 'famille', name: 'Famille',
     price: { monthly: 11.99, yearly: 10.99 },
     yearlyTotal: 131.88,
     description: 'Pour toute la famille',
@@ -127,8 +127,10 @@ export function PricingClient({ currentPlan, planExpiresAt, hasStripeSubscriptio
           <div className="mb-8 rounded-card border border-brand/20 bg-brand-soft p-6 dark:border-brand-dark/20 dark:bg-brand-dark-soft">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div className="flex items-center gap-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-brand dark:bg-brand-dark text-white dark:text-night-bg text-xl">
-                  {currentPlan === 'famille' ? '👨‍👩‍👧' : '⭐'}
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-brand dark:bg-brand-dark text-white dark:text-night-bg">
+                  {currentPlan === 'famille'
+                    ? <Users className="h-6 w-6" />
+                    : <Star className="h-6 w-6 fill-current" />}
                 </div>
                 <div>
                   <p className="font-display text-[18px] font-bold text-text-main dark:text-text-dark-main">
@@ -213,7 +215,9 @@ export function PricingClient({ currentPlan, planExpiresAt, hasStripeSubscriptio
 
                 <div className="mb-5">
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="text-2xl">{plan.icon}</span>
+                    {plan.id === 'free'    && <BookOpen className="h-6 w-6 text-text-secondary dark:text-text-dark-secondary" />}
+                    {plan.id === 'plus'    && <Star className="h-6 w-6 fill-yellow-400 text-yellow-400" />}
+                    {plan.id === 'famille' && <Users className="h-6 w-6 text-purple-500" />}
                     <h2 className="font-display text-[22px] font-bold text-text-main dark:text-text-dark-main">{plan.name}</h2>
                   </div>
                   <p className="font-body text-[13px] text-text-secondary dark:text-text-dark-secondary mb-3">{plan.description}</p>

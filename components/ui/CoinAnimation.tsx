@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { PartyPopper } from 'lucide-react'
 import { SkyCoin } from './SkyCoin'
 
 interface CoinParticle {
@@ -86,8 +87,8 @@ export function CoinToast({ amount, visible, onHide }: CoinToastProps) {
           <p className="font-display text-[15px] font-bold text-brand dark:text-brand-dark">
             +{amount} Sky Coins !
           </p>
-          <p className="font-body text-[12px] text-text-secondary dark:text-text-dark-secondary">
-            Score parfait 🎉
+          <p className="inline-flex items-center gap-1 font-body text-[12px] text-text-secondary dark:text-text-dark-secondary">
+            Score parfait <PartyPopper className="h-3.5 w-3.5" />
           </p>
         </div>
       </div>

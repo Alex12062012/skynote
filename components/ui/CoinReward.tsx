@@ -1,6 +1,7 @@
 'use client'
 
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, type ReactNode } from 'react'
+import { Trophy } from 'lucide-react'
 import { SkyCoin } from './SkyCoin'
 
 interface CoinParticle {
@@ -17,7 +18,7 @@ interface CoinRewardProps {
   visible: boolean
   amount: number
   reason: string
-  icon?: string
+  icon?: ReactNode
   onDone?: () => void
 }
 
@@ -59,7 +60,7 @@ function playCoinTick() {
   } catch {}
 }
 
-export function CoinReward({ visible, amount, reason, icon = '🏆', onDone }: CoinRewardProps) {
+export function CoinReward({ visible, amount, reason, icon = <Trophy className="h-7 w-7 text-amber-500" />, onDone }: CoinRewardProps) {
   const [particles, setParticles] = useState<CoinParticle[]>([])
   const [showToast, setShowToast] = useState(false)
   const [displayedCoins, setDisplayedCoins] = useState(0)
@@ -189,7 +190,7 @@ export function CoinReward({ visible, amount, reason, icon = '🏆', onDone }: C
           }}
         >
           <div className="flex items-center gap-3 rounded-2xl border border-brand/20 bg-sky-surface px-6 py-4 shadow-2xl dark:border-brand-dark/20 dark:bg-night-surface">
-            <span className="text-3xl">{icon}</span>
+            <span className="text-3xl flex items-center justify-center">{icon}</span>
             <div>
               <p className="font-body text-[12px] font-semibold uppercase tracking-wider text-brand dark:text-brand-dark">
                 {reason}

@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { Users, Rocket } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
 export default function FamilleLoginPage() {
@@ -66,7 +67,7 @@ export default function FamilleLoginPage() {
           </div>
           <div>
             <h2 className="font-display text-h2 text-text-main dark:text-text-dark-main">
-              Bonjour {childName} ! 👋
+              Bonjour {childName} !
             </h2>
             <p className="mt-1 font-body text-[14px] text-text-secondary dark:text-text-dark-secondary">
               Connexion en cours...
@@ -90,7 +91,7 @@ export default function FamilleLoginPage() {
         <div className="mb-8 text-center">
           <Link href="/" className="inline-flex flex-col items-center gap-3 mb-2">
             <div className="relative flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-purple-400 to-purple-600 shadow-lg">
-              <span className="text-3xl">👨‍👩‍👧</span>
+              <Users className="h-8 w-8 text-white" />
             </div>
             <span className="font-display text-[22px] font-bold text-text-main dark:text-text-dark-main">
               Skynote Famille
@@ -161,7 +162,9 @@ export default function FamilleLoginPage() {
                   Connexion...
                 </>
               ) : (
-                '🚀 Se connecter'
+                <>
+                  <Rocket className="h-4 w-4" /> Se connecter
+                </>
               )}
             </button>
           </form>

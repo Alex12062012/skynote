@@ -8,7 +8,7 @@ import { SourceTypeTabs } from './SourceTypeTabs'
 import { VoiceRecorder } from './VoiceRecorder'
 import { FileDropzone } from './FileDropzone'
 import { createCourse } from '@/lib/supabase/course-actions'
-import { X, AlertTriangle, Camera, List, Plus } from 'lucide-react'
+import { X, AlertTriangle, Camera, List, Plus, Folder, Check } from 'lucide-react'
 import { useI18n } from '@/lib/i18n/context'
 
 type SourceType = 'text' | 'photo' | 'list' | 'vocal'
@@ -197,7 +197,7 @@ export function CreateCourseForm({
                 <Camera className="h-5 w-5 text-amber-600 dark:text-amber-400" />
               </div>
               <h3 className="font-display text-[17px] font-bold text-text-main dark:text-text-dark-main leading-snug">
-                Conseil pour les photos 📸
+                Conseil pour les photos
               </h3>
             </div>
             <div className="mb-4 rounded-input border border-amber-200 bg-amber-50 p-4 dark:border-amber-800/30 dark:bg-amber-950/20">
@@ -283,8 +283,8 @@ export function CreateCourseForm({
             </label>
             {folderId ? (
               // Dossier pre-selectionne depuis l'URL, affichage en lecture seule
-              <div className="flex h-11 items-center rounded-input border border-sky-border bg-sky-surface px-4 font-body text-[14px] text-text-main dark:border-night-border dark:bg-night-surface dark:text-text-dark-main">
-                📁 {teacherFolders.find(f => f.id === folderId)?.name || 'Dossier selectionne'}
+              <div className="flex h-11 items-center gap-2 rounded-input border border-sky-border bg-sky-surface px-4 font-body text-[14px] text-text-main dark:border-night-border dark:bg-night-surface dark:text-text-dark-main">
+                <Folder className="h-4 w-4" /> {teacherFolders.find(f => f.id === folderId)?.name || 'Dossier selectionne'}
               </div>
             ) : (
               <select
@@ -294,7 +294,7 @@ export function CreateCourseForm({
               >
                 <option value="">Choisir un dossier...</option>
                 {teacherFolders.map((f) => (
-                  <option key={f.id} value={f.id}>📁 {f.name}</option>
+                  <option key={f.id} value={f.id}>{f.name}</option>
                 ))}
               </select>
             )}
@@ -363,8 +363,8 @@ export function CreateCourseForm({
         {sourceType === 'photo' && showExtracted && (
           <div>
             <div className="mb-2 flex items-center justify-between">
-              <label className="font-body text-[13px] font-medium text-text-main dark:text-text-dark-main">
-                ✅ Texte detecte ({photoCount} photo{photoCount > 1 ? 's' : ''}) — tu peux le modifier
+              <label className="inline-flex items-center gap-1 font-body text-[13px] font-medium text-text-main dark:text-text-dark-main">
+                <Check className="h-4 w-4 text-green-600" /> Texte detecte ({photoCount} photo{photoCount > 1 ? 's' : ''}) — tu peux le modifier
               </label>
               <button type="button"
                 onClick={() => { setShowExtracted(false); setExtractedText(''); setFile(null); setPhotoCount(0) }}

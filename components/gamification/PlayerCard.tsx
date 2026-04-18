@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { Flame } from 'lucide-react'
+import { Flame, Medal, Star } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { SkyCoin } from '@/components/ui/SkyCoin'
 import { PlayerEmblem } from './PlayerEmblem'
@@ -33,7 +33,8 @@ interface PlayerCardProps {
 export function PlayerCard({ rank, player, isMe, href }: PlayerCardProps) {
   const displayName = player.pseudo ?? `user_${player.user_number ?? '?'}`
   const title = TITLES.find(t => t.id === player.active_title_id)?.label ?? null
-  const medal = ['🥇', '🥈', '🥉'][rank - 1]
+  const medalColor = ['text-yellow-500', 'text-slate-400', 'text-amber-700'][rank - 1]
+  const showMedal = rank >= 1 && rank <= 3
 
   const inner = (
     <div
@@ -47,8 +48,8 @@ export function PlayerCard({ rank, player, isMe, href }: PlayerCardProps) {
     >
       {/* Rang */}
       <div className="flex w-10 flex-shrink-0 items-center justify-center">
-        {medal ? (
-          <span className="text-[26px] drop-shadow">{medal}</span>
+        {showMedal ? (
+          <Medal className={cn('h-7 w-7 drop-shadow', medalColor)} />
         ) : (
           <span
             className={cn(
@@ -89,7 +90,7 @@ export function PlayerCard({ rank, player, isMe, href }: PlayerCardProps) {
             </span>
           )}
           {(player.plan === 'plus' || player.plan === 'premium') && (
-            <span className="text-[11px]" title="Plus">⭐</span>
+            <span className="inline-flex" title="Plus"><Star className="h-3 w-3 text-yellow-500 fill-yellow-500" /></span>
           )}
         </div>
         {title && (

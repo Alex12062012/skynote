@@ -1,6 +1,6 @@
 'use client'
 
-import { Flame, Trophy, Target, Sparkles } from 'lucide-react'
+import { Flame, Trophy, Target, Sparkles, Heart } from 'lucide-react'
 import { SkyCoin } from '@/components/ui/SkyCoin'
 import { PlayerEmblem } from './PlayerEmblem'
 import { LikeButton } from './LikeButton'
@@ -72,8 +72,8 @@ export function ProfileHero({ profile }: ProfileHeroProps) {
                 />
               )}
               {profile.is_self && (
-                <span className="rounded-pill border border-sky-border px-3 py-1 font-body text-[12px] text-text-tertiary dark:border-night-border">
-                  ❤️ {profile.likes_received} likes reçus
+                <span className="inline-flex items-center gap-1.5 rounded-pill border border-sky-border px-3 py-1 font-body text-[12px] text-text-tertiary dark:border-night-border">
+                  <Heart className="h-3.5 w-3.5 fill-red-500 text-red-500" /> {profile.likes_received} likes reçus
                 </span>
               )}
             </div>

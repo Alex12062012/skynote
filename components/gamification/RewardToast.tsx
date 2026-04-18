@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { Target, Sparkles } from 'lucide-react'
 import { SkyCoin } from '@/components/ui/SkyCoin'
 import type { RewardBreakdown } from '@/lib/gamification/rewards'
 import { cn } from '@/lib/utils'
@@ -58,8 +59,11 @@ export function RewardToast({ reward, onClose, autoClose = 0 }: RewardToastProps
           <div className="absolute inset-x-0 top-0 h-2 bg-gradient-to-r from-amber-400 via-orange-400 to-pink-400" />
         )}
 
-        <div className="mb-2 text-4xl">
-          {perfect ? '🎯' : none ? '😅' : '✨'}
+        <div className="mb-2 flex justify-center">
+          {perfect
+            ? <Target className="h-10 w-10 text-amber-500" />
+            : none ? null
+            : <Sparkles className="h-10 w-10 text-emerald-500" />}
         </div>
 
         <h3 className={cn(

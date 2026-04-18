@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { CheckCircle, XCircle, Zap, RotateCcw, ArrowLeft, Leaf, Target, Flame, Trophy, GraduationCap, Star, BookOpen, Dumbbell } from 'lucide-react'
+import { CheckCircle, XCircle, Zap, RotateCcw, ArrowLeft, Leaf, Target, Flame, Trophy, GraduationCap, Star, BookOpen, Dumbbell, Check, X } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { SkyCoin } from '@/components/ui/SkyCoin'
 import { CoinAnimation, CoinToast } from '@/components/ui/CoinAnimation'
@@ -134,7 +134,7 @@ export function QcmEngine({ flashcard, questions, courseId, difficulty = 'medium
           )}
           {!isPerfect && (
             <p className="max-w-xs font-body text-[14px] text-text-secondary dark:text-text-dark-secondary">
-              {pct < 60 ? 'Relis les fiches puis réessaie ! 💪' : 'Encore un effort pour le score parfait !'}
+              {pct < 60 ? 'Relis les fiches puis réessaie !' : 'Encore un effort pour le score parfait !'}
             </p>
           )}
           <div className="flex flex-col gap-3 w-full max-w-xs">
@@ -229,8 +229,10 @@ export function QcmEngine({ flashcard, questions, courseId, difficulty = 'medium
               answerState === 'correct'
                 ? 'bg-success-soft border border-success/20 dark:bg-emerald-950/20 dark:border-emerald-800/30'
                 : 'bg-red-50 border border-error/20 dark:bg-red-950/20 dark:border-red-800/30')}>
-              <p className="font-body text-[12px] font-semibold mb-0.5 dark:text-text-dark-main">
-                {answerState === 'correct' ? '✓ Bonne réponse !' : '✗ Pas tout à fait...'}
+              <p className="flex items-center gap-1 font-body text-[12px] font-semibold mb-0.5 dark:text-text-dark-main">
+                {answerState === 'correct'
+                  ? (<><Check className="h-3.5 w-3.5 text-green-600" /> Bonne réponse !</>)
+                  : (<><X className="h-3.5 w-3.5 text-red-500" /> Pas tout à fait...</>)}
               </p>
               <p className="font-body text-[13px] text-text-secondary dark:text-text-dark-secondary">
                 {question.explanation}

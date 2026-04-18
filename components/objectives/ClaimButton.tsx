@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition, useRef } from 'react'
+import { Check } from 'lucide-react'
 import { SkyCoin } from '@/components/ui/SkyCoin'
 import { useCoinReward } from '@/components/providers/CoinRewardProvider'
 import { claimObjectiveReward } from '@/lib/supabase/claim-actions'
@@ -57,7 +58,7 @@ export function ClaimButton({ objectiveId, rewardCoins, objectiveTitle, objectiv
   if (claimed) {
     return (
       <span className="inline-flex items-center gap-1 rounded-pill bg-success-soft px-3 py-1 font-body text-[12px] font-semibold text-success dark:bg-emerald-950/30 dark:text-success-dark">
-        ✓ Réclamé
+        <Check className="h-3.5 w-3.5 text-green-600" /> Réclamé
       </span>
     )
   }

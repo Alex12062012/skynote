@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, X } from 'lucide-react'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = { title: 'Conditions d\'utilisation — Skynote' }
@@ -55,7 +55,7 @@ export default function TermsPage() {
                 'Partager ton compte avec d\'autres personnes',
               ].map((item) => (
                 <li key={item} className="flex items-start gap-2">
-                  <span className="text-error mt-0.5">✗</span>
+                  <X className="mt-0.5 h-4 w-4 text-red-500" />
                   <span>{item}</span>
                 </li>
               ))}

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { Sparkles } from 'lucide-react'
+import { Sparkles, PartyPopper } from 'lucide-react'
 import { SkyCoin } from '@/components/ui/SkyCoin'
 import { cn } from '@/lib/utils'
 import { doPrestige } from '@/lib/supabase/gamification-actions'
@@ -112,8 +112,8 @@ export function PrestigeButton({
 
           {success && (
             <div className="mt-4 rounded-input border border-emerald-300 bg-emerald-50 p-3 dark:border-emerald-800 dark:bg-emerald-950/30">
-              <p className="font-display text-[14px] font-bold text-emerald-700 dark:text-emerald-300">
-                🎉 Prestige {success} atteint !
+              <p className="inline-flex items-center gap-2 font-display text-[14px] font-bold text-emerald-700 dark:text-emerald-300">
+                <PartyPopper className="h-4 w-4" /> Prestige {success} atteint !
               </p>
               <p className="font-body text-[12px] text-emerald-700/80 dark:text-emerald-300/70">
                 Nouveau bonus : +{success * 5} % de gains. Titre <em>Renaissance {success}</em> débloqué.

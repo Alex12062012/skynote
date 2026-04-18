@@ -3,7 +3,7 @@
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Star } from 'lucide-react'
+import { Star, Check } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { SkyCoin } from '@/components/ui/SkyCoin'
 import { activatePremiumWithCoins } from '@/lib/supabase/objectives-actions'
@@ -78,7 +78,7 @@ export function ActivatePremiumButton({ coins }: { coins: number }) {
                   <ul className="space-y-1">
                     {['Cours illimités (plus de limite de 3/semaine)', 'Dictée vocale activée', 'Accès prioritaire aux nouveautés'].map(item => (
                       <li key={item} className="flex items-center gap-2 font-body text-[13px] text-text-main dark:text-text-dark-main">
-                        <span className="text-success dark:text-success-dark">✓</span>
+                        <Check className="h-4 w-4 text-green-600" />
                         {item}
                       </li>
                     ))}

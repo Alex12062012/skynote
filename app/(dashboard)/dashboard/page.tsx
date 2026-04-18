@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { Plus, ArrowRight, Flame } from 'lucide-react'
+import { Plus, ArrowRight, Flame, BookOpen } from 'lucide-react'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdminClient } from '@supabase/supabase-js'
@@ -331,7 +331,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         <div className="flex flex-col gap-4">
           <h2 className="font-display text-h3 text-text-main dark:text-text-dark-main">Cours de la classe</h2>
           {foldersWithCourses.length === 0 ? (
-            <EmptyState icon="📚" title="Aucun cours" description="Ton professeur n'a pas encore ajouté de cours." />
+            <EmptyState icon={<BookOpen className="h-10 w-10 text-text-tertiary dark:text-text-dark-tertiary" />} title="Aucun cours" description="Ton professeur n'a pas encore ajouté de cours." />
           ) : (
             <StudentCourseFolders folders={foldersWithCourses} />
           )}

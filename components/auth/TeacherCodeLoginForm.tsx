@@ -59,7 +59,6 @@ export function TeacherCodeLoginForm() {
   if (teacherName) {
     return (
       <div className="flex flex-col items-center gap-3 py-4 text-center">
-        <span className="text-3xl">👋</span>
         <p className="font-body text-[15px] font-semibold text-text-main dark:text-text-dark-main">
           Bonjour, {teacherName} !
         </p>

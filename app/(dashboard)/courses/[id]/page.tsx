@@ -136,7 +136,6 @@ async function ReadyCourse({ courseId, userId, courseOwnerId, courseTitle, qcmSt
   if (flashcards.length === 0) {
     return (
       <div className="flex flex-col items-center gap-4 rounded-card border border-sky-border p-8 text-center dark:border-night-border">
-        <p className="text-4xl">🤔</p>
         <p className="font-body text-[14px] text-text-secondary dark:text-text-dark-secondary">
           Aucune fiche générée. Le contenu était peut-être trop court.
         </p>

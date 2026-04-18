@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { Lock } from 'lucide-react'
 import { AdminDashboard } from '@/components/admin/AdminDashboard'
 
 const DEFAULT_PIN = '253912'
@@ -49,7 +50,7 @@ export default function AdminPage() {
       <div className="flex min-h-screen items-center justify-center bg-[#060D1A] px-4">
         <div className="w-full max-w-sm">
           <div className="mb-8 text-center">
-            <p className="text-4xl mb-3">🔐</p>
+            <Lock className="mx-auto mb-3 h-10 w-10 text-white" />
             <h1 className="font-display text-[28px] font-bold text-white">Accès Admin</h1>
             <p className="font-body text-[14px] text-slate-400 mt-1">Skynote — Panel de gestion</p>
           </div>

@@ -46,7 +46,7 @@ export default async function FamillePage() {
     <div className="mx-auto max-w-4xl animate-fade-in">
       <div className="mb-8">
         <h1 className="font-display text-h2 text-text-main dark:text-text-dark-main">
-          Navigation Familiale 👨‍👩‍👧
+          Navigation Familiale
         </h1>
         <p className="mt-1 font-body text-[14px] text-text-secondary dark:text-text-dark-secondary">
           Gérez les comptes de vos enfants et suivez leur progression.
