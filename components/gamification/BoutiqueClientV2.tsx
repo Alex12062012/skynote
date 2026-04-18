@@ -9,6 +9,7 @@ import { buyItem, equip, equipFrame } from '@/lib/supabase/gamification-actions'
 import { SpinWheel, WHEEL_SEGMENTS as WHEEL_LEGACY } from '@/components/boutique/SpinWheel'
 import { PlayerBadge } from './PlayerBadge'
 import { PrestigeButton } from './PrestigeButton'
+import { SkinDecoration } from './SkinDecoration'
 
 const ICON_MAP: Record<string, ElementType> = { Brain, Star, Rocket, Crown, Gem, Flame }
 
@@ -477,15 +478,18 @@ export function BoutiqueClientV2({
                       )}>
                         {/* Aperçu carte */}
                         <div
-                          className={cn('flex items-center gap-3 rounded-card border px-3 py-2', cardClass)}
+                          className={cn('relative overflow-hidden flex items-center gap-3 rounded-card border px-3 py-2', cardClass)}
                           style={boxShadow ? { boxShadow } : undefined}
                         >
-                          <div className="h-8 w-8 flex-shrink-0 rounded-full bg-gradient-to-br from-brand to-brand-dark" />
-                          <div className="min-w-0 flex-1">
-                            <div className="h-2.5 w-20 rounded-full bg-current opacity-20" />
-                            <div className="mt-1.5 h-2 w-12 rounded-full bg-current opacity-10" />
+                          <SkinDecoration skinId={resolvedId} />
+                          <div className="relative z-10 flex w-full items-center gap-3">
+                            <div className="h-8 w-8 flex-shrink-0 rounded-full bg-gradient-to-br from-brand to-brand-dark" />
+                            <div className="min-w-0 flex-1">
+                              <div className="h-2.5 w-20 rounded-full bg-current opacity-20" />
+                              <div className="mt-1.5 h-2 w-12 rounded-full bg-current opacity-10" />
+                            </div>
+                            <div className="h-2.5 w-10 rounded-full bg-current opacity-20" />
                           </div>
-                          <div className="h-2.5 w-10 rounded-full bg-current opacity-20" />
                         </div>
 
                         {/* Infos */}
