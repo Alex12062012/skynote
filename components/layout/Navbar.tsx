@@ -32,12 +32,8 @@ function getNavLinks(role: string, t: (k: string) => string, isBetaEnabled: bool
     { href: '/dashboard', label: t('nav.home'), icon: LayoutDashboard },
     { href: '/objectives', label: t('nav.objectives'), icon: Target },
   ]
-  // Quand la beta est activée, afficher le Leaderboard au lieu de Pricing
-  if (isBetaEnabled) {
-    links.push({ href: '/boutique', label: 'Boutique', icon: ShoppingBag })
-  } else if (role !== 'student') {
-    links.push({ href: '/pricing', label: t('nav.pricing'), icon: Tag })
-  }
+  // Toujours afficher la boutique (pricing masqué)
+  links.push({ href: '/boutique', label: 'Boutique', icon: ShoppingBag })
   return links
 }
 

@@ -47,6 +47,15 @@ export async function updateLoginStreak(userId: string): Promise<void> {
     .update({ streak_days: newStreak, last_login_at: now.toISOString() })
     .eq('id', userId)
 
+  // Bonus 3 coins pour 3 jours consécutifs
+  if (newStreak === 3) {
+    await supabase.rpc('award_coins', {
+      p_user_id: userId,
+      p_amount: 3,
+      p_reason: '3 jours de suite !',
+    })
+  }
+
   // Vérifier objectif streak_7
   await checkStreakObjective(userId, newStreak)
 }
@@ -96,7 +105,7 @@ async function checkStreakObjective(userId: string, currentStreak: number): Prom
   }
 
   if (isCompleted && !wasCompleted) {
-    await awardCoins(userId, obj.reward_coins, `Objectif complété : ${obj.title} 🔥`)
+    await awardCoins(userId, obj.reward_coins, `Objectif complété : ${obj.title}`)
   }
 }
 
@@ -150,7 +159,7 @@ export async function checkMasteryObjective(courseId: string, userId: string): P
     })
   }
 
-  await awardCoins(userId, obj.reward_coins, `Objectif complété : ${obj.title} 🎓`)
+  await awardCoins(userId, obj.reward_coins, `Objectif complété : ${obj.title}`)
   revalidatePath('/objectives')
 }
 
@@ -216,7 +225,7 @@ export async function activatePremiumWithCoins(): Promise<{ success: boolean; er
 
   const PREMIUM_COST = 750
 
-  const result = await spendCoins(user.id, PREMIUM_COST, '⭐ Activation Plus — 1 mois')
+  const result = await spendCoins(user.id, PREMIUM_COST, 'Activation Plus — 1 mois')
   if (!result.success) return result
 
   // Si l'utilisateur a déjà un plan Plus actif → prolonger au lieu de reset

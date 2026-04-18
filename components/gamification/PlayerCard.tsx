@@ -89,9 +89,7 @@ export function PlayerCard({ rank, player, isMe, href }: PlayerCardProps) {
               <Flame className="h-3.5 w-3.5 text-orange-500" aria-label={`${player.streak_days} jours de streak`} />
             </span>
           )}
-          {(player.plan === 'plus' || player.plan === 'premium') && (
-            <span className="inline-flex" title="Plus"><Star className="h-3 w-3 text-yellow-500 fill-yellow-500" /></span>
-          )}
+          {/* badge plan masqué */}
         </div>
         {title && (
           <p className="truncate font-body text-[12px] text-text-secondary dark:text-text-dark-secondary">

@@ -322,7 +322,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
             {greeting}, {firstName}
           </h1>
           <p className="mt-1 font-body text-[15px] text-text-secondary dark:text-text-dark-secondary">
-            {streak > 1 ? `\uD83D\uDD25 ${streak} jours de suite !` : 'Pret a reviser ?'}
+            {streak > 1 ? `${streak} jours de suite !` : 'Pret a reviser ?'}
           </p>
         </div>
 
@@ -363,7 +363,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
             {greeting}, {firstName}
           </h1>
           <p className="mt-1 font-body text-[15px] text-text-secondary dark:text-text-dark-secondary">
-            {streak > 1 ? `\uD83D\uDD25 ${streak} jours de suite !` : 'Pret a reviser ?'}
+            {streak > 1 ? `${streak} jours de suite !` : 'Pret a reviser ?'}
           </p>
         </div>
         <Link href="/courses/new">
@@ -379,20 +379,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
 
       <StatsBar coursesCount={totalCourses ?? 0} qcmCount={totalQcm ?? 0} streak={streak} coins={coins} />
 
-      {!isPremium && coins >= 60 && coins < 100 && (
-        <div className="flex items-center gap-4 rounded-card border border-brand/20 bg-brand-soft p-4 dark:border-brand-dark/20 dark:bg-brand-dark-soft">
-          <SkyCoin size={40} />
-          <div className="flex-1 min-w-0">
-            <p className="font-body text-[14px] font-semibold text-brand dark:text-brand-dark">
-              Plus que {100 - coins} coins pour Premium !
-            </p>
-            <ProgressBar value={coins} max={100} className="mt-2" />
-          </div>
-          <Link href="/objectives" className="flex-shrink-0">
-            <Button size="sm" variant="secondary" className="gap-1">Voir <ArrowRight className="h-3.5 w-3.5" /></Button>
-          </Link>
-        </div>
-      )}
+      {/* Banner premium masqué */}
 
       <div>
         <div className="mb-4 flex items-center justify-between">

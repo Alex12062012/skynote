@@ -63,28 +63,11 @@ export default async function ProfilePage() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          {!isPremium ? (
-            <Link href="/pricing"><Button variant="secondary" className="gap-2"><Crown className="h-4 w-4 text-amber-500" />{t('profile.free')} &rarr; Plus</Button></Link>
-          ) : (
-            <span className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 text-sm font-medium">
-              <Star className="h-3.5 w-3.5" />Plan {plan.charAt(0).toUpperCase() + plan.slice(1)}
-            </span>
-          )}
+          {/* badge plan masqué */}
         </div>
       </div>
 
-      {showPremiumBanner && (
-        <div className="flex items-center gap-4 rounded-card border border-brand/20 bg-brand-soft p-4 dark:border-brand-dark/20 dark:bg-brand-dark-soft">
-          <SkyCoin size={40} />
-          <div className="flex-1 min-w-0">
-            <p className="font-body text-[14px] font-semibold text-brand dark:text-brand-dark">
-              {t('profile.coinsNeeded').replace('{n}', String(coinsNeeded))}
-            </p>
-            <ProgressBar value={coins} max={750} className="mt-2" />
-          </div>
-          <Link href="/objectives" className="flex-shrink-0"><Button size="sm" variant="secondary" className="gap-1">{t('dash.viewAll')} <ArrowRight className="h-3.5 w-3.5" /></Button></Link>
-        </div>
-      )}
+      {/* banner premium masqué */}
 
       <div className="rounded-card border border-sky-border bg-sky-surface p-5 shadow-card dark:border-night-border dark:bg-night-surface dark:shadow-card-dark">
         <div className="flex items-center justify-between">
@@ -95,9 +78,7 @@ export default async function ProfilePage() {
               <p className="font-display text-h3 text-text-main dark:text-text-dark-main">{coins}</p>
             </div>
           </div>
-          {!isPremium && (
-            <Link href="/objectives"><Button size="sm" variant="ghost" className="gap-1 text-brand dark:text-brand-dark">{t('profile.earnCoins')} <ArrowRight className="h-3.5 w-3.5" /></Button></Link>
-          )}
+          <Link href="/objectives"><Button size="sm" variant="ghost" className="gap-1 text-brand dark:text-brand-dark">{t('profile.earnCoins')} <ArrowRight className="h-3.5 w-3.5" /></Button></Link>
         </div>
       </div>
 
@@ -151,12 +132,7 @@ export default async function ProfilePage() {
             <span className="text-sm text-text-tertiary dark:text-text-dark-tertiary">{t('profile.memberSince')}</span>
             <span className="text-sm font-medium text-text-main dark:text-text-dark-main">{memberSince}</span>
           </div>
-          <div className="flex items-center justify-between py-2 border-b border-sky-border/50 dark:border-night-border/50">
-            <span className="text-sm text-text-tertiary dark:text-text-dark-tertiary">{t('profile.currentPlan')}</span>
-            <span className={`text-sm font-medium ${isPremium ? 'text-amber-600 dark:text-amber-400' : 'text-text-main dark:text-text-dark-main'}`}>
-              {isPremium ? plan.charAt(0).toUpperCase() + plan.slice(1) : t('profile.free')}
-            </span>
-          </div>
+          {/* ligne plan masquée */}
           <div className="flex items-center justify-between py-2">
             <span className="text-sm text-text-tertiary dark:text-text-dark-tertiary">{t('profile.email')}</span>
             <span className="text-sm font-medium text-text-main dark:text-text-dark-main">{email}</span>

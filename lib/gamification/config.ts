@@ -15,10 +15,10 @@ export const DIFFICULTY_COINS: Record<QcmDifficulty, number> = {
 }
 
 export const DIFFICULTY_LABELS: Record<QcmDifficulty, string> = {
-  peaceful: 'Facile',
+  peaceful: 'Paisible',
   easy:     'Normal',
   medium:   'Hardcore',
-  hard:     'Expert',
+  hard:     'Teste tes parents',
 }
 
 // ─── SCORING ──────────────────────────────────────────────────────────────────
