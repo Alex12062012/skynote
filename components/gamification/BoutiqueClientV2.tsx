@@ -14,6 +14,12 @@ const ICON_MAP: Record<string, ElementType> = { Brain, Star, Rocket, Crown, Gem,
 
 type ShopTab = 'badges' | 'consumables' | 'titles'
 
+interface UserStats {
+  total_qcm_perfect: number
+  best_perfect_streak: number
+  wheel_spins: number
+}
+
 interface Props {
   initialCoins: number
   prestigeLevel: number
@@ -22,11 +28,31 @@ interface Props {
   activeBadge: string
   activeTitle: string | null
   recentSpins: Array<{ segment_id: string; reward_type: string; net_gain: number; created_at: string }>
+  userStats?: UserStats
+}
+
+// ─── Utilitaire barre de progression ─────────────────────────────────────────
+function parseTitleProgress(unlockRule: string | undefined, stats: UserStats): { current: number; max: number } | null {
+  if (!unlockRule) return null
+  const match = unlockRule.match(/^(\w+)\s*>=\s*(\d+)$/)
+  if (!match) return null
+  const [, metric, rawMax] = match
+  const max = parseInt(rawMax, 10)
+  const metricMap: Record<string, number> = {
+    total_qcm_perfect:   stats.total_qcm_perfect,
+    best_perfect_streak: stats.best_perfect_streak,
+    wheel_spins:         stats.wheel_spins,
+  }
+  const current = metricMap[metric] ?? 0
+  return { current: Math.min(current, max), max }
 }
 
 export function BoutiqueClientV2({
   initialCoins, prestigeLevel, ownedBadges, ownedTitles, activeBadge, activeTitle, recentSpins,
+  userStats,
 }: Props) {
+  const defaultStats: UserStats = { total_qcm_perfect: 0, best_perfect_streak: 0, wheel_spins: 0 }
+  const stats = userStats ?? defaultStats
   const [coins, setCoins] = useState(initialCoins)
   const [tab, setTab]     = useState<ShopTab>('badges')
   const [badges, setBadges] = useState(new Set(ownedBadges))
@@ -263,46 +289,72 @@ export function BoutiqueClientV2({
                 const owned = titles.has(t.id)
                 const equipped = equippedTitle === t.id
                 const buyable = Boolean(t.price)
+                const progress = !owned && !buyable ? parseTitleProgress(t.unlockRule, stats) : null
+                const pct = progress ? Math.round((progress.current / progress.max) * 100) : 0
                 return (
-                  <div key={t.id} className="flex items-center justify-between rounded-card border border-sky-border bg-sky-surface px-4 py-3 dark:border-night-border dark:bg-night-surface">
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="font-display text-[15px] font-bold">{t.label}</span>
-                        <span className="rounded-pill bg-sky-cloud px-2 py-0.5 font-body text-[10px] font-bold uppercase text-text-tertiary dark:bg-night-border">
-                          {t.category}
-                        </span>
+                  <div key={t.id} className="rounded-card border border-sky-border bg-sky-surface px-4 py-3 dark:border-night-border dark:bg-night-surface">
+                    <div className="flex items-center justify-between">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className={cn(
+                            'font-display text-[15px] font-bold',
+                            owned && equipped ? 'text-rainbow' : '',
+                          )}>{t.label}</span>
+                          <span className="rounded-pill bg-sky-cloud px-2 py-0.5 font-body text-[10px] font-bold uppercase text-text-tertiary dark:bg-night-border">
+                            {t.category}
+                          </span>
+                        </div>
+                        <p className="truncate font-body text-[12px] text-text-secondary dark:text-text-dark-secondary">{t.desc}</p>
                       </div>
-                      <p className="truncate font-body text-[12px] text-text-secondary dark:text-text-dark-secondary">{t.desc}</p>
+                      <div className="ml-3 flex flex-shrink-0 items-center gap-2">
+                        {owned ? (
+                          <button
+                            onClick={() => handleEquip('title', equipped ? null : t.id)}
+                            disabled={pending}
+                            className={cn(
+                              'rounded-pill px-3 py-1 font-display text-[11px] font-bold transition',
+                              equipped ? 'bg-emerald-500 text-white' : 'bg-brand text-white hover:bg-brand-hover',
+                            )}
+                          >
+                            {equipped ? 'Équipé' : 'Équiper'}
+                          </button>
+                        ) : buyable ? (
+                          <button
+                            onClick={() => handleBuy('title', t.id, t.price!)}
+                            disabled={coins < (t.price ?? 0) || pending}
+                            className={cn(
+                              'flex items-center gap-1 rounded-pill px-3 py-1 font-display text-[11px] font-bold transition',
+                              coins >= (t.price ?? 0)
+                                ? 'bg-brand text-white hover:bg-brand-hover'
+                                : 'cursor-not-allowed bg-sky-cloud text-text-tertiary',
+                            )}
+                          >
+                            <SkyCoin size={10} /> {t.price}
+                          </button>
+                        ) : (
+                          <Lock className="h-4 w-4 text-text-tertiary" />
+                        )}
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      {owned ? (
-                        <button
-                          onClick={() => handleEquip('title', equipped ? null : t.id)}
-                          disabled={pending}
-                          className={cn(
-                            'rounded-pill px-3 py-1 font-display text-[11px] font-bold transition',
-                            equipped ? 'bg-emerald-500 text-white' : 'bg-brand text-white hover:bg-brand-hover',
-                          )}
-                        >
-                          {equipped ? 'Équipé' : 'Équiper'}
-                        </button>
-                      ) : buyable ? (
-                        <button
-                          onClick={() => handleBuy('title', t.id, t.price!)}
-                          disabled={coins < (t.price ?? 0) || pending}
-                          className={cn(
-                            'flex items-center gap-1 rounded-pill px-3 py-1 font-display text-[11px] font-bold transition',
-                            coins >= (t.price ?? 0)
-                              ? 'bg-brand text-white hover:bg-brand-hover'
-                              : 'cursor-not-allowed bg-sky-cloud text-text-tertiary',
-                          )}
-                        >
-                          <SkyCoin size={10} /> {t.price}
-                        </button>
-                      ) : (
-                        <Lock className="h-4 w-4 text-text-tertiary" />
-                      )}
-                    </div>
+                    {/* Barre de progression pour les titres non-achetables non débloqués */}
+                    {progress && (
+                      <div className="mt-2.5">
+                        <div className="mb-1 flex items-center justify-between">
+                          <span className="font-body text-[10px] text-text-tertiary dark:text-text-dark-tertiary">
+                            Progression
+                          </span>
+                          <span className="font-display text-[10px] font-bold tabular-nums text-text-secondary dark:text-text-dark-secondary">
+                            {progress.current.toLocaleString('fr-FR')} / {progress.max.toLocaleString('fr-FR')}
+                          </span>
+                        </div>
+                        <div className="h-1.5 w-full overflow-hidden rounded-full bg-sky-cloud dark:bg-night-border">
+                          <div
+                            className="h-full rounded-full bg-brand transition-all duration-500 dark:bg-brand-dark"
+                            style={{ width: `${pct}%` }}
+                          />
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )
               })}

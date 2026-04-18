@@ -8,6 +8,7 @@ import { StreakTracker } from '@/components/dashboard/StreakTracker'
 import { CoinRewardProvider } from '@/components/providers/CoinRewardProvider'
 import { FeedbackButton } from '@/components/ui/FeedbackButton'
 import { FeedbackTrigger } from '@/components/providers/FeedbackTrigger'
+import { CoinRain } from '@/components/ui/CoinRain'
 import type { Profile } from '@/types/database'
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -15,10 +16,19 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const [{ data: profile }, { data: betaRow }] = await Promise.all([
+  const [{ data: profile }, { data: betaRow }, { data: boostRow }] = await Promise.all([
     supabase.from('profiles').select('*').eq('id', user.id).single(),
     supabase.from('admin_settings').select('value').eq('key', 'beta_mode').maybeSingle(),
+    supabase
+      .from('user_boosts')
+      .select('expires_at')
+      .eq('user_id', user.id)
+      .eq('boost_type', 'x2_coins')
+      .gt('expires_at', new Date().toISOString())
+      .maybeSingle(),
   ])
+
+  const boostActive = Boolean(boostRow)
 
   const isBetaEnabled = betaRow?.value === 'true'
 
@@ -32,6 +42,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
       <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
         {children}
       </main>
+      <CoinRain active={boostActive} />
       <FeedbackButton userId={user.id} />
       <FeedbackTrigger
         userId={user.id}
