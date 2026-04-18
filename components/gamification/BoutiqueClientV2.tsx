@@ -45,6 +45,7 @@ interface Props {
   activeTitle: string | null
   ownedFrames?: FrameItem[]
   activeFrame?: string | null
+  pseudo?: string
   recentSpins: Array<{ segment_id: string; reward_type: string; net_gain: number; created_at: string }>
   userStats?: UserStats
   consumableState?: ConsumableState
@@ -68,7 +69,7 @@ function parseTitleProgress(unlockRule: string | undefined, stats: UserStats): {
 
 export function BoutiqueClientV2({
   initialCoins, prestigeLevel, ownedBadges, ownedTitles, activeBadge, activeTitle,
-  ownedFrames = [], activeFrame: initialActiveFrame = null,
+  ownedFrames = [], activeFrame: initialActiveFrame = null, pseudo = 'Moi',
   recentSpins, userStats, consumableState,
 }: Props) {
   const defaultStats: UserStats = { total_qcm_perfect: 0, best_perfect_streak: 0, wheel_spins: 0 }
@@ -496,7 +497,7 @@ export function BoutiqueClientV2({
                                 />
                                 <div className="min-w-0 flex-1">
                                   <p className="truncate font-display text-[13px] font-bold text-text-main dark:text-text-dark-main">
-                                    Toi
+                                    {pseudo}
                                   </p>
                                   {titleLabel && (
                                     <RainbowText className="font-body text-[10px] font-bold">{titleLabel}</RainbowText>

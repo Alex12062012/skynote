@@ -94,6 +94,7 @@ export default async function BoutiquePage() {
       activeTitle={(profile as any)?.active_title_id ?? null}
       ownedFrames={ownedFrames}
       activeFrame={(profile as any)?.active_frame_id ?? null}
+      pseudo={(profile as any)?.pseudo ?? `user_${(profile as any)?.user_number ?? '?'}`}
       recentSpins={recentSpins}
       userStats={userStats}
       consumableState={consumableState}
