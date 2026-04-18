@@ -43,11 +43,12 @@ export default async function DashboardLayout({ children }: { children: React.Re
       <Navbar profile={profile as Profile | null} isBetaEnabled={isBetaEnabled} />
       {/* Mise à jour silencieuse du streak de connexion */}
       <StreakTracker userId={user.id} />
-      <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
+      <main className="relative z-10 mx-auto max-w-6xl px-4 py-8 sm:px-6">
         {children}
       </main>
       <CoinRain active={boostActive} />
       <FeedbackButton userId={user.id} />
+
       <FeedbackTrigger
         userId={user.id}
         initialShown5={profile?.feedback_shown_5 ?? false}
