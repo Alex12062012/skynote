@@ -1,12 +1,29 @@
 'use client'
 
 import Link from 'next/link'
-import { Flame, Medal, Star } from 'lucide-react'
+import { Flame, Medal } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { SkyCoin } from '@/components/ui/SkyCoin'
 import { RainbowText } from '@/components/ui/RainbowText'
 import { PlayerEmblem } from './PlayerEmblem'
 import { TITLES } from '@/lib/gamification/config'
+
+// ─── Skins de carte ──────────────────────────────────────────────────────────
+// Chaque skin change le fond + la bordure de la carte dans le classement.
+const CARD_SKINS: Record<string, {
+  card: string        // classes pour le wrapper de la carte
+  glow?: string       // halo optionnel (pseudo-element via boxShadow inline)
+  boxShadow?: string
+}> = {
+  frame_etoile_rare: {
+    card: 'border-yellow-400/70 bg-gradient-to-r from-amber-50 via-sky-surface to-yellow-50 dark:border-yellow-500/50 dark:from-amber-950/30 dark:via-night-surface dark:to-yellow-950/20',
+    boxShadow: '0 0 0 1px rgba(250,204,21,0.4), 0 2px 12px rgba(250,204,21,0.2)',
+  },
+  frame_etoile_legendary: {
+    card: 'border-purple-400/70 bg-gradient-to-r from-purple-50 via-sky-surface to-pink-50 dark:border-purple-500/50 dark:from-purple-950/30 dark:via-night-surface dark:to-pink-950/20',
+    boxShadow: '0 0 0 1px rgba(168,85,247,0.5), 0 2px 16px rgba(168,85,247,0.25)',
+  },
+}
 
 export interface PlayerCardData {
   id: string
@@ -15,6 +32,7 @@ export interface PlayerCardData {
   prestige_level: number
   active_title_id: string | null
   active_badge_id: string
+  active_frame_id?: string | null   // skin de carte équipé
   coins: number               // weekly, monthly ou all-time selon le contexte
   streak_days?: number
   plan?: string
@@ -29,7 +47,7 @@ interface PlayerCardProps {
 
 /**
  * Carte joueur pour le leaderboard.
- * Style Brawl Stars : badge central gros, prestige AU-DESSUS, titre EN DESSOUS.
+ * Le skin (active_frame_id) change le fond et la bordure de la carte.
  */
 export function PlayerCard({ rank, player, isMe, href }: PlayerCardProps) {
   const displayName = player.pseudo ?? `user_${player.user_number ?? '?'}`
@@ -37,15 +55,21 @@ export function PlayerCard({ rank, player, isMe, href }: PlayerCardProps) {
   const medalColor = ['text-yellow-500', 'text-slate-400', 'text-amber-700'][rank - 1]
   const showMedal = rank >= 1 && rank <= 3
 
+  const skin = player.active_frame_id ? CARD_SKINS[player.active_frame_id] : null
+
   const inner = (
     <div
       className={cn(
         'group relative flex items-center gap-4 rounded-card border px-4 py-3 transition-all',
         'hover:-translate-y-0.5 hover:shadow-card-hover',
-        isMe
-          ? 'border-brand/40 bg-brand-soft dark:border-brand-dark/40 dark:bg-brand-dark-soft'
-          : 'border-sky-border bg-sky-surface dark:border-night-border dark:bg-night-surface',
+        // Skin en priorité, sinon style isMe, sinon défaut
+        skin
+          ? skin.card
+          : isMe
+            ? 'border-brand/40 bg-brand-soft dark:border-brand-dark/40 dark:bg-brand-dark-soft'
+            : 'border-sky-border bg-sky-surface dark:border-night-border dark:bg-night-surface',
       )}
+      style={skin?.boxShadow ? { boxShadow: skin.boxShadow } : undefined}
     >
       {/* Rang */}
       <div className="flex w-10 flex-shrink-0 items-center justify-center">
@@ -79,7 +103,7 @@ export function PlayerCard({ rank, player, isMe, href }: PlayerCardProps) {
           <p
             className={cn(
               'truncate font-display text-[15px] font-bold',
-              isMe ? 'text-brand dark:text-brand-dark' : 'text-text-main dark:text-text-dark-main',
+              isMe && !skin ? 'text-brand dark:text-brand-dark' : 'text-text-main dark:text-text-dark-main',
             )}
           >
             {displayName}
@@ -90,7 +114,6 @@ export function PlayerCard({ rank, player, isMe, href }: PlayerCardProps) {
               <Flame className="h-3.5 w-3.5 text-orange-500" aria-label={`${player.streak_days} jours de streak`} />
             </span>
           )}
-          {/* badge plan masqué */}
         </div>
         {title && (
           <div className="truncate">
@@ -107,7 +130,7 @@ export function PlayerCard({ rank, player, isMe, href }: PlayerCardProps) {
         <span
           className={cn(
             'font-display text-[16px] font-black tabular-nums',
-            isMe ? 'text-brand dark:text-brand-dark' : 'text-text-main dark:text-text-dark-main',
+            isMe && !skin ? 'text-brand dark:text-brand-dark' : 'text-text-main dark:text-text-dark-main',
           )}
         >
           {player.coins.toLocaleString('fr-FR')}

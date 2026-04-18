@@ -166,6 +166,7 @@ export interface LeaderboardRow {
   prestige_level: number
   active_title_id: string | null
   active_badge_id: string
+  active_frame_id: string | null  // skin de carte équipé
   sky_coins: number              // solde actuel (peut avoir été dépensé)
   weekly_coins: number           // gagnés cette semaine
   monthly_coins: number          // gagnés ce mois-ci
@@ -200,7 +201,7 @@ export async function getLeaderboard(
   // joueurs actifs soient noyés dans la masse des inactifs.
   const { data: rawTop } = await admin
     .from('profiles')
-    .select('id, pseudo, user_number, prestige_level, active_title_id, active_badge_id, sky_coins, weekly_coins, monthly_coins, likes_received, streak_days, plan, role, classroom_id, total_coins_earned')
+    .select('id, pseudo, user_number, prestige_level, active_title_id, active_badge_id, active_frame_id, sky_coins, weekly_coins, monthly_coins, likes_received, streak_days, plan, role, classroom_id, total_coins_earned')
     .neq('role', 'teacher')
     .order(orderCol,              { ascending: false })
     .order('total_coins_earned',  { ascending: false })
@@ -213,6 +214,7 @@ export async function getLeaderboard(
       id: p.id, pseudo: p.pseudo, user_number: p.user_number,
       prestige_level: p.prestige_level ?? 0,
       active_title_id: p.active_title_id, active_badge_id: p.active_badge_id ?? 'letter',
+      active_frame_id: p.active_frame_id ?? null,
       sky_coins: p.sky_coins ?? 0, weekly_coins: p.weekly_coins ?? 0, monthly_coins: p.monthly_coins ?? 0,
       total_coins_earned: p.total_coins_earned ?? 0,
       likes_received: p.likes_received ?? 0, streak_days: p.streak_days ?? 0, plan: p.plan ?? 'free',
@@ -226,7 +228,7 @@ export async function getLeaderboard(
     } else {
       const { data: mp } = await admin
         .from('profiles')
-        .select('id, pseudo, user_number, prestige_level, active_title_id, active_badge_id, sky_coins, weekly_coins, monthly_coins, likes_received, streak_days, plan, total_coins_earned')
+        .select('id, pseudo, user_number, prestige_level, active_title_id, active_badge_id, active_frame_id, sky_coins, weekly_coins, monthly_coins, likes_received, streak_days, plan, total_coins_earned')
         .eq('id', user.id)
         .single()
       if (mp) {
@@ -258,6 +260,7 @@ export async function getLeaderboard(
           id: mp.id, pseudo: mp.pseudo, user_number: mp.user_number,
           prestige_level: mp.prestige_level ?? 0,
           active_title_id: mp.active_title_id, active_badge_id: mp.active_badge_id ?? 'letter',
+          active_frame_id: (mp as any).active_frame_id ?? null,
           sky_coins: mp.sky_coins ?? 0, weekly_coins: mp.weekly_coins ?? 0, monthly_coins: mp.monthly_coins ?? 0,
           total_coins_earned: (mp as any).total_coins_earned ?? 0,
           likes_received: mp.likes_received ?? 0, streak_days: mp.streak_days ?? 0, plan: mp.plan ?? 'free',

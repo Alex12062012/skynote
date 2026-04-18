@@ -76,13 +76,13 @@ export async function POST() {
   }
 
   if (segment.type === 'frame') {
-    const frameId = `frame_rare_${Date.now()}`
-    await supabase.from('user_inventory').insert({
+    // item_id fixe pour matcher CARD_SKINS dans PlayerCard
+    await supabase.from('user_inventory').upsert({
       user_id: user.id,
       item_type: 'frame',
-      item_id: frameId,
-      data: { name: 'Cadre Étoile', rarity: 'rare' },
-    })
+      item_id: 'frame_etoile_rare',
+      data: { name: 'Skin Étoile', rarity: 'rare' },
+    }, { onConflict: 'user_id,item_type,item_id' })
   }
 
   // Enregistrer le spin

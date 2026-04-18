@@ -223,7 +223,7 @@ export function BoutiqueClientV2({
             { key: 'badges',     icon: Palette, label: 'Badges' },
             { key: 'consumables', icon: Zap,    label: 'Boosts' },
             { key: 'titles',     icon: Award,   label: 'Titres' },
-            { key: 'frames',     icon: Frame,   label: `Cadres${ownedFrames.length > 0 ? ` (${ownedFrames.length})` : ''}` },
+            { key: 'frames',     icon: Frame,   label: `Skins${ownedFrames.length > 0 ? ` (${ownedFrames.length})` : ''}` },
           ] as { key: ShopTab; icon: ElementType; label: string }[]).map(({ key, icon: Icon, label }) => (
             <button key={key} onClick={() => setTab(key)}
               className={cn(
@@ -441,10 +441,10 @@ export function BoutiqueClientV2({
                 <div className="flex flex-col items-center gap-3 rounded-card border border-dashed border-sky-border py-12 text-center dark:border-night-border">
                   <Frame className="h-10 w-10 text-text-tertiary dark:text-text-dark-tertiary" />
                   <p className="font-display text-[15px] font-bold text-text-secondary dark:text-text-dark-secondary">
-                    Pas encore de cadre
+                    Pas encore de skin
                   </p>
                   <p className="font-body text-[13px] text-text-tertiary dark:text-text-dark-tertiary">
-                    Tente ta chance à la roue pour débloquer un cadre rare !
+                    Tente ta chance à la roue pour débloquer un skin rare !
                   </p>
                 </div>
               ) : (
@@ -471,7 +471,7 @@ export function BoutiqueClientV2({
                         />
                         <div>
                           <p className="font-display text-[13px] font-bold text-text-main dark:text-text-dark-main">
-                            {f.data?.name ?? 'Cadre rare'}
+                            {f.data?.name ?? 'Skin rare'}
                           </p>
                           <span className={cn('mt-1 inline-block rounded-pill px-2 py-0.5 font-body text-[10px] font-bold uppercase', rarityColor)}>
                             {rarity}

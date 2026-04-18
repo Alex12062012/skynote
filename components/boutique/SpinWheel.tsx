@@ -14,7 +14,7 @@ export const WHEEL_SEGMENTS = [
   { id: 'coins_100', label: '+100',      type: 'coins',    value: 100, color: '#34D399', text: '#022c22',  probability: 14 },
   { id: 'coins_200', label: '+200',      type: 'coins',    value: 200, color: '#2DD4BF', text: '#042f2e',  probability: 8  },
   { id: 'boost_xp',  label: 'Boost XP ×2', type: 'boost_xp', value: 0, color: '#A78BFA', text: '#fff',   probability: 4  },
-  { id: 'frame',     label: 'Cadre rare', type: 'frame',   value: 0,   color: '#F472B6', text: '#fff',     probability: 3  },
+  { id: 'frame',     label: 'Skin rare',  type: 'frame',   value: 0,   color: '#F472B6', text: '#fff',     probability: 3  },
 ] as const
 
 const NUM_SEGMENTS = WHEEL_SEGMENTS.length
@@ -289,13 +289,13 @@ function ResultBanner({ result, onClose }: { result: SpinResult; onClose: () => 
             : `${result.netGain} coins nets`
           : seg.type === 'boost_xp'
           ? 'Boost XP ×2 activé'
-          : 'Cadre rare débloqué'}
+          : 'Skin rare débloqué !'}
       </p>
       <p className="font-body text-[13px] text-text-secondary dark:text-text-dark-secondary">
         {seg.type === 'coins' && `Tu as reçu ${seg.value} coins pour un coût de ${SPIN_COST} coins.`}
         {seg.type === 'lost' && 'Retente ta chance !'}
         {seg.type === 'boost_xp' && 'Tes XP sont doublés pendant 1 heure.'}
-        {seg.type === 'frame' && 'Un cadre "Étoile" a été ajouté à ton inventaire.'}
+        {seg.type === 'frame' && 'Un skin "Étoile" a été ajouté à tes skins dans la boutique.'}
       </p>
       <button
         onClick={onClose}
