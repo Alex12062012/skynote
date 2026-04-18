@@ -30,17 +30,14 @@ export default async function BoutiquePage() {
     ownedTitles = (data ?? []).map((t: any) => t.title_id)
   } catch { /* table absente */ }
 
-  let wheelSpinCount = 0
+  // Compteur de tours depuis profiles (fiable — incrémenté via RPC SECURITY DEFINER)
+  const wheelSpinCount: number = (profile as any)?.total_wheel_spins ?? 0
+
   try {
     const { data } = await supabase
       .from('wheel_spins').select('segment_id, reward_type, net_gain, created_at')
       .eq('user_id', user.id).order('created_at', { ascending: false }).limit(5)
     recentSpins = data ?? []
-    // Compte total pour la barre de progression du titre "Pro du casino"
-    const { count } = await supabase
-      .from('wheel_spins').select('id', { count: 'exact', head: true })
-      .eq('user_id', user.id)
-    wheelSpinCount = count ?? 0
   } catch { /* table absente */ }
 
   const userStats = {

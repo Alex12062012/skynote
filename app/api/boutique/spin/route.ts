@@ -95,7 +95,10 @@ export async function POST() {
     }, { onConflict: 'user_id,item_type,item_id' })
   }
 
-  // Enregistrer le spin (on masque le type 'skin_secret' → 'frame' dans les logs)
+  // Incrémenter le compteur de tours (via RPC SECURITY DEFINER — fiable côté API route)
+  await supabase.rpc('increment_wheel_spins', { p_user_id: user.id })
+
+  // Enregistrer le spin dans les logs (best-effort, peut échouer silencieusement)
   await supabase.from('wheel_spins').insert({
     user_id: user.id,
     segment_id: segment.id,
