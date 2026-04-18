@@ -13,7 +13,10 @@ export default async function LeaderboardPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const { rows, me } = await getLeaderboard('weekly')
+  // Mode par défaut = all_time : affiche tout de suite la vraie hiérarchie
+  // (en weekly, tant qu'on est lundi/mardi, quasi tout le monde est à 0 et
+  //  le classement semble vide)
+  const { rows, me } = await getLeaderboard('all_time')
 
   // Forcer le choix d'un pseudo si pas encore défini
   const { data: myProf } = await supabase
@@ -36,7 +39,7 @@ export default async function LeaderboardPage() {
       <LeaderboardClient
         initialRows={rows}
         initialMe={me}
-        initialMode="weekly"
+        initialMode="all_time"
         currentUserId={user.id}
       />
     </div>

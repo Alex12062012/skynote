@@ -165,9 +165,10 @@ export interface LeaderboardRow {
   prestige_level: number
   active_title_id: string | null
   active_badge_id: string
-  sky_coins: number
-  weekly_coins: number
-  monthly_coins: number
+  sky_coins: number              // solde actuel (peut avoir été dépensé)
+  weekly_coins: number           // gagnés cette semaine
+  monthly_coins: number          // gagnés ce mois-ci
+  total_coins_earned: number     // lifetime — utilisé en mode all_time
   likes_received: number
   streak_days: number
   plan: string
@@ -181,15 +182,26 @@ export async function getLeaderboard(
   const authClient = await createClient()
   const { data: { user } } = await authClient.auth.getUser()
 
+  // Colonne principale de tri :
+  //  - weekly  → coins gagnés cette semaine
+  //  - monthly → coins gagnés ce mois-ci
+  //  - all_time → coins gagnés lifetime (pas sky_coins, qui est le solde actuel
+  //    et peut être à 0 après dépenses en boutique ou après un prestige)
   const orderCol =
     mode === 'weekly'  ? 'weekly_coins' :
     mode === 'monthly' ? 'monthly_coins' :
-                          'sky_coins'
+                          'total_coins_earned'
 
+  // Tiebreakers déterministes : si plein de joueurs sont ex-aequo sur la
+  // fenêtre courante (ex: semaine fraîche, tout le monde à 0), on les départage
+  // par lifetime puis par user_number (ordre d'inscription). Ça évite que les
+  // joueurs actifs soient noyés dans la masse des inactifs.
   const { data: rawTop } = await admin
     .from('profiles')
-    .select('id, pseudo, user_number, prestige_level, active_title_id, active_badge_id, sky_coins, weekly_coins, monthly_coins, likes_received, streak_days, plan, role, classroom_id')
-    .order(orderCol, { ascending: false })
+    .select('id, pseudo, user_number, prestige_level, active_title_id, active_badge_id, sky_coins, weekly_coins, monthly_coins, likes_received, streak_days, plan, role, classroom_id, total_coins_earned')
+    .order(orderCol,              { ascending: false })
+    .order('total_coins_earned',  { ascending: false })
+    .order('user_number',         { ascending: true  })
     .limit(limit * 2)
 
   // Exclure profs (spectateurs)
@@ -201,6 +213,7 @@ export async function getLeaderboard(
       prestige_level: p.prestige_level ?? 0,
       active_title_id: p.active_title_id, active_badge_id: p.active_badge_id ?? 'letter',
       sky_coins: p.sky_coins ?? 0, weekly_coins: p.weekly_coins ?? 0, monthly_coins: p.monthly_coins ?? 0,
+      total_coins_earned: p.total_coins_earned ?? 0,
       likes_received: p.likes_received ?? 0, streak_days: p.streak_days ?? 0, plan: p.plan ?? 'free',
     }))
 
@@ -212,27 +225,42 @@ export async function getLeaderboard(
     } else {
       const { data: mp } = await admin
         .from('profiles')
-        .select('id, pseudo, user_number, prestige_level, active_title_id, active_badge_id, sky_coins, weekly_coins, monthly_coins, likes_received, streak_days, plan')
+        .select('id, pseudo, user_number, prestige_level, active_title_id, active_badge_id, sky_coins, weekly_coins, monthly_coins, likes_received, streak_days, plan, total_coins_earned')
         .eq('id', user.id)
         .single()
       if (mp) {
-        // Pour le rang exact hors top, on compte les profils au-dessus
+        // Pour le rang exact hors top, on compte les profils strictement au-dessus
+        // avec le même tiebreaker que la liste (window > moi) OR (window = moi ET lifetime > moi)
         const col =
           mode === 'weekly'  ? 'weekly_coins' :
           mode === 'monthly' ? 'monthly_coins' :
-                                'sky_coins'
-        const { count } = await admin
+                                'total_coins_earned'
+        const myWindow   = (mp as any)[col] ?? 0
+        const myLifetime = (mp as any).total_coins_earned ?? 0
+
+        // Étage 1 : quelqu'un a plus que moi sur la fenêtre
+        const { count: above1 } = await admin
           .from('profiles')
           .select('id', { count: 'exact', head: true })
-          .gt(col, (mp as any)[col] ?? 0)
+          .gt(col, myWindow)
           .neq('role', 'teacher')
+
+        // Étage 2 : égalité sur la fenêtre mais lifetime supérieur
+        const { count: above2 } = await admin
+          .from('profiles')
+          .select('id', { count: 'exact', head: true })
+          .eq(col, myWindow)
+          .gt('total_coins_earned', myLifetime)
+          .neq('role', 'teacher')
+
         me = {
           id: mp.id, pseudo: mp.pseudo, user_number: mp.user_number,
           prestige_level: mp.prestige_level ?? 0,
           active_title_id: mp.active_title_id, active_badge_id: mp.active_badge_id ?? 'letter',
           sky_coins: mp.sky_coins ?? 0, weekly_coins: mp.weekly_coins ?? 0, monthly_coins: mp.monthly_coins ?? 0,
+          total_coins_earned: (mp as any).total_coins_earned ?? 0,
           likes_received: mp.likes_received ?? 0, streak_days: mp.streak_days ?? 0, plan: mp.plan ?? 'free',
-          rank: (count ?? 0) + 1,
+          rank: (above1 ?? 0) + (above2 ?? 0) + 1,
         }
       }
     }

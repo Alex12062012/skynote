@@ -40,7 +40,7 @@ export function LeaderboardClient({
   const coinField =
     mode === 'weekly'  ? 'weekly_coins'  :
     mode === 'monthly' ? 'monthly_coins' :
-                          'sky_coins'
+                          'total_coins_earned'  // lifetime, pas solde actuel
 
   return (
     <div className="space-y-5">
