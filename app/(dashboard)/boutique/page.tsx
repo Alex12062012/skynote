@@ -49,6 +49,19 @@ export default async function BoutiquePage() {
     wheel_spins:         wheelSpinCount,
   }
 
+  // Cadres (frames) depuis user_inventory
+  let ownedFrames: Array<{ item_id: string; data: { name: string; rarity: string }; equipped: boolean }> = []
+  try {
+    const { data } = await supabase
+      .from('user_inventory').select('item_id, data, equipped')
+      .eq('user_id', user.id).eq('item_type', 'frame')
+    ownedFrames = (data ?? []).map((f: any) => ({
+      item_id: f.item_id,
+      data: typeof f.data === 'object' ? f.data : {},
+      equipped: Boolean(f.equipped),
+    }))
+  } catch { /* table absente */ }
+
   // Charges des consommables
   const now = new Date().toISOString()
   type ConsumableState = { x2_active: boolean; x2_expires: string | null; retry_qcm_charges: number; skip_question_charges: number }
@@ -79,6 +92,8 @@ export default async function BoutiquePage() {
       ownedTitles={ownedTitles}
       activeBadge={(profile as any)?.active_badge_id ?? 'letter'}
       activeTitle={(profile as any)?.active_title_id ?? null}
+      ownedFrames={ownedFrames}
+      activeFrame={(profile as any)?.active_frame_id ?? null}
       recentSpins={recentSpins}
       userStats={userStats}
       consumableState={consumableState}

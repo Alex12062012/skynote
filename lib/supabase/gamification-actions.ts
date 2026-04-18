@@ -525,6 +525,41 @@ export async function equip(kind: 'badge' | 'title', itemId: string | null): Pro
   return { error: null }
 }
 
+// ─── EQUIP FRAME ─────────────────────────────────────────────────────────────
+export async function equipFrame(itemId: string | null): Promise<{ error: string | null }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Non connecté' }
+
+  if (itemId) {
+    // Vérifier que le joueur possède ce cadre
+    const { data: owned } = await supabase
+      .from('user_inventory').select('id')
+      .eq('user_id', user.id).eq('item_type', 'frame').eq('item_id', itemId)
+      .maybeSingle()
+    if (!owned) return { error: 'Cadre non possédé' }
+    // Déséquiper les autres cadres
+    await supabase.from('user_inventory')
+      .update({ equipped: false })
+      .eq('user_id', user.id).eq('item_type', 'frame')
+    // Équiper celui-ci
+    await supabase.from('user_inventory')
+      .update({ equipped: true })
+      .eq('user_id', user.id).eq('item_type', 'frame').eq('item_id', itemId)
+  } else {
+    // Déséquiper tout
+    await supabase.from('user_inventory')
+      .update({ equipped: false })
+      .eq('user_id', user.id).eq('item_type', 'frame')
+  }
+
+  await supabase.from('profiles').update({ active_frame_id: itemId }).eq('id', user.id)
+  revalidatePath('/profile')
+  revalidatePath('/leaderboard')
+  revalidatePath('/boutique')
+  return { error: null }
+}
+
 // ─── WHEEL OF FORTUNE ────────────────────────────────────────────────────────
 export interface WheelSpinResult {
   segmentIndex: number

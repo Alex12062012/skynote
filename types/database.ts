@@ -17,6 +17,7 @@ export interface Profile {
   prestige_level: number
   active_title_id: string | null
   active_badge_id: string
+  active_frame_id: string | null
   total_coins_earned: number
   total_qcm_perfect: number
   total_qcm_attempted: number

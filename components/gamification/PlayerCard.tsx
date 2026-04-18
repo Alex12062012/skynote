@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { Flame, Medal, Star } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { SkyCoin } from '@/components/ui/SkyCoin'
+import { RainbowText } from '@/components/ui/RainbowText'
 import { PlayerEmblem } from './PlayerEmblem'
 import { TITLES } from '@/lib/gamification/config'
 
@@ -92,9 +93,11 @@ export function PlayerCard({ rank, player, isMe, href }: PlayerCardProps) {
           {/* badge plan masqué */}
         </div>
         {title && (
-          <p className="truncate font-body text-[12px] text-text-secondary dark:text-text-dark-secondary">
-            {title}
-          </p>
+          <div className="truncate">
+            <RainbowText className="font-body text-[12px] font-bold">
+              {title}
+            </RainbowText>
+          </div>
         )}
       </div>
 

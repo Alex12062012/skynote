@@ -1,18 +1,18 @@
 'use client'
 
 import { useState, useTransition, type ElementType } from 'react'
-import { Lock, ShoppingBag, Palette, Award, Zap, FerrisWheel, Sparkles, Brain, Star, Rocket, Crown, Gem, Flame, Check } from 'lucide-react'
+import { Lock, ShoppingBag, Palette, Award, Zap, FerrisWheel, Sparkles, Brain, Star, Rocket, Crown, Gem, Flame, Check, Frame } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { SkyCoin } from '@/components/ui/SkyCoin'
 import { BADGES, CONSUMABLES, TITLES, prestigeCost } from '@/lib/gamification/config'
-import { buyItem, equip } from '@/lib/supabase/gamification-actions'
+import { buyItem, equip, equipFrame } from '@/lib/supabase/gamification-actions'
 import { SpinWheel, WHEEL_SEGMENTS as WHEEL_LEGACY } from '@/components/boutique/SpinWheel'
 import { PlayerBadge } from './PlayerBadge'
 import { PrestigeButton } from './PrestigeButton'
 
 const ICON_MAP: Record<string, ElementType> = { Brain, Star, Rocket, Crown, Gem, Flame }
 
-type ShopTab = 'badges' | 'consumables' | 'titles'
+type ShopTab = 'badges' | 'consumables' | 'titles' | 'frames'
 
 interface UserStats {
   total_qcm_perfect: number
@@ -27,6 +27,12 @@ interface ConsumableState {
   skip_question_charges: number
 }
 
+interface FrameItem {
+  item_id: string
+  data: { name: string; rarity: string }
+  equipped: boolean
+}
+
 interface Props {
   initialCoins: number
   prestigeLevel: number
@@ -34,6 +40,8 @@ interface Props {
   ownedTitles: string[]
   activeBadge: string
   activeTitle: string | null
+  ownedFrames?: FrameItem[]
+  activeFrame?: string | null
   recentSpins: Array<{ segment_id: string; reward_type: string; net_gain: number; created_at: string }>
   userStats?: UserStats
   consumableState?: ConsumableState
@@ -56,8 +64,9 @@ function parseTitleProgress(unlockRule: string | undefined, stats: UserStats): {
 }
 
 export function BoutiqueClientV2({
-  initialCoins, prestigeLevel, ownedBadges, ownedTitles, activeBadge, activeTitle, recentSpins,
-  userStats, consumableState,
+  initialCoins, prestigeLevel, ownedBadges, ownedTitles, activeBadge, activeTitle,
+  ownedFrames = [], activeFrame: initialActiveFrame = null,
+  recentSpins, userStats, consumableState,
 }: Props) {
   const defaultStats: UserStats = { total_qcm_perfect: 0, best_perfect_streak: 0, wheel_spins: 0 }
   const stats = userStats ?? defaultStats
@@ -68,6 +77,7 @@ export function BoutiqueClientV2({
   const [titles, setTitles] = useState(new Set(ownedTitles))
   const [equippedBadge, setEquippedBadge] = useState(activeBadge)
   const [equippedTitle, setEquippedTitle] = useState(activeTitle)
+  const [equippedFrame, setEquippedFrame] = useState<string | null>(initialActiveFrame)
   const [feedback, setFeedback] = useState<{ msg: string; kind: 'ok' | 'err' } | null>(null)
   const [pending, start] = useTransition()
 
@@ -95,6 +105,15 @@ export function BoutiqueClientV2({
       if (kind === 'badge') setEquippedBadge(id ?? 'letter')
       else setEquippedTitle(id)
       notify(id ? 'Équipé !' : 'Retiré')
+    })
+  }
+
+  const handleEquipFrame = (itemId: string | null) => {
+    start(async () => {
+      const res = await equipFrame(itemId)
+      if (res.error) { notify(res.error, 'err'); return }
+      setEquippedFrame(itemId)
+      notify(itemId ? 'Cadre équipé !' : 'Cadre retiré')
     })
   }
 
@@ -204,6 +223,7 @@ export function BoutiqueClientV2({
             { key: 'badges',     icon: Palette, label: 'Badges' },
             { key: 'consumables', icon: Zap,    label: 'Boosts' },
             { key: 'titles',     icon: Award,   label: 'Titres' },
+            { key: 'frames',     icon: Frame,   label: `Cadres${ownedFrames.length > 0 ? ` (${ownedFrames.length})` : ''}` },
           ] as { key: ShopTab; icon: ElementType; label: string }[]).map(({ key, icon: Icon, label }) => (
             <button key={key} onClick={() => setTab(key)}
               className={cn(
@@ -413,6 +433,76 @@ export function BoutiqueClientV2({
                   </div>
                 )
               })}
+            </div>
+          )}
+          {tab === 'frames' && (
+            <div>
+              {ownedFrames.length === 0 ? (
+                <div className="flex flex-col items-center gap-3 rounded-card border border-dashed border-sky-border py-12 text-center dark:border-night-border">
+                  <Frame className="h-10 w-10 text-text-tertiary dark:text-text-dark-tertiary" />
+                  <p className="font-display text-[15px] font-bold text-text-secondary dark:text-text-dark-secondary">
+                    Pas encore de cadre
+                  </p>
+                  <p className="font-body text-[13px] text-text-tertiary dark:text-text-dark-tertiary">
+                    Tente ta chance à la roue pour débloquer un cadre rare !
+                  </p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                  {ownedFrames.map(f => {
+                    const isEquipped = equippedFrame === f.item_id
+                    const rarity = (f.data?.rarity ?? 'rare') as 'rare' | 'legendary'
+                    const rarityColor = rarity === 'legendary'
+                      ? 'bg-gradient-to-r from-pink-500 to-purple-500 text-white'
+                      : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300'
+                    return (
+                      <div key={f.item_id} className={cn(
+                        'flex flex-col items-center gap-3 rounded-card border-2 p-4 text-center',
+                        isEquipped
+                          ? 'border-yellow-400 bg-yellow-50 dark:border-yellow-600 dark:bg-yellow-950/20'
+                          : 'border-sky-border bg-sky-surface dark:border-night-border dark:bg-night-surface',
+                      )}>
+                        {/* Aperçu du cadre sur badge */}
+                        <PlayerBadge
+                          badgeId={equippedBadge}
+                          letter="A"
+                          size="lg"
+                          frameRarity={rarity}
+                        />
+                        <div>
+                          <p className="font-display text-[13px] font-bold text-text-main dark:text-text-dark-main">
+                            {f.data?.name ?? 'Cadre rare'}
+                          </p>
+                          <span className={cn('mt-1 inline-block rounded-pill px-2 py-0.5 font-body text-[10px] font-bold uppercase', rarityColor)}>
+                            {rarity}
+                          </span>
+                        </div>
+                        <button
+                          onClick={() => handleEquipFrame(isEquipped ? null : f.item_id)}
+                          disabled={pending}
+                          className={cn(
+                            'w-full rounded-pill py-1.5 font-display text-[12px] font-bold transition',
+                            isEquipped
+                              ? 'bg-emerald-500 text-white'
+                              : 'bg-brand text-white hover:bg-brand-hover',
+                          )}
+                        >
+                          {isEquipped ? <><Check className="inline h-3 w-3 mr-1" />Équipé</> : 'Équiper'}
+                        </button>
+                        {isEquipped && (
+                          <button
+                            onClick={() => handleEquipFrame(null)}
+                            disabled={pending}
+                            className="font-body text-[11px] text-text-tertiary underline dark:text-text-dark-tertiary"
+                          >
+                            Retirer
+                          </button>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
             </div>
           )}
         </div>

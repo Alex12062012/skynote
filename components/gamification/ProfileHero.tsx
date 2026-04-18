@@ -2,6 +2,7 @@
 
 import { Flame, Trophy, Target, Sparkles, Heart } from 'lucide-react'
 import { SkyCoin } from '@/components/ui/SkyCoin'
+import { RainbowText } from '@/components/ui/RainbowText'
 import { PlayerEmblem } from './PlayerEmblem'
 import { LikeButton } from './LikeButton'
 import { TITLES } from '@/lib/gamification/config'
@@ -41,9 +42,11 @@ export function ProfileHero({ profile }: ProfileHeroProps) {
               {displayName}
             </h1>
             {activeTitle && (
-              <p className="mt-0.5 font-display text-[14px] font-bold italic text-brand dark:text-brand-dark">
-                « {activeTitle.label} »
-              </p>
+              <div className="mt-0.5">
+                <RainbowText className="font-display text-[14px] font-bold italic">
+                  « {activeTitle.label} »
+                </RainbowText>
+              </div>
             )}
             {profile.bio && (
               <p className="mt-2 font-body text-[13px] text-text-secondary dark:text-text-dark-secondary">

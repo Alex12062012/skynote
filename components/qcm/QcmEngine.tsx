@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useTransition, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { CheckCircle, XCircle, Zap, RotateCcw, ArrowLeft, Leaf, Target, Flame, Trophy, GraduationCap, Star, BookOpen, Dumbbell, Check, X } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
@@ -48,6 +48,29 @@ export function QcmEngine({ flashcard, questions, courseId, difficulty = 'medium
   const [showToast, setShowToast] = useState(false)
   const [retryCharges, setRetryCharges] = useState(0)
   const [retryPending, setRetryPending] = useState(false)
+  const [skipCharges, setSkipCharges] = useState(0)
+  const [skipPending, setSkipPending] = useState(false)
+
+  // Charger les charges retry/skip au montage
+  useEffect(() => {
+    let cancelled = false
+    ;(async () => {
+      try {
+        const supabase = createClient()
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user || cancelled) return
+        const { data } = await supabase
+          .from('user_boosts').select('boost_type, charges')
+          .eq('user_id', user.id)
+          .in('boost_type', ['retry_qcm', 'skip_question'])
+        if (cancelled) return
+        const rows = data ?? []
+        setRetryCharges(rows.filter((r: any) => r.boost_type === 'retry_qcm').reduce((s: number, r: any) => s + (r.charges ?? 1), 0))
+        setSkipCharges(rows.filter((r: any) => r.boost_type === 'skip_question').reduce((s: number, r: any) => s + (r.charges ?? 1), 0))
+      } catch { /* table absente */ }
+    })()
+    return () => { cancelled = true }
+  }, [])
 
   const question = questions[currentQ]
   const total = questions.length
@@ -108,18 +131,53 @@ export function QcmEngine({ flashcard, questions, courseId, difficulty = 'medium
     handleRestart()
   }
 
-  // Charger les charges retry au montage du résultat
   async function loadRetryCharges() {
     try {
       const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
       const { data } = await supabase
-        .from('user_boosts').select('charges')
-        .eq('user_id', user.id).eq('boost_type', 'retry_qcm')
-      const total = (data ?? []).reduce((s: number, r: any) => s + (r.charges ?? 1), 0)
-      setRetryCharges(total)
+        .from('user_boosts').select('boost_type, charges')
+        .eq('user_id', user.id)
+        .in('boost_type', ['retry_qcm', 'skip_question'])
+      const rows = data ?? []
+      setRetryCharges(rows.filter((r: any) => r.boost_type === 'retry_qcm').reduce((s: number, r: any) => s + (r.charges ?? 1), 0))
+      setSkipCharges(rows.filter((r: any) => r.boost_type === 'skip_question').reduce((s: number, r: any) => s + (r.charges ?? 1), 0))
     } catch { /* table absente */ }
+  }
+
+  async function handleSkipQuestion() {
+    if (skipPending || skipCharges <= 0 || answerState !== 'unanswered') return
+    setSkipPending(true)
+    const { error, remaining } = await consumeBoostCharge('skip_question')
+    setSkipPending(false)
+    if (error) return
+    setSkipCharges(remaining)
+
+    // On avance sans compter la réponse comme correcte
+    const newAnswers = [...answers, { questionIndex: currentQ, chosenIndex: -1, correct: false }]
+    setAnswers(newAnswers)
+
+    if (currentQ < total - 1) {
+      setCurrentQ(q => q + 1)
+      setSelectedOption(null)
+      setAnswerState('unanswered')
+    } else {
+      const finalScore = newAnswers.filter(a => a.correct).length
+      startTransition(async () => {
+        const { coinsEarned: earned } = await saveQcmAttempt({
+          flashcardId: flashcard.id,
+          score: finalScore,
+          total,
+          answers: newAnswers.map(a => a.chosenIndex),
+          difficulty,
+        })
+        setCoinsEarned(earned)
+        if (earned > 0) showReward({ amount: earned, reason: `Score parfait — ${DIFFICULTY_LABELS[difficulty].label} !` })
+        setShowResult(true)
+        loadRetryCharges()
+      })
+    }
   }
 
   // ── Résultats ──────────────────────────────────────────────
@@ -207,12 +265,24 @@ export function QcmEngine({ flashcard, questions, courseId, difficulty = 'medium
                 Question {currentQ + 1} / {total}
               </span>
               <span className={cn('font-body text-[11px] font-semibold', DIFFICULTY_LABELS[difficulty].color)}>
-                {DIFFICULTY_LABELS[difficulty].label} {DIFFICULTY_LABELS[difficulty].label}
+                {DIFFICULTY_LABELS[difficulty].label}
               </span>
             </div>
-            <span className="font-body text-[13px] font-semibold text-success dark:text-success-dark">
-              {answers.filter((a) => a.correct).length} correctes
-            </span>
+            <div className="flex items-center gap-2">
+              {skipCharges > 0 && answerState === 'unanswered' && (
+                <button
+                  onClick={handleSkipQuestion}
+                  disabled={skipPending}
+                  className="flex items-center gap-1 rounded-pill bg-amber-100 px-2.5 py-1 font-body text-[11px] font-semibold text-amber-700 transition hover:bg-amber-200 disabled:opacity-50 dark:bg-amber-950/30 dark:text-amber-300"
+                >
+                  <Zap className="h-3 w-3" />
+                  {skipPending ? '…' : `Skip (${skipCharges})`}
+                </button>
+              )}
+              <span className="font-body text-[13px] font-semibold text-success dark:text-success-dark">
+                {answers.filter((a) => a.correct).length} correctes
+              </span>
+            </div>
           </div>
           <div className="h-1.5 w-full overflow-hidden rounded-pill bg-sky-cloud dark:bg-night-border">
             <div className="h-full rounded-pill transition-all duration-500"
