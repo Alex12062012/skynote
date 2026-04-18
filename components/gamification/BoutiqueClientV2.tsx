@@ -1,10 +1,10 @@
 'use client'
 
 import { useState, useTransition, type ElementType } from 'react'
-import { Lock, ShoppingBag, Palette, Award, Zap, FerrisWheel, Sparkles, Brain, Star, Rocket, Crown, Gem, Flame, Check, Frame } from 'lucide-react'
+import { Lock, ShoppingBag, Palette, Award, Zap, FerrisWheel, Sparkles, Brain, Star, Rocket, Crown, Gem, Flame, Check, Frame, Eye } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { SkyCoin } from '@/components/ui/SkyCoin'
-import { BADGES, CONSUMABLES, TITLES, prestigeCost } from '@/lib/gamification/config'
+import { BADGES, CONSUMABLES, TITLES, SKINS, SKIN_ID_ALIASES, prestigeCost } from '@/lib/gamification/config'
 import { buyItem, equip, equipFrame } from '@/lib/supabase/gamification-actions'
 import { SpinWheel, WHEEL_SEGMENTS as WHEEL_LEGACY } from '@/components/boutique/SpinWheel'
 import { PlayerBadge } from './PlayerBadge'
@@ -436,47 +436,81 @@ export function BoutiqueClientV2({
             </div>
           )}
           {tab === 'frames' && (
-            <div>
+            <div className="space-y-4">
+              {/* Compteur */}
+              <div className="flex items-center justify-between rounded-input border border-sky-border bg-sky-surface-2 px-4 py-2.5 dark:border-night-border dark:bg-night-surface-2">
+                <span className="font-body text-[13px] text-text-secondary dark:text-text-dark-secondary">
+                  Collection de skins
+                </span>
+                <span className="font-display text-[20px] font-black tabular-nums text-text-main dark:text-text-dark-main">
+                  {ownedFrames.length}
+                  <span className="font-display text-[14px] font-semibold text-text-tertiary">/10</span>
+                </span>
+              </div>
+
               {ownedFrames.length === 0 ? (
                 <div className="flex flex-col items-center gap-3 rounded-card border border-dashed border-sky-border py-12 text-center dark:border-night-border">
                   <Frame className="h-10 w-10 text-text-tertiary dark:text-text-dark-tertiary" />
-                  <p className="font-display text-[15px] font-bold text-text-secondary dark:text-text-dark-secondary">
-                    Pas encore de skin
-                  </p>
+                  <p className="font-display text-[15px] font-bold text-text-secondary dark:text-text-dark-secondary">Pas encore de skin</p>
                   <p className="font-body text-[13px] text-text-tertiary dark:text-text-dark-tertiary">
-                    Tente ta chance à la roue pour débloquer un skin rare !
+                    Tente ta chance à la roue — skins à 5% et secrets encore plus rares…
                   </p>
                 </div>
               ) : (
-                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   {ownedFrames.map(f => {
+                    // Résoudre via aliases
+                    const resolvedId = SKIN_ID_ALIASES[f.item_id] ?? f.item_id
+                    const skinEntry = SKINS.find(s => s.id === resolvedId)
                     const isEquipped = equippedFrame === f.item_id
-                    const rarity = (f.data?.rarity ?? 'rare') as 'rare' | 'legendary'
-                    const rarityColor = rarity === 'legendary'
-                      ? 'bg-gradient-to-r from-pink-500 to-purple-500 text-white'
-                      : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300'
+                    const isSecret = f.data?.secret === true || skinEntry?.secret === true
+                    const rarity = skinEntry?.rarity ?? (f.data?.rarity as any) ?? 'rare'
+                    const label = skinEntry?.label ?? f.data?.name ?? 'Skin'
+                    const desc = skinEntry?.desc ?? ''
+                    const cardClass = skinEntry?.cardClass ?? 'border-sky-border bg-sky-surface dark:border-night-border dark:bg-night-surface'
+                    const boxShadow = skinEntry?.boxShadow ?? ''
+
                     return (
                       <div key={f.item_id} className={cn(
-                        'flex flex-col items-center gap-3 rounded-card border-2 p-4 text-center',
-                        isEquipped
-                          ? 'border-yellow-400 bg-yellow-50 dark:border-yellow-600 dark:bg-yellow-950/20'
-                          : 'border-sky-border bg-sky-surface dark:border-night-border dark:bg-night-surface',
+                        'flex flex-col gap-3 rounded-card border-2 p-4',
+                        isEquipped ? 'border-emerald-400/60 dark:border-emerald-600/50' : 'border-sky-border dark:border-night-border',
                       )}>
-                        {/* Aperçu du cadre sur badge */}
-                        <PlayerBadge
-                          badgeId={equippedBadge}
-                          letter="A"
-                          size="lg"
-                          frameRarity={rarity}
-                        />
-                        <div>
-                          <p className="font-display text-[13px] font-bold text-text-main dark:text-text-dark-main">
-                            {f.data?.name ?? 'Skin rare'}
-                          </p>
-                          <span className={cn('mt-1 inline-block rounded-pill px-2 py-0.5 font-body text-[10px] font-bold uppercase', rarityColor)}>
+                        {/* Aperçu carte */}
+                        <div
+                          className={cn('flex items-center gap-3 rounded-card border px-3 py-2', cardClass)}
+                          style={boxShadow ? { boxShadow } : undefined}
+                        >
+                          <div className="h-8 w-8 flex-shrink-0 rounded-full bg-gradient-to-br from-brand to-brand-dark" />
+                          <div className="min-w-0 flex-1">
+                            <div className="h-2.5 w-20 rounded-full bg-current opacity-20" />
+                            <div className="mt-1.5 h-2 w-12 rounded-full bg-current opacity-10" />
+                          </div>
+                          <div className="h-2.5 w-10 rounded-full bg-current opacity-20" />
+                        </div>
+
+                        {/* Infos */}
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <div className="flex items-center gap-1.5">
+                              <p className="font-display text-[14px] font-bold text-text-main dark:text-text-dark-main">{label}</p>
+                              {isSecret && (
+                                <span className="rounded-pill bg-gradient-to-r from-violet-500 to-pink-500 px-1.5 py-0.5 font-display text-[9px] font-black uppercase text-white">
+                                  Secret
+                                </span>
+                              )}
+                            </div>
+                            {desc && <p className="font-body text-[11px] text-text-tertiary dark:text-text-dark-tertiary">{desc}</p>}
+                          </div>
+                          <span className={cn(
+                            'flex-shrink-0 rounded-pill px-2 py-0.5 font-body text-[10px] font-bold uppercase',
+                            rarity === 'legendary'
+                              ? 'bg-gradient-to-r from-pink-500 to-purple-500 text-white'
+                              : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300',
+                          )}>
                             {rarity}
                           </span>
                         </div>
+
                         <button
                           onClick={() => handleEquipFrame(isEquipped ? null : f.item_id)}
                           disabled={pending}
@@ -487,17 +521,8 @@ export function BoutiqueClientV2({
                               : 'bg-brand text-white hover:bg-brand-hover',
                           )}
                         >
-                          {isEquipped ? <><Check className="inline h-3 w-3 mr-1" />Équipé</> : 'Équiper'}
+                          {isEquipped ? <><Check className="inline h-3 w-3 mr-1" />Équipé — cliquer pour retirer</> : 'Équiper'}
                         </button>
-                        {isEquipped && (
-                          <button
-                            onClick={() => handleEquipFrame(null)}
-                            disabled={pending}
-                            className="font-body text-[11px] text-text-tertiary underline dark:text-text-dark-tertiary"
-                          >
-                            Retirer
-                          </button>
-                        )}
                       </div>
                     )
                   })}

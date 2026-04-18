@@ -5,16 +5,16 @@ import { SkyCoin } from '@/components/ui/SkyCoin'
 import { cn } from '@/lib/utils'
 import { useCoinReward } from '@/components/providers/CoinRewardProvider'
 
-// ─── Segments (mirror de l'API) ───────────────────────────────────────────────
+// ─── Segments VISIBLES (le segment secret n'est pas affiché) ─────────────────
 export const WHEEL_SEGMENTS = [
-  { id: 'lost',      label: 'Perdu',     type: 'lost',     value: 0,   color: '#EF4444', text: '#fff',     probability: 20 },
-  { id: 'coins_20',  label: '+20',       type: 'coins',    value: 20,  color: '#FB923C', text: '#fff',     probability: 17 },
-  { id: 'coins_40',  label: '+40',       type: 'coins',    value: 40,  color: '#FBBF24', text: '#fff',     probability: 14 },
-  { id: 'coins_60',  label: '+60',       type: 'coins',    value: 60,  color: '#A3E635', text: '#1a2e05',  probability: 20 },
-  { id: 'coins_100', label: '+100',      type: 'coins',    value: 100, color: '#34D399', text: '#022c22',  probability: 14 },
-  { id: 'coins_200', label: '+200',      type: 'coins',    value: 200, color: '#2DD4BF', text: '#042f2e',  probability: 8  },
-  { id: 'boost_xp',  label: 'Boost XP ×2', type: 'boost_xp', value: 0, color: '#A78BFA', text: '#fff',   probability: 4  },
-  { id: 'frame',     label: 'Skin rare',  type: 'frame',   value: 0,   color: '#F472B6', text: '#fff',     probability: 3  },
+  { id: 'lost',       label: 'Perdu',        type: 'lost',     value: 0,   color: '#EF4444', text: '#fff',    probability: 20 },
+  { id: 'coins_20',   label: '+20',          type: 'coins',    value: 20,  color: '#FB923C', text: '#fff',    probability: 16 },
+  { id: 'coins_40',   label: '+40',          type: 'coins',    value: 40,  color: '#FBBF24', text: '#fff',    probability: 13 },
+  { id: 'coins_60',   label: '+60',          type: 'coins',    value: 60,  color: '#A3E635', text: '#1a2e05', probability: 18 },
+  { id: 'coins_100',  label: '+100',         type: 'coins',    value: 100, color: '#34D399', text: '#022c22', probability: 13 },
+  { id: 'coins_200',  label: '+200',         type: 'coins',    value: 200, color: '#2DD4BF', text: '#042f2e', probability: 7  },
+  { id: 'boost_xp',  label: 'Boost XP ×2', type: 'boost_xp', value: 0,   color: '#A78BFA', text: '#fff',    probability: 4  },
+  { id: 'skin',       label: 'Skin',         type: 'skin',     value: 0,   color: '#F472B6', text: '#fff',    probability: 5  },
 ] as const
 
 const NUM_SEGMENTS = WHEEL_SEGMENTS.length
@@ -261,7 +261,7 @@ function ResultBanner({ result, onClose }: { result: SpinResult; onClose: () => 
   const seg = result.segment
   const isLoss    = seg.type === 'lost' || result.netGain < 0
   const isWin     = result.netGain > 0
-  const isSpecial = seg.type === 'boost_xp' || seg.type === 'frame'
+  const isSpecial = seg.type === 'boost_xp' || seg.type === 'skin' || seg.type === 'frame'
 
   return (
     <div
@@ -288,14 +288,14 @@ function ResultBanner({ result, onClose }: { result: SpinResult; onClose: () => 
             ? `+${result.netGain} coins nets`
             : `${result.netGain} coins nets`
           : seg.type === 'boost_xp'
-          ? 'Boost XP ×2 activé'
-          : 'Skin rare débloqué !'}
+          ? 'Boost XP ×2 activé !'
+          : 'Skin débloqué !'}
       </p>
       <p className="font-body text-[13px] text-text-secondary dark:text-text-dark-secondary">
-        {seg.type === 'coins' && `Tu as reçu ${seg.value} coins pour un coût de ${SPIN_COST} coins.`}
+        {seg.type === 'coins' && `Tu as reçu ${(seg as any).value} coins pour un coût de ${SPIN_COST} coins.`}
         {seg.type === 'lost' && 'Retente ta chance !'}
         {seg.type === 'boost_xp' && 'Tes XP sont doublés pendant 1 heure.'}
-        {seg.type === 'frame' && 'Un skin "Étoile" a été ajouté à tes skins dans la boutique.'}
+        {(seg.type === 'skin' || seg.type === 'frame') && 'Un skin a été ajouté à ta collection dans la boutique.'}
       </p>
       <button
         onClick={onClose}

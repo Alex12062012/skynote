@@ -142,6 +142,109 @@ export const CONSUMABLES = [
   { id: 'skip_question', label: 'Skip question',  desc: 'Passer une question dans un QCM (max 5)',                     price: 10, durationHours: 0, maxCharges: 5  },
 ] as const
 
+// ─── SKINS DE CARTE ───────────────────────────────────────────────────────────
+export interface SkinEntry {
+  id: string
+  label: string
+  desc: string
+  rarity: 'rare' | 'legendary'
+  secret: boolean
+  /** Classes Tailwind pour le wrapper de la carte */
+  cardClass: string
+  /** boxShadow inline (Tailwind ne peut pas purger les valeurs arbitraires ici) */
+  boxShadow: string
+}
+
+export const SKINS: SkinEntry[] = [
+  // ── Normaux (10) ──────────────────────────────────────────────────────────
+  {
+    id: 'skin_aube', label: 'Aube', desc: 'Les teintes rosées du lever de soleil', rarity: 'rare', secret: false,
+    cardClass: 'border-rose-300/60 bg-gradient-to-r from-rose-50 via-pink-50 to-amber-50 dark:border-rose-700/40 dark:from-rose-950/30 dark:via-pink-950/20 dark:to-amber-950/20',
+    boxShadow: '0 0 0 1px rgba(251,113,133,0.35), 0 2px 14px rgba(251,113,133,0.18)',
+  },
+  {
+    id: 'skin_crepuscule', label: 'Crépuscule', desc: 'Orange et violet fusionnés au couchant', rarity: 'rare', secret: false,
+    cardClass: 'border-purple-300/60 bg-gradient-to-r from-orange-50 via-purple-50 to-pink-50 dark:border-purple-700/40 dark:from-orange-950/20 dark:via-purple-950/30 dark:to-pink-950/20',
+    boxShadow: '0 0 0 1px rgba(192,132,252,0.35), 0 2px 14px rgba(192,132,252,0.18)',
+  },
+  {
+    id: 'skin_nuage', label: 'Nuage', desc: 'Douceur cotonneuse et ciel dégagé', rarity: 'rare', secret: false,
+    cardClass: 'border-sky-300/60 bg-gradient-to-r from-white via-sky-50 to-blue-50 dark:border-sky-600/40 dark:from-sky-950/30 dark:via-blue-950/20 dark:to-slate-900/30',
+    boxShadow: '0 0 0 1px rgba(125,211,252,0.4), 0 2px 14px rgba(125,211,252,0.2)',
+  },
+  {
+    id: 'skin_aurore', label: 'Aurore Boréale', desc: 'Danseuses lumineuses dans le ciel nordique', rarity: 'rare', secret: false,
+    cardClass: 'border-teal-400/60 bg-gradient-to-r from-emerald-50 via-teal-50 to-purple-50 dark:border-teal-500/50 dark:from-emerald-950/30 dark:via-teal-950/20 dark:to-purple-950/30',
+    boxShadow: '0 0 0 1px rgba(45,212,191,0.4), 0 2px 16px rgba(45,212,191,0.22)',
+  },
+  {
+    id: 'skin_soleil', label: 'Soleil', desc: 'Éclat doré du soleil de midi', rarity: 'rare', secret: false,
+    cardClass: 'border-yellow-400/70 bg-gradient-to-r from-amber-50 via-yellow-50 to-amber-50 dark:border-yellow-500/50 dark:from-amber-950/30 dark:via-yellow-950/20 dark:to-amber-950/30',
+    boxShadow: '0 0 0 1px rgba(250,204,21,0.5), 0 2px 16px rgba(250,204,21,0.25)',
+  },
+  {
+    id: 'skin_lune', label: 'Lune', desc: 'Lumière lunaire froide et apaisante', rarity: 'rare', secret: false,
+    cardClass: 'border-slate-400/50 bg-gradient-to-r from-slate-50 via-blue-50 to-slate-100 dark:border-slate-500/40 dark:from-slate-900/50 dark:via-slate-800/40 dark:to-slate-900/50',
+    boxShadow: '0 0 0 1px rgba(148,163,184,0.4), 0 2px 12px rgba(148,163,184,0.2)',
+  },
+  {
+    id: 'skin_tempete', label: 'Tempête', desc: 'Électricité dans l\'air orageux', rarity: 'rare', secret: false,
+    cardClass: 'border-blue-500/60 bg-gradient-to-r from-slate-100 via-blue-50 to-slate-100 dark:border-blue-600/50 dark:from-slate-900/50 dark:via-blue-950/30 dark:to-slate-900/50',
+    boxShadow: '0 0 0 1px rgba(59,130,246,0.45), 0 2px 16px rgba(59,130,246,0.22)',
+  },
+  {
+    id: 'skin_nuit_etoilee', label: 'Nuit Étoilée', desc: 'Constellations dans l\'infini', rarity: 'rare', secret: false,
+    cardClass: 'border-indigo-400/60 bg-gradient-to-r from-indigo-50 via-slate-50 to-violet-50 dark:border-indigo-500/50 dark:from-indigo-950/40 dark:via-slate-900/40 dark:to-violet-950/30',
+    boxShadow: '0 0 0 1px rgba(99,102,241,0.4), 0 2px 14px rgba(99,102,241,0.22)',
+  },
+  {
+    id: 'skin_brume', label: 'Brume', desc: 'Matinée brumeuse et mystérieuse', rarity: 'rare', secret: false,
+    cardClass: 'border-violet-300/50 bg-gradient-to-r from-violet-50 via-slate-50 to-pink-50 dark:border-violet-600/40 dark:from-violet-950/25 dark:via-slate-900/30 dark:to-pink-950/20',
+    boxShadow: '0 0 0 1px rgba(167,139,250,0.35), 0 2px 12px rgba(167,139,250,0.18)',
+  },
+  {
+    id: 'skin_ocean', label: 'Océan', desc: 'Profondeurs bleues et mystérieuses', rarity: 'rare', secret: false,
+    cardClass: 'border-cyan-500/60 bg-gradient-to-r from-cyan-50 via-blue-50 to-teal-50 dark:border-cyan-600/50 dark:from-cyan-950/30 dark:via-blue-950/30 dark:to-teal-950/25',
+    boxShadow: '0 0 0 1px rgba(6,182,212,0.45), 0 2px 16px rgba(6,182,212,0.22)',
+  },
+  // ── Secrets (5) ───────────────────────────────────────────────────────────
+  {
+    id: 'skin_secret_phoenix', label: 'Phœnix', desc: 'Renaître des flammes, plus fort', rarity: 'legendary', secret: true,
+    cardClass: 'border-orange-500/70 bg-gradient-to-r from-red-50 via-orange-50 to-yellow-50 dark:border-orange-500/60 dark:from-red-950/45 dark:via-orange-950/35 dark:to-yellow-950/25',
+    boxShadow: '0 0 0 2px rgba(249,115,22,0.55), 0 4px 22px rgba(249,115,22,0.3)',
+  },
+  {
+    id: 'skin_secret_cristal', label: 'Cristal', desc: 'Pureté prismatique de la glace éternelle', rarity: 'legendary', secret: true,
+    cardClass: 'border-cyan-300/70 bg-gradient-to-r from-white via-cyan-50 to-blue-50 dark:border-cyan-400/60 dark:from-cyan-950/45 dark:via-blue-950/35 dark:to-slate-900/50',
+    boxShadow: '0 0 0 2px rgba(34,211,238,0.55), 0 4px 22px rgba(34,211,238,0.3)',
+  },
+  {
+    id: 'skin_secret_cosmos', label: 'Cosmos', desc: 'L\'immensité sombre de l\'univers', rarity: 'legendary', secret: true,
+    cardClass: 'border-violet-600/70 bg-gradient-to-r from-violet-50 via-purple-50 to-pink-50 dark:border-violet-500/65 dark:from-violet-950/55 dark:via-purple-950/45 dark:to-pink-950/35',
+    boxShadow: '0 0 0 2px rgba(124,58,237,0.6), 0 4px 24px rgba(124,58,237,0.35)',
+  },
+  {
+    id: 'skin_secret_dragon', label: 'Dragon', desc: 'Écailles émeraude d\'une créature légendaire', rarity: 'legendary', secret: true,
+    cardClass: 'border-emerald-500/70 bg-gradient-to-r from-emerald-50 via-green-50 to-teal-50 dark:border-emerald-500/60 dark:from-emerald-950/50 dark:via-green-950/40 dark:to-teal-950/35',
+    boxShadow: '0 0 0 2px rgba(16,185,129,0.55), 0 4px 22px rgba(16,185,129,0.3)',
+  },
+  {
+    id: 'skin_secret_prismatique', label: 'Prismatique', desc: 'Hologramme vivant, spectre complet de la lumière', rarity: 'legendary', secret: true,
+    cardClass: 'border-fuchsia-400/70 bg-gradient-to-r from-pink-50 via-purple-50 to-cyan-50 dark:border-fuchsia-500/60 dark:from-pink-950/40 dark:via-purple-950/35 dark:to-cyan-950/35',
+    boxShadow: '0 0 0 2px rgba(232,121,249,0.55), 0 4px 24px rgba(232,121,249,0.32)',
+  },
+]
+
+/** IDs des skins normaux (non secrets) — utilisé pour le tirage roue */
+export const REGULAR_SKIN_IDS = SKINS.filter(s => !s.secret).map(s => s.id)
+/** IDs des skins secrets — utilisé pour le tirage roue */
+export const SECRET_SKIN_IDS  = SKINS.filter(s => s.secret).map(s => s.id)
+
+// Rétrocompatibilité avec l'ancien item_id
+export const SKIN_ID_ALIASES: Record<string, string> = {
+  'frame_etoile_rare': 'skin_soleil',
+}
+
 // ─── LEADERBOARD ──────────────────────────────────────────────────────────────
 export const LEADERBOARD_MODES = ['weekly', 'monthly', 'all_time'] as const
 export type LeaderboardMode = typeof LEADERBOARD_MODES[number]
