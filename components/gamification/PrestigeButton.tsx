@@ -103,7 +103,7 @@ export function PrestigeButton({
                 onClick={handlePrestige}
                 className="flex-1 rounded-pill bg-gradient-to-r from-purple-600 to-pink-600 px-4 py-2 font-display text-[13px] font-bold text-white shadow-btn disabled:opacity-50"
               >
-                {pending ? 'Ascension…' : `OK, reset mes ${nextCost} coins`}
+                {pending ? 'Ascension…' : `OK, dépenser ${nextCost} coins`}
               </button>
               <button
                 disabled={pending}
