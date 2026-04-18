@@ -137,9 +137,9 @@ export const TITLES: TitleCatalogEntry[] = [
 
 // ─── CONSOMMABLES BOUTIQUE ────────────────────────────────────────────────────
 export const CONSUMABLES = [
-  { id: 'x2_coins',      label: '×2 coins (1 h)', desc: 'Double tes gains pendant une heure', price: 50, durationHours: 1 },
-  { id: 'retry_qcm',     label: 'Retry QCM',      desc: 'Refaire un QCM sans pénalité',        price: 15, durationHours: 0 },
-  { id: 'skip_question', label: 'Skip question',  desc: 'Passer une question dans un QCM',      price: 10, durationHours: 0 },
+  { id: 'x2_coins',      label: '×2 coins (1 h)', desc: 'Double tes gains pendant une heure — 1 seul actif à la fois', price: 50, durationHours: 1, maxCharges: 1  },
+  { id: 'retry_qcm',     label: 'Retry QCM',      desc: 'Refaire un QCM sans pénalité (max 5)',                        price: 15, durationHours: 0, maxCharges: 5  },
+  { id: 'skip_question', label: 'Skip question',  desc: 'Passer une question dans un QCM (max 5)',                     price: 10, durationHours: 0, maxCharges: 5  },
 ] as const
 
 // ─── LEADERBOARD ──────────────────────────────────────────────────────────────

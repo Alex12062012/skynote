@@ -7,14 +7,14 @@ import { useCoinReward } from '@/components/providers/CoinRewardProvider'
 
 // ─── Segments (mirror de l'API) ───────────────────────────────────────────────
 export const WHEEL_SEGMENTS = [
-  { id: 'lost',      label: 'Perdu',     type: 'lost',     value: 0,   color: '#EF4444', text: '#fff',     probability: 25 },
-  { id: 'coins_20',  label: '+20',       type: 'coins',    value: 20,  color: '#FB923C', text: '#fff',     probability: 20 },
-  { id: 'coins_40',  label: '+40',       type: 'coins',    value: 40,  color: '#FBBF24', text: '#fff',     probability: 20 },
-  { id: 'coins_60',  label: '+60',       type: 'coins',    value: 60,  color: '#A3E635', text: '#1a2e05',  probability: 15 },
-  { id: 'coins_100', label: '+100',      type: 'coins',    value: 100, color: '#34D399', text: '#022c22',  probability: 10 },
-  { id: 'coins_200', label: '+200',      type: 'coins',    value: 200, color: '#2DD4BF', text: '#042f2e',  probability: 5  },
-  { id: 'boost_xp',  label: 'Boost XP', type: 'boost_xp', value: 0,   color: '#A78BFA', text: '#fff',     probability: 3  },
-  { id: 'frame',     label: 'Cadre',     type: 'frame',    value: 0,   color: '#F472B6', text: '#fff',     probability: 2  },
+  { id: 'lost',      label: 'Perdu',     type: 'lost',     value: 0,   color: '#EF4444', text: '#fff',     probability: 20 },
+  { id: 'coins_20',  label: '+20',       type: 'coins',    value: 20,  color: '#FB923C', text: '#fff',     probability: 17 },
+  { id: 'coins_40',  label: '+40',       type: 'coins',    value: 40,  color: '#FBBF24', text: '#fff',     probability: 14 },
+  { id: 'coins_60',  label: '+60',       type: 'coins',    value: 60,  color: '#A3E635', text: '#1a2e05',  probability: 20 },
+  { id: 'coins_100', label: '+100',      type: 'coins',    value: 100, color: '#34D399', text: '#022c22',  probability: 14 },
+  { id: 'coins_200', label: '+200',      type: 'coins',    value: 200, color: '#2DD4BF', text: '#042f2e',  probability: 8  },
+  { id: 'boost_xp',  label: 'Boost XP ×2', type: 'boost_xp', value: 0, color: '#A78BFA', text: '#fff',   probability: 4  },
+  { id: 'frame',     label: 'Cadre rare', type: 'frame',   value: 0,   color: '#F472B6', text: '#fff',     probability: 3  },
 ] as const
 
 const NUM_SEGMENTS = WHEEL_SEGMENTS.length

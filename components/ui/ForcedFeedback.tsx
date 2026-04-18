@@ -65,7 +65,7 @@ export function ForcedFeedback({ userId, milestone, onDone }: ForcedFeedbackProp
                 </div>
               </div>
               <h3 className="font-display text-h3 text-text-main dark:text-text-dark-main">
-                {milestone === 5 ? 'Tu as fait 5 QCM !' : 'Tu as fait 25 QCM !'}
+                {milestone === 5 ? 'Tu as fait 5 QCM !' : 'Tu as fait 20 QCM !'}
               </h3>
               <p className="mt-1 font-body text-[14px] text-text-secondary dark:text-text-dark-secondary">
                 Aide-nous a ameliorer Skynote avec ton avis — ca prend 30 secondes !

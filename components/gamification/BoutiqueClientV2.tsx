@@ -20,6 +20,13 @@ interface UserStats {
   wheel_spins: number
 }
 
+interface ConsumableState {
+  x2_active: boolean
+  x2_expires: string | null
+  retry_qcm_charges: number
+  skip_question_charges: number
+}
+
 interface Props {
   initialCoins: number
   prestigeLevel: number
@@ -29,6 +36,7 @@ interface Props {
   activeTitle: string | null
   recentSpins: Array<{ segment_id: string; reward_type: string; net_gain: number; created_at: string }>
   userStats?: UserStats
+  consumableState?: ConsumableState
 }
 
 // ─── Utilitaire barre de progression ─────────────────────────────────────────
@@ -49,10 +57,11 @@ function parseTitleProgress(unlockRule: string | undefined, stats: UserStats): {
 
 export function BoutiqueClientV2({
   initialCoins, prestigeLevel, ownedBadges, ownedTitles, activeBadge, activeTitle, recentSpins,
-  userStats,
+  userStats, consumableState,
 }: Props) {
   const defaultStats: UserStats = { total_qcm_perfect: 0, best_perfect_streak: 0, wheel_spins: 0 }
   const stats = userStats ?? defaultStats
+  const cs: ConsumableState = consumableState ?? { x2_active: false, x2_expires: null, retry_qcm_charges: 0, skip_question_charges: 0 }
   const [coins, setCoins] = useState(initialCoins)
   const [tab, setTab]     = useState<ShopTab>('badges')
   const [badges, setBadges] = useState(new Set(ownedBadges))
@@ -262,27 +271,73 @@ export function BoutiqueClientV2({
 
           {tab === 'consumables' && (
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-              {CONSUMABLES.map(c => (
-                <div key={c.id} className="flex flex-col gap-2 rounded-card border-2 border-sky-border bg-sky-surface p-4 dark:border-night-border dark:bg-night-surface">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-input bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300">
-                    <Zap className="h-5 w-5" />
+              {CONSUMABLES.map(c => {
+                // État actuel de ce consommable
+                const isX2 = c.id === 'x2_coins'
+                const isCharged = c.id === 'retry_qcm' || c.id === 'skip_question'
+                const currentCharges = c.id === 'retry_qcm' ? cs.retry_qcm_charges : c.id === 'skip_question' ? cs.skip_question_charges : 0
+                const maxCharges = (c as any).maxCharges ?? 1
+                const isBlocked = isX2 ? cs.x2_active : isCharged ? currentCharges >= maxCharges : false
+                const canBuy = !isBlocked && coins >= c.price && !pending
+
+                // Temps restant pour x2
+                let x2TimeLeft = ''
+                if (isX2 && cs.x2_active && cs.x2_expires) {
+                  const ms = new Date(cs.x2_expires).getTime() - Date.now()
+                  const min = Math.max(0, Math.round(ms / 60000))
+                  x2TimeLeft = min > 0 ? `Actif — ${min} min` : 'Expire bientôt'
+                }
+
+                return (
+                  <div key={c.id} className={cn(
+                    'flex flex-col gap-2 rounded-card border-2 p-4',
+                    isBlocked
+                      ? 'border-emerald-400/40 bg-emerald-50 dark:border-emerald-700/40 dark:bg-emerald-950/20'
+                      : 'border-sky-border bg-sky-surface dark:border-night-border dark:bg-night-surface',
+                  )}>
+                    <div className="flex items-start justify-between">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-input bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300">
+                        <Zap className="h-5 w-5" />
+                      </div>
+                      {/* Badge état */}
+                      {isX2 && cs.x2_active && (
+                        <span className="rounded-pill bg-emerald-500 px-2 py-0.5 font-display text-[10px] font-bold text-white">
+                          {x2TimeLeft}
+                        </span>
+                      )}
+                      {isCharged && (
+                        <span className={cn(
+                          'rounded-pill px-2 py-0.5 font-display text-[11px] font-bold',
+                          currentCharges >= maxCharges
+                            ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300'
+                            : 'bg-sky-cloud text-text-secondary dark:bg-night-border',
+                        )}>
+                          {currentCharges}/{maxCharges}
+                        </span>
+                      )}
+                    </div>
+                    <p className="font-display text-[14px] font-bold">{c.label}</p>
+                    <p className="flex-1 font-body text-[12px] text-text-secondary dark:text-text-dark-secondary">{c.desc}</p>
+                    <button
+                      onClick={() => handleBuy('consumable', c.id, c.price)}
+                      disabled={!canBuy}
+                      className={cn(
+                        'flex items-center justify-center gap-1 rounded-pill py-1.5 font-display text-[12px] font-bold transition',
+                        isBlocked
+                          ? 'cursor-not-allowed bg-emerald-100 text-emerald-600 dark:bg-emerald-950/30 dark:text-emerald-400'
+                          : canBuy
+                            ? 'bg-amber-500 text-white hover:bg-amber-600'
+                            : 'cursor-not-allowed bg-sky-cloud text-text-tertiary dark:bg-night-border',
+                      )}
+                    >
+                      {isBlocked
+                        ? isX2 ? 'Boost actif' : 'Max atteint'
+                        : <><SkyCoin size={11} /> {c.price}</>
+                      }
+                    </button>
                   </div>
-                  <p className="font-display text-[14px] font-bold">{c.label}</p>
-                  <p className="flex-1 font-body text-[12px] text-text-secondary dark:text-text-dark-secondary">{c.desc}</p>
-                  <button
-                    onClick={() => handleBuy('consumable', c.id, c.price)}
-                    disabled={coins < c.price || pending}
-                    className={cn(
-                      'flex items-center justify-center gap-1 rounded-pill py-1.5 font-display text-[12px] font-bold transition',
-                      coins >= c.price
-                        ? 'bg-amber-500 text-white hover:bg-amber-600'
-                        : 'cursor-not-allowed bg-sky-cloud text-text-tertiary dark:bg-night-border',
-                    )}
-                  >
-                    <SkyCoin size={11} /> {c.price}
-                  </button>
-                </div>
-              ))}
+                )
+              })}
             </div>
           )}
 

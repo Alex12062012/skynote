@@ -27,3 +27,28 @@
   .text-gradient-sky { @apply bg-gradient-to-r from-brand to-brand-dark bg-clip-text text-transparent; }
   .glass { backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
 }
+
+/* ─── Rainbow ARGB title ─────────────────────────────────────── */
+@keyframes rainbow-shift {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+.text-rainbow {
+  background: linear-gradient(90deg,
+    #ff0000, #ff6600, #ffcc00, #00ff88,
+    #00ccff, #6600ff, #ff00cc, #ff0000) !important;
+  background-size: 300% 100% !important;
+  background-clip: text !important;
+  -webkit-background-clip: text !important;
+  color: transparent !important;
+  animation: rainbow-shift 3s linear infinite;
+}
+
+/* ─── X2 Coin Rain ───────────────────────────────────────────── */
+@keyframes coin-fall {
+  0%   { transform: translateY(-40px) rotate(0deg); opacity: 0; }
+  10%  { opacity: 1; }
+  90%  { opacity: 1; }
+  100% { transform: translateY(100vh) rotate(360deg); opacity: 0; }
+}

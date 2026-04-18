@@ -8,6 +8,8 @@ import { SkyCoin } from '@/components/ui/SkyCoin'
 import { CoinAnimation, CoinToast } from '@/components/ui/CoinAnimation'
 import { useCoinReward } from '@/components/providers/CoinRewardProvider'
 import { saveQcmAttempt, type QcmDifficulty } from '@/lib/supabase/qcm-actions'
+import { consumeBoostCharge } from '@/lib/supabase/gamification-actions'
+import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
 import { useI18n } from '@/lib/i18n/context'
 import type { QcmQuestion, Flashcard } from '@/types/database'
@@ -44,6 +46,8 @@ export function QcmEngine({ flashcard, questions, courseId, difficulty = 'medium
   const { showReward } = useCoinReward()
   const [showCoinAnim, setShowCoinAnim] = useState(false)
   const [showToast, setShowToast] = useState(false)
+  const [retryCharges, setRetryCharges] = useState(0)
+  const [retryPending, setRetryPending] = useState(false)
 
   const question = questions[currentQ]
   const total = questions.length
@@ -82,6 +86,7 @@ export function QcmEngine({ flashcard, questions, courseId, difficulty = 'medium
         setCoinsEarned(earned)
         if (earned > 0) { showReward({ amount: earned, reason: `Score parfait — ${DIFFICULTY_LABELS[difficulty].label} !` }) }
         setShowResult(true)
+        loadRetryCharges()
       })
     }
   }
@@ -90,8 +95,31 @@ export function QcmEngine({ flashcard, questions, courseId, difficulty = 'medium
     setCurrentQ(0); setAnswers([]); setSelectedOption(null)
     setAnswerState('unanswered'); setShowResult(false)
     setCoinsEarned(0); setShowCoinAnim(false); setShowToast(false)
-    // Régénérer de nouvelles questions quand on recommence
     if (onRegenerate) onRegenerate()
+  }
+
+  async function handleRetryWithCharge() {
+    if (retryPending || retryCharges <= 0) return
+    setRetryPending(true)
+    const { error, remaining } = await consumeBoostCharge('retry_qcm')
+    setRetryPending(false)
+    if (error) return
+    setRetryCharges(remaining)
+    handleRestart()
+  }
+
+  // Charger les charges retry au montage du résultat
+  async function loadRetryCharges() {
+    try {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+      const { data } = await supabase
+        .from('user_boosts').select('charges')
+        .eq('user_id', user.id).eq('boost_type', 'retry_qcm')
+      const total = (data ?? []).reduce((s: number, r: any) => s + (r.charges ?? 1), 0)
+      setRetryCharges(total)
+    } catch { /* table absente */ }
   }
 
   // ── Résultats ──────────────────────────────────────────────
@@ -139,6 +167,17 @@ export function QcmEngine({ flashcard, questions, courseId, difficulty = 'medium
           )}
           <div className="flex flex-col gap-3 w-full max-w-xs">
             <Button onClick={handleRestart} className="w-full gap-2"><RotateCcw className="h-4 w-4" />Recommencer</Button>
+            {!isPerfect && retryCharges > 0 && (
+              <Button
+                onClick={handleRetryWithCharge}
+                disabled={retryPending}
+                variant="secondary"
+                className="w-full gap-2 border-amber-400/50 bg-amber-50 text-amber-700 hover:bg-amber-100 dark:bg-amber-950/20 dark:text-amber-300"
+              >
+                <Zap className="h-4 w-4" />
+                {retryPending ? 'En cours…' : `Retry gratuit (${retryCharges} charge${retryCharges > 1 ? 's' : ''})`}
+              </Button>
+            )}
             {onChangeDifficulty && (
               <Button onClick={onChangeDifficulty} variant="secondary" className="w-full gap-2">
                 Changer de niveau

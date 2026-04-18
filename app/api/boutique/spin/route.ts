@@ -17,8 +17,9 @@ export const WHEEL_SEGMENTS = [
 ] as const
 
 // Probabilités cumulatives (doit totaliser 100)
-// Perdu: 25% | +20: 20% | +40: 20% | +60: 15% | +100: 10% | +200: 5% | Boost: 3% | Cadre: 2%
-const WEIGHTS = [25, 20, 20, 15, 10, 5, 3, 2]
+// 51% de perdre des coins | 49% de gagner ou lot rare
+// Perdu: 20% | +20: 17% | +40: 14% | +60: 20% | +100: 14% | +200: 8% | Boost: 4% | Cadre: 3%
+const WEIGHTS = [20, 17, 14, 20, 14, 8, 4, 3]
 const CUMULATIVE = WEIGHTS.reduce<number[]>((acc, w, i) => {
   acc.push((acc[i - 1] ?? 0) + w)
   return acc

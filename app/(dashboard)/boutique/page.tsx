@@ -49,6 +49,28 @@ export default async function BoutiquePage() {
     wheel_spins:         wheelSpinCount,
   }
 
+  // Charges des consommables
+  const now = new Date().toISOString()
+  type ConsumableState = { x2_active: boolean; x2_expires: string | null; retry_qcm_charges: number; skip_question_charges: number }
+  let consumableState: ConsumableState = { x2_active: false, x2_expires: null, retry_qcm_charges: 0, skip_question_charges: 0 }
+
+  try {
+    const { data: boosts } = await supabase
+      .from('user_boosts').select('boost_type, expires_at, charges')
+      .eq('user_id', user.id)
+    if (boosts) {
+      const x2 = boosts.find((b: any) => b.boost_type === 'x2_coins' && b.expires_at > now)
+      consumableState.x2_active  = Boolean(x2)
+      consumableState.x2_expires = (x2 as any)?.expires_at ?? null
+      consumableState.retry_qcm_charges = boosts
+        .filter((b: any) => b.boost_type === 'retry_qcm')
+        .reduce((s: number, b: any) => s + (b.charges ?? 1), 0)
+      consumableState.skip_question_charges = boosts
+        .filter((b: any) => b.boost_type === 'skip_question')
+        .reduce((s: number, b: any) => s + (b.charges ?? 1), 0)
+    }
+  } catch { /* table absente */ }
+
   return (
     <BoutiqueClientV2
       initialCoins={(profile as any)?.sky_coins ?? 0}
@@ -59,6 +81,7 @@ export default async function BoutiquePage() {
       activeTitle={(profile as any)?.active_title_id ?? null}
       recentSpins={recentSpins}
       userStats={userStats}
+      consumableState={consumableState}
     />
   )
 }

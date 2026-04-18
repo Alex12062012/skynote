@@ -399,6 +399,25 @@ export async function buyItem(
       .eq('user_id', user.id).eq('title_id', itemId).maybeSingle()
     if (owned) return { error: 'Déjà débloqué' }
   }
+  // Check limites consommables (AVANT débit pour ne pas avoir à rollback)
+  if (category === 'consumable') {
+    const c = CONSUMABLES.find(x => x.id === itemId)
+    if (!c) return { error: 'Consommable introuvable' }
+    try {
+      const { data: existing } = await supabase
+        .from('user_boosts').select('boost_type, expires_at, charges')
+        .eq('user_id', user.id).eq('boost_type', itemId)
+      if (itemId === 'x2_coins') {
+        const hasActive = (existing ?? []).some(
+          (b: any) => b.expires_at && b.expires_at > new Date().toISOString()
+        )
+        if (hasActive) return { error: 'Tu as déjà un boost ×2 actif !' }
+      } else {
+        const total = (existing ?? []).reduce((s: number, b: any) => s + (b.charges ?? 1), 0)
+        if (total >= (c as any).maxCharges) return { error: `Maximum ${(c as any).maxCharges} charges atteint` }
+      }
+    } catch { /* table absente en dev, on laisse passer */ }
+  }
 
   // ─── Débit : tente RPC atomique, fallback manuel si migration 016 non appliquée
   let newBalance: number | undefined
@@ -595,6 +614,47 @@ async function unlockDerivedTitles(userId: string) {
       user_id: userId, title_id: titleId, source: 'unlock',
     }).select()  // ignore les conflits via upsert-like (l'unique key bloquera les doublons)
       .then(() => {}, () => {})
+  }
+}
+
+// ─── CONSOMMER UNE CHARGE BOOST ──────────────────────────────────────────────
+/**
+ * Décrémente d'une charge le boost charge-based (retry_qcm, skip_question).
+ * Supprime la row si charges <= 0.
+ */
+export async function consumeBoostCharge(
+  boostType: 'retry_qcm' | 'skip_question'
+): Promise<{ error: string | null; remaining: number }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Non connecté', remaining: 0 }
+
+  try {
+    const { data: rows } = await supabase
+      .from('user_boosts').select('id, charges')
+      .eq('user_id', user.id).eq('boost_type', boostType)
+      .order('id', { ascending: true }).limit(1)
+
+    if (!rows || rows.length === 0) return { error: 'Aucune charge disponible', remaining: 0 }
+
+    const row = rows[0] as any
+    const newCharges = (row.charges ?? 1) - 1
+
+    if (newCharges <= 0) {
+      await supabase.from('user_boosts').delete().eq('id', row.id)
+    } else {
+      await supabase.from('user_boosts').update({ charges: newCharges }).eq('id', row.id)
+    }
+
+    // Calcul du total restant
+    const { data: remaining } = await supabase
+      .from('user_boosts').select('charges')
+      .eq('user_id', user.id).eq('boost_type', boostType)
+    const total = (remaining ?? []).reduce((s: number, r: any) => s + (r.charges ?? 1), 0)
+
+    return { error: null, remaining: total }
+  } catch {
+    return { error: 'Table absente', remaining: 0 }
   }
 }
 

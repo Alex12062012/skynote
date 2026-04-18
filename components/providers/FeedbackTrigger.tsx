@@ -26,7 +26,7 @@ export function FeedbackTrigger({ userId, initialShown5, initialShown25 }: Feedb
 
     const total = count ?? 0
 
-    if (total >= 25 && !initialShown25) {
+    if (total >= 20 && !initialShown25) {
       setMilestone(25)
     } else if (total >= 5 && !initialShown5) {
       setMilestone(5)
