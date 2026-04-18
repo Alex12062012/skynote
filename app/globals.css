@@ -31,18 +31,18 @@
 /* ─── Rainbow ARGB title ─────────────────────────────────────── */
 @keyframes rainbow-shift {
   0%   { background-position: 0% 50%; }
-  50%  { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
+  100% { background-position: 100% 50%; }
 }
+/* Dégradé dupliqué → loop sans saut visible (fin = début) */
 .text-rainbow {
   background: linear-gradient(90deg,
-    #ff0000, #ff6600, #ffcc00, #00ff88,
-    #00ccff, #6600ff, #ff00cc, #ff0000) !important;
-  background-size: 300% 100% !important;
+    #ff0000, #ff6600, #ffcc00, #00ff88, #00ccff, #6600ff, #ff00cc,
+    #ff0000, #ff6600, #ffcc00, #00ff88, #00ccff, #6600ff, #ff00cc, #ff0000) !important;
+  background-size: 200% 100% !important;
   background-clip: text !important;
   -webkit-background-clip: text !important;
   color: transparent !important;
-  animation: rainbow-shift 3s linear infinite;
+  animation: rainbow-shift 4s linear infinite;
 }
 
 /* ─── X2 Coin Rain ───────────────────────────────────────────── */

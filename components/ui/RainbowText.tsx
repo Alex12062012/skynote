@@ -7,14 +7,15 @@
  * même quand le parent a overflow: hidden ou d'autres contraintes CSS.
  */
 
+// Dégradé dupliqué → boucle seamless dans une seule direction (pas de bounce)
 const RAINBOW_STYLE: React.CSSProperties = {
-  background: 'linear-gradient(90deg, #ff0000, #ff6600, #ffcc00, #00ff88, #00ccff, #6600ff, #ff00cc, #ff0000)',
-  backgroundSize: '300% 100%',
+  background: 'linear-gradient(90deg, #ff0000, #ff6600, #ffcc00, #00ff88, #00ccff, #6600ff, #ff00cc, #ff0000, #ff6600, #ffcc00, #00ff88, #00ccff, #6600ff, #ff00cc, #ff0000)',
+  backgroundSize: '200% 100%',
   WebkitBackgroundClip: 'text',
   backgroundClip: 'text',
   WebkitTextFillColor: 'transparent',
   color: 'transparent',
-  animation: 'rainbow-shift 3s linear infinite',
+  animation: 'rainbow-shift 4s linear infinite',
   display: 'inline-block',
 }
 

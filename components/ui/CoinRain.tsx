@@ -30,7 +30,7 @@ export function CoinRain({ active }: CoinRainProps) {
   return (
     <div
       aria-hidden="true"
-      className="pointer-events-none fixed inset-0 z-[9999] overflow-hidden"
+      className="pointer-events-none fixed inset-0 z-[1] overflow-hidden"
     >
       {coins.map(coin => (
         <div
