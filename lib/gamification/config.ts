@@ -145,4 +145,4 @@ export const CONSUMABLES = [
 // ─── LEADERBOARD ──────────────────────────────────────────────────────────────
 export const LEADERBOARD_MODES = ['weekly', 'monthly', 'all_time'] as const
 export type LeaderboardMode = typeof LEADERBOARD_MODES[number]
-export const LEADERBOARD_PAGE_SIZE = 20
+export const LEADERBOARD_PAGE_SIZE = 10
