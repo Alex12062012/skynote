@@ -51,6 +51,7 @@ export function ClaimButton({ objectiveId, rewardCoins, objectiveTitle, objectiv
       if (!error && coinsAwarded > 0) {
         setClaimed(true)
         onClaimed?.(coinsAwarded)
+        showReward({ amount: coinsAwarded, reason: objectiveTitle ?? 'Objectif accompli !' })
       }
     })
   }

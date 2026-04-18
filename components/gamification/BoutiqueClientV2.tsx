@@ -150,8 +150,11 @@ export function BoutiqueClientV2({
                   {WHEEL_LEGACY.map((seg) => (
                     <div key={seg.id} className="flex items-center gap-2 rounded-input border border-sky-border bg-sky-surface-2 px-3 py-2 dark:border-night-border dark:bg-night-surface-2">
                       <span className="h-2.5 w-2.5 flex-shrink-0 rounded-full" style={{ background: seg.color }} />
-                      <span className="font-body text-[12px] font-medium text-text-secondary dark:text-text-dark-secondary">
+                      <span className="flex-1 font-body text-[12px] font-medium text-text-secondary dark:text-text-dark-secondary">
                         {seg.label}
+                      </span>
+                      <span className="font-display text-[11px] font-bold tabular-nums text-text-tertiary dark:text-text-dark-tertiary">
+                        {seg.probability}%
                       </span>
                     </div>
                   ))}
@@ -296,10 +299,7 @@ export function BoutiqueClientV2({
                     <div className="flex items-center justify-between">
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
-                          <span className={cn(
-                            'font-display text-[15px] font-bold',
-                            owned && equipped ? 'text-rainbow' : '',
-                          )}>{t.label}</span>
+                          <span className="font-display text-[15px] font-bold text-rainbow">{t.label}</span>
                           <span className="rounded-pill bg-sky-cloud px-2 py-0.5 font-body text-[10px] font-bold uppercase text-text-tertiary dark:bg-night-border">
                             {t.category}
                           </span>

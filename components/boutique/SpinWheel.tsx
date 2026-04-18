@@ -3,17 +3,18 @@
 import { useRef, useState, useCallback } from 'react'
 import { SkyCoin } from '@/components/ui/SkyCoin'
 import { cn } from '@/lib/utils'
+import { useCoinReward } from '@/components/providers/CoinRewardProvider'
 
 // ─── Segments (mirror de l'API) ───────────────────────────────────────────────
 export const WHEEL_SEGMENTS = [
-  { id: 'lost',      label: 'Perdu',     type: 'lost',     value: 0,   color: '#EF4444', text: '#fff' },
-  { id: 'coins_20',  label: '+20',       type: 'coins',    value: 20,  color: '#FB923C', text: '#fff' },
-  { id: 'coins_40',  label: '+40',       type: 'coins',    value: 40,  color: '#FBBF24', text: '#fff' },
-  { id: 'coins_60',  label: '+60',       type: 'coins',    value: 60,  color: '#A3E635', text: '#1a2e05' },
-  { id: 'coins_100', label: '+100',      type: 'coins',    value: 100, color: '#34D399', text: '#022c22' },
-  { id: 'coins_200', label: '+200',      type: 'coins',    value: 200, color: '#2DD4BF', text: '#042f2e' },
-  { id: 'boost_xp',  label: 'Boost XP', type: 'boost_xp', value: 0,   color: '#A78BFA', text: '#fff' },
-  { id: 'frame',     label: 'Cadre',     type: 'frame',    value: 0,   color: '#F472B6', text: '#fff' },
+  { id: 'lost',      label: 'Perdu',     type: 'lost',     value: 0,   color: '#EF4444', text: '#fff',     probability: 25 },
+  { id: 'coins_20',  label: '+20',       type: 'coins',    value: 20,  color: '#FB923C', text: '#fff',     probability: 20 },
+  { id: 'coins_40',  label: '+40',       type: 'coins',    value: 40,  color: '#FBBF24', text: '#fff',     probability: 20 },
+  { id: 'coins_60',  label: '+60',       type: 'coins',    value: 60,  color: '#A3E635', text: '#1a2e05',  probability: 15 },
+  { id: 'coins_100', label: '+100',      type: 'coins',    value: 100, color: '#34D399', text: '#022c22',  probability: 10 },
+  { id: 'coins_200', label: '+200',      type: 'coins',    value: 200, color: '#2DD4BF', text: '#042f2e',  probability: 5  },
+  { id: 'boost_xp',  label: 'Boost XP', type: 'boost_xp', value: 0,   color: '#A78BFA', text: '#fff',     probability: 3  },
+  { id: 'frame',     label: 'Cadre',     type: 'frame',    value: 0,   color: '#F472B6', text: '#fff',     probability: 2  },
 ] as const
 
 const NUM_SEGMENTS = WHEEL_SEGMENTS.length
@@ -58,6 +59,7 @@ export function SpinWheel({ coins, onBalanceUpdate }: SpinWheelProps) {
   const [showResult, setShowResult] = useState(false)
   const [error, setError]           = useState<string | null>(null)
   const currentRotation             = useRef(0)
+  const { showReward } = useCoinReward()
 
   const cx = 150, cy = 150, r = 140
 
@@ -100,6 +102,9 @@ export function SpinWheel({ coins, onBalanceUpdate }: SpinWheelProps) {
       onBalanceUpdate?.(res.newBalance)
       setShowResult(true)
       setSpinning(false)
+      if (res.netGain > 0) {
+        showReward({ amount: res.netGain, reason: 'Roue de la fortune !' })
+      }
     }, 4200)
   }, [spinning, balance, onBalanceUpdate])
 

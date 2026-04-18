@@ -16,19 +16,23 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const [{ data: profile }, { data: betaRow }, { data: boostRow }] = await Promise.all([
+  const [{ data: profile }, { data: betaRow }] = await Promise.all([
     supabase.from('profiles').select('*').eq('id', user.id).single(),
     supabase.from('admin_settings').select('value').eq('key', 'beta_mode').maybeSingle(),
-    supabase
+  ])
+
+  // Table user_boosts peut ne pas exister en dev — on protège
+  let boostActive = false
+  try {
+    const { data: boostRow } = await supabase
       .from('user_boosts')
       .select('expires_at')
       .eq('user_id', user.id)
       .eq('boost_type', 'x2_coins')
       .gt('expires_at', new Date().toISOString())
-      .maybeSingle(),
-  ])
-
-  const boostActive = Boolean(boostRow)
+      .maybeSingle()
+    boostActive = Boolean(boostRow)
+  } catch { /* table absente */ }
 
   const isBetaEnabled = betaRow?.value === 'true'
 
