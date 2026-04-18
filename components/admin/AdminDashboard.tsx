@@ -129,11 +129,111 @@ function UserListModal({ modal, onClose }: { modal: StatModal; onClose: () => vo
   )
 }
 
+function GrowthLineChart({ data }: { data: TimeSeries[] }) {
+  if (data.length < 2) return null
+
+  const W = 800, H = 280, PAD = { top: 24, right: 24, bottom: 48, left: 56 }
+  const innerW = W - PAD.left - PAD.right
+  const innerH = H - PAD.top - PAD.bottom
+
+  const maxVal = Math.max(...data.map(d => d.count), 1)
+  const minVal = 0
+
+  const toX = (i: number) => PAD.left + (i / (data.length - 1)) * innerW
+  const toY = (v: number) => PAD.top + innerH - ((v - minVal) / (maxVal - minVal)) * innerH
+
+  // Ligne principale
+  const linePath = data.map((d, i) => `${i === 0 ? 'M' : 'L'} ${toX(i).toFixed(1)} ${toY(d.count).toFixed(1)}`).join(' ')
+
+  // Zone de remplissage sous la courbe
+  const areaPath = `${linePath} L ${toX(data.length - 1).toFixed(1)} ${(PAD.top + innerH).toFixed(1)} L ${PAD.left} ${(PAD.top + innerH).toFixed(1)} Z`
+
+  // Graduations Y (5 niveaux)
+  const yTicks = Array.from({ length: 5 }, (_, i) => Math.round((maxVal / 4) * i))
+
+  // Labels X : afficher ~6 dates réparties
+  const xStep = Math.max(1, Math.floor(data.length / 6))
+  const xLabels = data.filter((_, i) => i % xStep === 0 || i === data.length - 1)
+
+  // Formatage date court
+  const fmtDate = (iso: string) => {
+    const d = new Date(iso)
+    return `${d.getDate()}/${d.getMonth() + 1}`
+  }
+
+  return (
+    <div className="w-full overflow-x-auto">
+      <svg width="100%" viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ minWidth: 400 }}>
+        <defs>
+          <linearGradient id="growth-fill" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#60A5FA" stopOpacity="0.25" />
+            <stop offset="100%" stopColor="#60A5FA" stopOpacity="0.02" />
+          </linearGradient>
+          <linearGradient id="growth-line" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stopColor="#3B82F6" />
+            <stop offset="100%" stopColor="#60A5FA" />
+          </linearGradient>
+        </defs>
+
+        {/* Grille horizontale */}
+        {yTicks.map(v => (
+          <g key={v}>
+            <line
+              x1={PAD.left} y1={toY(v)} x2={PAD.left + innerW} y2={toY(v)}
+              stroke="rgba(255,255,255,0.06)" strokeWidth="1"
+            />
+            <text x={PAD.left - 10} y={toY(v)} textAnchor="end" dominantBaseline="middle"
+              fill="rgba(148,163,184,0.8)" fontSize="11" fontFamily="sans-serif">
+              {v}
+            </text>
+          </g>
+        ))}
+
+        {/* Zone remplie */}
+        <path d={areaPath} fill="url(#growth-fill)" />
+
+        {/* Ligne principale */}
+        <path d={linePath} fill="none" stroke="url(#growth-line)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+
+        {/* Points sur chaque donnée */}
+        {data.map((d, i) => (
+          <circle key={i} cx={toX(i)} cy={toY(d.count)} r="3"
+            fill="#60A5FA" stroke="#1e293b" strokeWidth="1.5" />
+        ))}
+
+        {/* Point final mis en valeur */}
+        <circle cx={toX(data.length - 1)} cy={toY(data[data.length - 1].count)} r="5.5"
+          fill="#60A5FA" stroke="#fff" strokeWidth="2" />
+        <text x={toX(data.length - 1)} y={toY(data[data.length - 1].count) - 12}
+          textAnchor="middle" fill="white" fontSize="13" fontWeight="bold" fontFamily="sans-serif">
+          {data[data.length - 1].count}
+        </text>
+
+        {/* Labels X */}
+        {xLabels.map((d, i) => {
+          const idx = data.indexOf(d)
+          return (
+            <text key={i} x={toX(idx)} y={PAD.top + innerH + 20}
+              textAnchor="middle" fill="rgba(148,163,184,0.8)" fontSize="11" fontFamily="sans-serif">
+              {fmtDate(d.date)}
+            </text>
+          )
+        })}
+
+        {/* Axe Y */}
+        <line x1={PAD.left} y1={PAD.top} x2={PAD.left} y2={PAD.top + innerH}
+          stroke="rgba(255,255,255,0.1)" strokeWidth="1" />
+      </svg>
+    </div>
+  )
+}
+
 export function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   const [tab, setTab] = useState<'stats' | 'users' | 'feedbacks' | 'settings'>('stats')
   const [period, setPeriod] = useState<Period>('7')
   const [stats, setStats] = useState<Stats | null>(null)
   const [timeSeries, setTimeSeries] = useState<Record<string, TimeSeries[]>>({})
+  const [growthSeries, setGrowthSeries] = useState<TimeSeries[]>([])
   const [users, setUsers] = useState<User[]>([])
   const [topUsers, setTopUsers] = useState<User[]>([])
   const [feedbacks, setFeedbacks] = useState<any[]>([])
@@ -171,6 +271,7 @@ export function AdminDashboard({ onLogout }: { onLogout: () => void }) {
       setUsers(data.recentUsers)
       setTopUsers(data.topUsers)
       setTimeSeries(data.timeSeries || {})
+      setGrowthSeries(data.growthSeries || [])
       setActiveUsersToday(data.activeUsersToday || [])
       setUsersWithCourses(data.usersWithCourses || [])
       setUsersWithQcm(data.usersWithQcm || [])
@@ -336,6 +437,25 @@ export function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                 </button>
               ))}
             </div>
+
+            {/* Graphique croissance utilisateurs — toujours visible */}
+            {growthSeries.length > 1 && (
+              <div className="rounded-2xl border border-slate-700 bg-slate-800/60 p-5">
+                <div className="mb-4 flex items-center justify-between">
+                  <div>
+                    <h2 className="font-bold text-[18px] text-white">Utilisateurs inscrits</h2>
+                    <p className="text-[13px] text-slate-400">Depuis la création de Skynote</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-black text-[36px] text-blue-400 leading-none">
+                      {growthSeries[growthSeries.length - 1]?.count ?? 0}
+                    </p>
+                    <p className="text-[12px] text-slate-500">total</p>
+                  </div>
+                </div>
+                <GrowthLineChart data={growthSeries} />
+              </div>
+            )}
 
             {loading ? (
               <div className="flex items-center justify-center py-20">

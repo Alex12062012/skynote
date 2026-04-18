@@ -64,6 +64,7 @@ export async function GET(request: NextRequest) {
       { data: allCourses },
       { data: coinTransactions },
       { data: allQcmForAvg },
+      { data: allTimeSignups },
     ] = await Promise.all([
       supabase.from('profiles').select('*', { count: 'exact', head: true }),
       supabase.from('courses').select('*', { count: 'exact', head: true }),
@@ -77,6 +78,7 @@ export async function GET(request: NextRequest) {
       supabase.from('courses').select('created_at').gte('created_at', sinceISO),
       supabase.from('coin_transactions').select('amount,created_at').gte('created_at', sinceISO),
       supabase.from('qcm_attempts').select('user_id,created_at').gte('created_at', sinceISO),
+      supabase.from('profiles').select('created_at').order('created_at', { ascending: true }),
     ])
 
     const signupsSeries = buildTimeSeries(days, allSignups || [], 'created_at')
@@ -137,6 +139,19 @@ export async function GET(request: NextRequest) {
       supabase.from('profiles').select('id, full_name, email, streak_days, plan').gte('streak_days', 3).order('streak_days', { ascending: false }),
     ])
 
+    // Série cumulative all-time (total utilisateurs depuis le début)
+    const dailyCounts: Record<string, number> = {}
+    ;(allTimeSignups || []).forEach((row: any) => {
+      const day = row.created_at?.split('T')[0]
+      if (day) dailyCounts[day] = (dailyCounts[day] || 0) + 1
+    })
+    const sortedDays = Object.keys(dailyCounts).sort()
+    let cumulative = 0
+    const growthSeries = sortedDays.map(date => {
+      cumulative += dailyCounts[date]
+      return { date, count: cumulative }
+    })
+
     function dedup(rows: any[]) {
       const seen = new Set()
       return rows.filter((r: any) => {
@@ -167,6 +182,7 @@ export async function GET(request: NextRequest) {
       usersWithPerfect: dedup(usersWithPerfect || []),
       premiumUsers: premiumUsers || [],
       streakUsers: streakUsers || [],
+      growthSeries,
       timeSeries: {
         signups: signupsSeries,
         qcm: qcmSeries,
