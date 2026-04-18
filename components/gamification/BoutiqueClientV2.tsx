@@ -8,8 +8,10 @@ import { BADGES, CONSUMABLES, TITLES, SKINS, SKIN_ID_ALIASES, prestigeCost } fro
 import { buyItem, equip, equipFrame } from '@/lib/supabase/gamification-actions'
 import { SpinWheel, WHEEL_SEGMENTS as WHEEL_LEGACY } from '@/components/boutique/SpinWheel'
 import { PlayerBadge } from './PlayerBadge'
+import { PlayerEmblem } from './PlayerEmblem'
 import { PrestigeButton } from './PrestigeButton'
 import { SkinDecoration } from './SkinDecoration'
+import { RainbowText } from '@/components/ui/RainbowText'
 
 const ICON_MAP: Record<string, ElementType> = { Brain, Star, Rocket, Crown, Gem, Flame }
 
@@ -476,21 +478,43 @@ export function BoutiqueClientV2({
                         'flex flex-col gap-3 rounded-card border-2 p-4',
                         isEquipped ? 'border-emerald-400/60 dark:border-emerald-600/50' : 'border-sky-border dark:border-night-border',
                       )}>
-                        {/* Aperçu carte */}
-                        <div
-                          className={cn('relative overflow-hidden flex items-center gap-3 rounded-card border px-3 py-2', cardClass)}
-                          style={boxShadow ? { boxShadow } : undefined}
-                        >
-                          <SkinDecoration skinId={resolvedId} />
-                          <div className="relative z-10 flex w-full items-center gap-3">
-                            <div className="h-8 w-8 flex-shrink-0 rounded-full bg-gradient-to-br from-brand to-brand-dark" />
-                            <div className="min-w-0 flex-1">
-                              <div className="h-2.5 w-20 rounded-full bg-current opacity-20" />
-                              <div className="mt-1.5 h-2 w-12 rounded-full bg-current opacity-10" />
+                        {/* Aperçu carte — vraies infos */}
+                        {(() => {
+                          const titleLabel = TITLES.find(t => t.id === equippedTitle)?.label ?? null
+                          return (
+                            <div
+                              className={cn('relative overflow-hidden flex items-center gap-3 rounded-card border px-3 py-2', cardClass)}
+                              style={boxShadow ? { boxShadow } : undefined}
+                            >
+                              <SkinDecoration skinId={resolvedId} />
+                              <div className="relative z-10 flex w-full items-center gap-3">
+                                <PlayerEmblem
+                                  prestigeLevel={prestigeLevel}
+                                  badgeId={equippedBadge}
+                                  letter="A"
+                                  size="sm"
+                                />
+                                <div className="min-w-0 flex-1">
+                                  <p className="truncate font-display text-[13px] font-bold text-text-main dark:text-text-dark-main">
+                                    Toi
+                                  </p>
+                                  {titleLabel && (
+                                    <RainbowText className="font-body text-[10px] font-bold">{titleLabel}</RainbowText>
+                                  )}
+                                  <p className="font-body text-[10px] text-text-tertiary dark:text-text-dark-tertiary">
+                                    Prestige {prestigeLevel}
+                                  </p>
+                                </div>
+                                <div className="flex flex-shrink-0 items-center gap-1">
+                                  <SkyCoin size={14} />
+                                  <span className="font-display text-[13px] font-black tabular-nums text-text-main dark:text-text-dark-main">
+                                    {coins.toLocaleString('fr-FR')}
+                                  </span>
+                                </div>
+                              </div>
                             </div>
-                            <div className="h-2.5 w-10 rounded-full bg-current opacity-20" />
-                          </div>
-                        </div>
+                          )
+                        })()}
 
                         {/* Infos */}
                         <div className="flex items-start justify-between gap-2">
