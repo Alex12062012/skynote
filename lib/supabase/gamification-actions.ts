@@ -200,14 +200,13 @@ export async function getLeaderboard(
   const { data: rawTop } = await admin
     .from('profiles')
     .select('id, pseudo, user_number, prestige_level, active_title_id, active_badge_id, sky_coins, weekly_coins, monthly_coins, likes_received, streak_days, plan, role, classroom_id, total_coins_earned')
+    .neq('role', 'teacher')
     .order(orderCol,              { ascending: false })
     .order('total_coins_earned',  { ascending: false })
     .order('user_number',         { ascending: true  })
-    .limit(limit * 2)
+    .limit(limit)
 
-  // Exclure profs (spectateurs)
   const rows: LeaderboardRow[] = (rawTop ?? [])
-    .filter((p: any) => p.role !== 'teacher')
     .slice(0, limit)
     .map((p: any) => ({
       id: p.id, pseudo: p.pseudo, user_number: p.user_number,
