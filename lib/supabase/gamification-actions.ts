@@ -183,14 +183,15 @@ export async function getLeaderboard(
   const { data: { user } } = await authClient.auth.getUser()
 
   // Colonne principale de tri :
-  //  - weekly  → coins gagnés cette semaine
-  //  - monthly → coins gagnés ce mois-ci
-  //  - all_time → coins gagnés lifetime (pas sky_coins, qui est le solde actuel
-  //    et peut être à 0 après dépenses en boutique ou après un prestige)
+  //  - weekly   → coins gagnés cette semaine
+  //  - monthly  → coins gagnés ce mois-ci
+  //  - all_time → SOLDE ACTUEL (sky_coins). Le classement all_time reflète
+  //    "ce qu'il te reste", pas ce que tu as gagné dans ta vie. Cohérent avec
+  //    /lexo (admin) qui affiche aussi le solde actuel.
   const orderCol =
     mode === 'weekly'  ? 'weekly_coins' :
     mode === 'monthly' ? 'monthly_coins' :
-                          'total_coins_earned'
+                          'sky_coins'
 
   // Tiebreakers déterministes : si plein de joueurs sont ex-aequo sur la
   // fenêtre courante (ex: semaine fraîche, tout le monde à 0), on les départage
@@ -234,7 +235,7 @@ export async function getLeaderboard(
         const col =
           mode === 'weekly'  ? 'weekly_coins' :
           mode === 'monthly' ? 'monthly_coins' :
-                                'total_coins_earned'
+                                'sky_coins'
         const myWindow   = (mp as any)[col] ?? 0
         const myLifetime = (mp as any).total_coins_earned ?? 0
 

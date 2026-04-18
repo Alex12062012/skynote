@@ -40,7 +40,7 @@ export function LeaderboardClient({
   const coinField =
     mode === 'weekly'  ? 'weekly_coins'  :
     mode === 'monthly' ? 'monthly_coins' :
-                          'total_coins_earned'  // lifetime, pas solde actuel
+                          'sky_coins'  // solde actuel = ce qu'il reste
 
   return (
     <div className="space-y-5">
@@ -72,7 +72,7 @@ export function LeaderboardClient({
       <p className="text-center font-body text-[12px] text-text-tertiary dark:text-text-dark-tertiary">
         {mode === 'weekly'  && '🔄 Reset chaque lundi à minuit'}
         {mode === 'monthly' && '🔄 Reset le 1er de chaque mois'}
-        {mode === 'all_time' && '🏆 Classement cumulé depuis toujours'}
+        {mode === 'all_time' && '💰 Classement par solde actuel'}
       </p>
 
       {/* Liste */}
