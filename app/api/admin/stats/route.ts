@@ -70,7 +70,7 @@ export async function GET(request: NextRequest) {
       supabase.from('qcm_attempts').select('*', { count: 'exact', head: true }),
       supabase.from('qcm_attempts').select('*', { count: 'exact', head: true }).eq('perfect', true),
       supabase.from('flashcards').select('*', { count: 'exact', head: true }),
-      supabase.from('profiles').select('id,email,full_name,sky_coins,plan,streak_days,created_at,last_login_at,is_beta_tester').order('created_at', { ascending: false, nullsFirst: false }).limit(50),
+      supabase.from('profiles').select('id,email,full_name,sky_coins,plan,streak_days,created_at,last_login_at,is_beta_tester').order('created_at', { ascending: false, nullsFirst: false }).limit(1000),
       supabase.from('profiles').select('id,email,full_name,sky_coins,plan,streak_days').neq('role', 'teacher').order('sky_coins', { ascending: false }).limit(10),
       supabase.from('profiles').select('created_at').gte('created_at', sinceISO),
       supabase.from('qcm_attempts').select('created_at').gte('created_at', sinceISO),
