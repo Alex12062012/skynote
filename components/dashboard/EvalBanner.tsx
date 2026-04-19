@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { Calendar, ChevronRight, Brain, Plus } from 'lucide-react'
+import { Button } from '@/components/ui/Button'
 import type { Evaluation } from '@/lib/supabase/eval-actions'
 
 function daysLeft(examDate: string) {
@@ -47,12 +48,10 @@ export function EvalBanner({ evals }: { evals: Evaluation[] }) {
         )
       })}
 
-      <Link
-        href="/eval/new"
-        className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-input bg-brand px-6 text-[15px] font-medium text-white shadow-btn hover:bg-brand-hover transition-all duration-150"
-      >
-        <Plus className="h-5 w-5" />
-        Nouvelle évaluation
+      <Link href="/eval/new" className="w-full">
+        <Button size="lg" className="gap-2 w-full">
+          <Plus className="h-5 w-5" />Nouvelle évaluation
+        </Button>
       </Link>
     </div>
   )
