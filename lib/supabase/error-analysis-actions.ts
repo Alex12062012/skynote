@@ -119,13 +119,13 @@ IMPORTANT: JSON only, no markdown, maximum 120 words total.`
     // 6. Incrémenter quota
     if (!isPremium) {
       const today = new Date().toISOString().split('T')[0]
-      await supabase.rpc('increment_ai_usage', { p_user_id: user.id, p_date: today })
-        .catch(() =>
-          supabase.from('ai_usage').upsert(
-            { user_id: user.id, usage_date: today, count: 1 },
-            { onConflict: 'user_id,usage_date' }
-          )
+      const { error: rpcError } = await supabase.rpc('increment_ai_usage', { p_user_id: user.id, p_date: today })
+      if (rpcError) {
+        await supabase.from('ai_usage').upsert(
+          { user_id: user.id, usage_date: today, count: 1 },
+          { onConflict: 'user_id,usage_date' }
         )
+      }
     }
 
     // 7. Créer flashcard simplifiée IA

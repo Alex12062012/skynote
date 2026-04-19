@@ -15,10 +15,6 @@ interface PersistedMessage {
   timestamp: string
 }
 
-// ============================================================
-// GET — charger l'historique persisté
-// ============================================================
-
 export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient()
@@ -42,10 +38,6 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// ============================================================
-// POST — répondre + persister
-// ============================================================
-
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient()
@@ -67,10 +59,9 @@ export async function POST(request: NextRequest) {
       .single()
     const betaActive = beta?.value === 'true'
 
-    // Free users → premium_prompt au lieu de 403
     if (!isPremium && !betaActive) {
       return NextResponse.json({
-        answer: "Tu as des erreurs sur ce cours — passe premium pour que l'IA t'aide à les corriger.",
+        answer: "Tu as des erreurs sur ce cours — passe premium pour que l'IA t'aide a les corriger.",
         type: 'premium_prompt' as MessageType,
       })
     }
@@ -89,7 +80,6 @@ export async function POST(request: NextRequest) {
 
     if (!course) return NextResponse.json({ error: 'Cours introuvable' }, { status: 404 })
 
-    // Charger historique persisté si le client n'en envoie pas
     let resolvedHistory: PersistedMessage[] = Array.isArray(history) && history.length > 0
       ? history
       : []
@@ -105,10 +95,9 @@ export async function POST(request: NextRequest) {
         if (session?.messages) {
           resolvedHistory = (session.messages as PersistedMessage[]).slice(-10)
         }
-      } catch { /* pas d'historique, on continue */ }
+      } catch { /* pas d'historique */ }
     }
 
-    // Flashcards du cours
     const { data: flashcards } = await supabase
       .from('flashcards')
       .select('id, title, summary, key_points, mastery_level, consecutive_errors')
@@ -120,7 +109,6 @@ export async function POST(request: NextRequest) {
       .map((f, i) => `Fiche ${i + 1} - ${f.title}:\n${f.summary}\nPoints cles: ${(f.key_points as string[]).join(', ')}`)
       .join('\n\n')
 
-    // Contexte SM-2 — optionnel, ne bloque jamais le chat
     let sm2Context = ''
     try {
       const allCards = flashcards || []
@@ -128,7 +116,6 @@ export async function POST(request: NextRequest) {
         ? Math.round((allCards.reduce((s, c) => s + (c.mastery_level ?? 0), 0) / allCards.length) * 20)
         : 0
       const hasBlocage = allCards.some(c => (c.consecutive_errors ?? 0) >= 2)
-
       const flashcardIds = allCards.map(c => c.id).filter(Boolean)
       let errorLines = 'Aucune'
 
@@ -153,12 +140,12 @@ export async function POST(request: NextRequest) {
 
       sm2Context = [
         '[CONTEXTE APPRENANT]',
-        `- Niveau de maîtrise global : ${masteryAvg}%`,
-        `- Blocages actuels : ${hasBlocage ? 'Oui - privilégier explications par étapes' : 'Non - aller à l\'essentiel'}`,
-        `- Erreurs récurrentes : ${errorLines}`,
+        `- Niveau de maitrise global : ${masteryAvg}%`,
+        `- Blocages actuels : ${hasBlocage ? 'Oui - privilegier explications par etapes' : "Non - aller a l'essentiel"}`,
+        `- Erreurs recurrentes : ${errorLines}`,
         '',
-        'Si l\'élève semble bloqué, propose spontanément un mini-quiz ou une reformulation plus simple.',
-        'Si l\'élève demande un quiz, génère 3 questions sous forme de message avec type quiz_suggestion.',
+        "Si l'eleve semble bloque, propose spontanement un mini-quiz ou une reformulation plus simple.",
+        "Si l'eleve demande un quiz, genere 3 questions sous forme de message avec type quiz_suggestion.",
         '',
       ].join('\n')
     } catch { /* contexte SM-2 optionnel */ }
@@ -167,8 +154,8 @@ export async function POST(request: NextRequest) {
 
     const systemPrompt = [
       sm2Context,
-      'Tu es un assistant pedagogique pour un eleve de college/lycee.',
-      'Tu reponds aux questions sur ce cours. Utilise le contenu du cours en priorite, et tes connaissances generales en complement si besoin.',
+      "Tu es un assistant pedagogique pour un eleve de college/lycee.",
+      "Tu reponds aux questions sur ce cours. Utilise le contenu du cours en priorite, et tes connaissances generales en complement si besoin.",
       '',
       `COURS : ${course.title} (${course.subject})`,
       '---',
@@ -182,7 +169,7 @@ export async function POST(request: NextRequest) {
       'REGLES :',
       '- Reponds en francais, de facon claire et adaptee a un eleve de 10-17 ans.',
       '- Sois concis (3-5 phrases max sauf si la question demande plus).',
-      '- Si la question n a rien a voir avec le cours, reponds quand meme mais precise que ce n est pas dans le cours.',
+      "- Si la question n a rien a voir avec le cours, reponds quand meme mais precise que ce n est pas dans le cours.",
       '- Utilise des exemples concrets quand possible.',
       '- Ne dis jamais "selon le cours" ou "d apres le document", reponds naturellement.',
       '- N utilise JAMAIS de formatage markdown. Pas de double etoile, pas d etoile, pas de diese, pas de backtick. Ecris en texte brut uniquement.',
@@ -208,24 +195,22 @@ export async function POST(request: NextRequest) {
       .map((b) => (b as { type: 'text'; text: string }).text)
       .join('')
 
-    // Détecter le type
     const detectedType: MessageType =
       /Question 1|Q1\b/i.test(answer) ? 'quiz_suggestion'
       : /erreur|confond|confus|mal compris/i.test(answer) ? 'error_insight'
       : 'text'
 
-    // Persister en fire & forget
     const now = new Date().toISOString()
     const updatedMessages: PersistedMessage[] = [
       ...resolvedHistory,
-      { role: 'user', content: question, type: 'text', timestamp: now },
-      { role: 'assistant', content: answer, type: detectedType, timestamp: now },
+      { role: 'user' as const, content: String(question), type: 'text' as MessageType, timestamp: now },
+      { role: 'assistant' as const, content: answer, type: detectedType, timestamp: now },
     ].slice(-10)
 
-    supabase.from('chat_sessions').upsert(
+    void (async () => { await supabase.from('chat_sessions').upsert(
       { user_id: user.id, course_id: courseId, messages: updatedMessages, updated_at: now },
       { onConflict: 'user_id,course_id' }
-    ).catch(() => {})
+    ) })().catch(() => {})
 
     return NextResponse.json({ answer, type: detectedType })
   } catch (error: unknown) {

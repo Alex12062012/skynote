@@ -26,10 +26,6 @@ const SUGGESTIONS = [
   'Résume ce cours',
 ]
 
-// ============================================================
-// Bulle assistant selon type
-// ============================================================
-
 function AssistantBubble({ message }: { message: Message }) {
   const type = message.type ?? 'text'
 
@@ -82,10 +78,6 @@ function AssistantBubble({ message }: { message: Message }) {
   )
 }
 
-// ============================================================
-// Composant principal
-// ============================================================
-
 export function CourseChat({ courseId, courseTitle, isPremium }: CourseChatProps) {
   const [open, setOpen] = useState(false)
   const [messages, setMessages] = useState<Message[]>([])
@@ -105,7 +97,6 @@ export function CourseChat({ courseId, courseTitle, isPremium }: CourseChatProps
     if (open && inputRef.current) inputRef.current.focus()
   }, [open])
 
-  // Charger historique persisté à l'ouverture (une seule fois)
   useEffect(() => {
     if (!open || historyLoaded || messages.length > 0) return
     setHistoryLoaded(true)
@@ -122,12 +113,10 @@ export function CourseChat({ courseId, courseTitle, isPremium }: CourseChatProps
   async function handleSend() {
     const q = input.trim()
     if (!q || loading) return
-
     const userMsg: Message = { role: 'user', content: q, type: 'text', timestamp: new Date().toISOString() }
     setMessages(prev => [...prev, userMsg])
     setInput('')
     setLoading(true)
-
     try {
       const res = await fetch('/api/chat', {
         method: 'POST',
