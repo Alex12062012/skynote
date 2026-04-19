@@ -8,8 +8,9 @@ import { SourceTypeTabs } from './SourceTypeTabs'
 import { VoiceRecorder } from './VoiceRecorder'
 import { FileDropzone } from './FileDropzone'
 import { createCourse } from '@/lib/supabase/course-actions'
-import { X, AlertTriangle, Camera, List, Plus, Folder, Check } from 'lucide-react'
+import { X, AlertTriangle, Camera, List, Plus, Folder, Check, Globe } from 'lucide-react'
 import { useI18n } from '@/lib/i18n/context'
+import { CONTENT_LANGUAGES } from '@/lib/ai/prompts'
 
 type SourceType = 'text' | 'photo' | 'list' | 'vocal'
 
@@ -34,6 +35,7 @@ export function CreateCourseForm({
   const [subject, setSubject] = useState('')
   const [selectedFolderId, setSelectedFolderId] = useState(folderId || '')
   const [sourceType, setSourceType] = useState<SourceType>('text')
+  const [contentLang, setContentLang] = useState('auto')
   const [textContent, setTextContent] = useState('')
   const [file, setFile] = useState<File | null>(null)
   const [voiceTranscript, setVoiceTranscript] = useState('')
@@ -178,7 +180,7 @@ export function CreateCourseForm({
       fetch('/api/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ courseId }),
+        body: JSON.stringify({ courseId, contentLang }),
       }).catch(console.error)
 
       router.push(`/courses/${courseId}`)
@@ -302,6 +304,27 @@ export function CreateCourseForm({
           </div>
         ) : (
           <SubjectSelect value={subject} onChange={setSubject} error={errors.subject} />
+        )}
+
+        {/* Langue des fiches generees — cachee pour quiz liste */}
+        {sourceType !== 'list' && (
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <Globe className="h-4 w-4 text-text-tertiary dark:text-text-dark-tertiary" />
+              <span className="font-body text-[13px] font-medium text-text-secondary dark:text-text-dark-secondary whitespace-nowrap">
+                Langue des fiches
+              </span>
+            </div>
+            <select
+              value={contentLang}
+              onChange={(e) => setContentLang(e.target.value)}
+              className="flex-1 h-9 appearance-none rounded-input border border-sky-border bg-sky-surface px-3 font-body text-[13px] text-text-main focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/15 dark:border-night-border dark:bg-night-surface dark:text-text-dark-main dark:focus:border-brand-dark"
+            >
+              {CONTENT_LANGUAGES.map((l) => (
+                <option key={l.code} value={l.code}>{l.label}</option>
+              ))}
+            </select>
+          </div>
         )}
 
         <SourceTypeTabs value={sourceType} onChange={handleSourceTypeChange} vocalEnabled={true} />

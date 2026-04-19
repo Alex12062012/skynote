@@ -1,6 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk'
 import {
-  FLASHCARD_SYSTEM_PROMPT,
+  getFlashcardSystemPrompt,
   QCM_SYSTEM_PROMPT,
   getQcmSystemPrompt,
   buildFlashcardPrompt,
@@ -62,12 +62,13 @@ const MAX_FLASHCARDS = 6
 export async function generateFlashcards(
   courseTitle: string,
   subject: string,
-  content: string
+  content: string,
+  lang?: string
 ): Promise<GeneratedFlashcard[]> {
   const message = await anthropic.messages.create({
     model: 'claude-sonnet-4-6',
     max_tokens: 2048,
-    system: FLASHCARD_SYSTEM_PROMPT,
+    system: getFlashcardSystemPrompt(lang),
     messages: [{ role: 'user', content: buildFlashcardPrompt(courseTitle, subject, content) }],
   })
 
@@ -161,6 +162,5 @@ export async function generateQcmQuestions(
       JSON.stringify(parsed.questions[0] || {}).slice(0, 400)
     )
   }
-
   return filtered.slice(0, 5)
 }

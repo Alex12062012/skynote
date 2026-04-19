@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { courseId } = body
+    const { courseId, contentLang } = body
 
     if (!courseId || typeof courseId !== 'string') {
       return NextResponse.json({ error: 'courseId manquant' }, { status: 400 })
@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
       .eq('id', courseId)
 
     waitUntil(
-      processCourse(courseId).catch((err) => {
+      processCourse(courseId, contentLang).catch((err) => {
         console.error('[API /generate] Pipeline error:', err)
       })
     )

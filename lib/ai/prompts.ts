@@ -4,12 +4,32 @@
  * Les fiches et QCM sont generes dans la langue du contenu du cours
  */
 
-export const FLASHCARD_SYSTEM_PROMPT = `Tu es un assistant pedagogique pour eleves de college et lycee (10-17 ans).
+export const CONTENT_LANGUAGES: { code: string; label: string }[] = [
+  { code: 'auto', label: 'Auto (langue du cours)' },
+  { code: 'fr', label: 'Français' },
+  { code: 'en', label: 'English' },
+  { code: 'es', label: 'Español' },
+  { code: 'de', label: 'Deutsch' },
+  { code: 'it', label: 'Italiano' },
+  { code: 'pt', label: 'Português' },
+  { code: 'ar', label: 'العربية' },
+  { code: 'ja', label: '日本語' },
+  { code: 'zh', label: '中文' },
+]
+
+export function getFlashcardSystemPrompt(lang?: string): string {
+  const langRule = (!lang || lang === 'auto')
+    ? `REGLE DE LANGUE CRUCIALE :
+- DETECTE automatiquement la langue du contenu du cours fourni.
+- Genere les fiches DANS LA MEME LANGUE que le contenu du cours.`
+    : `REGLE DE LANGUE CRUCIALE :
+- Genere les fiches OBLIGATOIREMENT en : ${CONTENT_LANGUAGES.find(l => l.code === lang)?.label ?? lang}.
+- Peu importe la langue du cours source, les fiches doivent etre dans cette langue.`
+
+  return `Tu es un assistant pedagogique pour eleves de college et lycee (10-17 ans).
 Tu transformes un cours en fiches de revision.
 
-REGLE DE LANGUE CRUCIALE :
-- DETECTE automatiquement la langue du contenu du cours fourni.
-- Genere les fiches DANS LA MEME LANGUE que le contenu du cours.
+${langRule}
 
 CONTRAINTES STRICTES - toute violation rend la reponse invalide :
 1. Reponds UNIQUEMENT en JSON valide. Pas de markdown, pas de backticks, pas de texte avant ou apres le JSON.
@@ -35,9 +55,11 @@ FORMAT JSON EXACT :
   ]
 }
 
-RAPPEL : Idealement 4 fiches, jusqu'a 6 si vraiment necessaire. 3 key_points par fiche, pas plus. Aucun doublon. TOUT DANS LA LANGUE DU COURS.`
+RAPPEL : Idealement 4 fiches, jusqu'a 6 si vraiment necessaire. 3 key_points par fiche, pas plus. Aucun doublon. TOUT DANS LA LANGUE SPECIFIEE.`
+}
 
-export const FLASHCARD_SYSTEM_PROMPT_UNUSED = FLASHCARD_SYSTEM_PROMPT
+// Compat : sans lang = auto-detect
+export const FLASHCARD_SYSTEM_PROMPT = getFlashcardSystemPrompt()
 
 export type QcmDifficulty = 'peaceful' | 'easy' | 'medium' | 'hard'
 
@@ -87,6 +109,37 @@ CONTRAINTES STRICTES :
 FORMAT JSON EXACT :
 {
   "questions": [
+    {
+      "question": "La question posee a l'eleve ?",
+      "options": ["Option A", "Option B", "Option C", "Option D"],
+      "correct_index": 0,
+      "explanation": "Explication courte de pourquoi c'est la bonne reponse."
+    }
+  ]
+}`
+}
+
+export function buildFlashcardPrompt(courseTitle: string, subject: string, content: string): string {
+  return `MATIERE : ${subject}
+TITRE DU COURS : ${courseTitle}
+
+CONTENU DU COURS :
+${content}`
+}
+
+export function buildQcmPrompt(flashcardTitle: string, summary: string, keyPoints: string[]): string {
+  return `FICHE : ${flashcardTitle}
+
+RESUME : ${summary}
+
+POINTS CLES :
+${keyPoints.map((p, i) => `${i + 1}. ${p}`).join('\n')}
+
+Genere 5 questions QCM basees sur cette fiche.`
+}
+
+// Legacy exports pour la compatibilite
+export const QCM_SYSTEM_PROMPT = getQcmSystemPrompt('easy')
     {
       "question": "La question posee a l'eleve ?",
       "options": ["Option A", "Option B", "Option C", "Option D"],

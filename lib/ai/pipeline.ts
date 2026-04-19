@@ -9,7 +9,7 @@ const ALL_DIFFICULTIES: QcmDifficulty[] = ['peaceful', 'easy', 'medium', 'hard']
  * Les QCM restent en qcm_status='processing' pour etre generes en arriere-plan.
  * Rapide : 1 seul appel Claude (~15s).
  */
-export async function processCourse(courseId: string): Promise<void> {
+export async function processCourse(courseId: string, contentLang?: string): Promise<void> {
   const supabase = await createClient()
 
   const { count: existingFlashcards } = await supabase
@@ -48,7 +48,7 @@ export async function processCourse(courseId: string): Promise<void> {
       .update({ status: 'processing', progress: 10 })
       .eq('id', courseId)
 
-    const flashcardsData = await generateFlashcards(course.title, course.subject, content)
+    const flashcardsData = await generateFlashcards(course.title, course.subject, content, contentLang)
 
     await supabase
       .from('courses')
