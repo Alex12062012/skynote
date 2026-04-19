@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { usePathname, useSearchParams } from 'next/navigation'
 import { useState, Suspense } from 'react'
-import { Target, LayoutDashboard, Users, Menu, X, Tag, BookOpen, Key, CreditCard, ShoppingBag } from 'lucide-react'
+import { Trophy, LayoutDashboard, Users, Menu, X, BookOpen, Key, CreditCard, ShoppingBag } from 'lucide-react'
 import { SkyCoin } from '@/components/ui/SkyCoin'
 import { CoinCounter } from '@/components/ui/CoinCounter'
 import { ThemeToggle } from '@/components/ui/ThemeToggle'
@@ -30,7 +30,7 @@ function getNavLinks(role: string, t: (k: string) => string, isBetaEnabled: bool
 
   const links: NavLink[] = [
     { href: '/dashboard', label: t('nav.home'), icon: LayoutDashboard },
-    { href: '/objectives', label: t('nav.objectives'), icon: Target },
+    { href: '/leaderboard', label: 'Classement', icon: Trophy },
   ]
   // Toujours afficher la boutique (pricing masqué)
   links.push({ href: '/boutique', label: 'Boutique', icon: ShoppingBag })
