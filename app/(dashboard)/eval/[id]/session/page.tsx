@@ -4,10 +4,12 @@ import { useState, useEffect, useTransition } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { getTodayCards } from '@/lib/supabase/eval-actions'
 import { submitReview } from '@/lib/supabase/review-actions'
+import { triggerErrorAnalysis } from '@/lib/supabase/error-analysis-actions'
 import { createClient } from '@/lib/supabase/client'
 import { GRADE_COINS } from '@/lib/sm2'
 import type { SM2Grade } from '@/lib/sm2'
-import { CheckCircle, Coins, RotateCcw, ChevronRight, Lightbulb } from 'lucide-react'
+import type { ErrorAnalysis } from '@/lib/supabase/error-analysis-actions'
+import { CheckCircle, Coins, RotateCcw, ChevronRight, Lightbulb, AlertCircle, BookOpen, Zap, Crown } from 'lucide-react'
 
 type CardRow = { id: string; title: string; summary: string }
 
@@ -30,6 +32,8 @@ export default function EvalSessionPage() {
   const [coinsEarned, setCoinsEarned] = useState(0)
   const [done, setDone] = useState(false)
   const [isPending, startTransition] = useTransition()
+  const [errorAnalysis, setErrorAnalysis] = useState<ErrorAnalysis | null>(null)
+  const [quotaExceeded, setQuotaExceeded] = useState(false)
 
   useEffect(() => {
     async function load() {
@@ -61,9 +65,20 @@ export default function EvalSessionPage() {
     const card = cards[index]
     if (!card) return
 
+    setErrorAnalysis(null)
+    setQuotaExceeded(false)
+
     startTransition(async () => {
       try {
         await submitReview(card.id, grade)
+
+        // Analyse d'erreur en arrière-plan si grade = 0 (again)
+        if (grade === 0) {
+          triggerErrorAnalysis(card.id).then(result => {
+            if (result.status === 'ok') setErrorAnalysis(result.analysis)
+            else if (result.status === 'quota_exceeded') setQuotaExceeded(true)
+          }).catch(() => {})
+        }
       } finally {
         setCoinsEarned(prev => prev + GRADE_COINS[grade])
         if (index + 1 >= cards.length) {
@@ -155,7 +170,7 @@ export default function EvalSessionPage() {
         <div
           className="relative w-full max-w-lg cursor-pointer"
           style={{ perspective: '1000px' }}
-          onClick={() => !flipped && setFlipped(true)}
+          onClick={() => { if (!flipped) { setFlipped(true); setErrorAnalysis(null); setQuotaExceeded(false) } }}
         >
           <div
             className="relative transition-transform duration-500"
@@ -198,6 +213,46 @@ export default function EvalSessionPage() {
                 )}
               </button>
             ))}
+          </div>
+        )}
+
+        {/* Panneau analyse d'erreur */}
+        {errorAnalysis && (
+          <div className="mt-4 w-full max-w-lg rounded-card border border-red-500/20 bg-red-500/5 p-4 flex flex-col gap-3">
+            <div className="flex items-center gap-2">
+              <AlertCircle className="h-4 w-4 text-red-400 shrink-0" />
+              <p className="text-sm font-semibold text-red-300">Analyse de ton erreur</p>
+            </div>
+            <div className="grid gap-2 text-sm">
+              <div className="flex gap-2">
+                <Zap className="h-4 w-4 text-orange-400 shrink-0 mt-0.5" />
+                <p className="text-text-secondary dark:text-dark-secondary">{errorAnalysis.error}</p>
+              </div>
+              <div className="flex gap-2">
+                <Lightbulb className="h-4 w-4 text-yellow-400 shrink-0 mt-0.5" />
+                <p className="text-text-secondary dark:text-dark-secondary">{errorAnalysis.explanation}</p>
+              </div>
+              <div className="flex gap-2">
+                <BookOpen className="h-4 w-4 text-brand shrink-0 mt-0.5" />
+                <p className="text-text-secondary dark:text-dark-secondary"><span className="font-medium text-main dark:text-dark-main">Règle :</span> {errorAnalysis.rule}</p>
+              </div>
+              <div className="rounded-lg bg-white/5 px-3 py-2 text-xs text-text-tertiary dark:text-dark-tertiary italic">
+                {errorAnalysis.example}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Quota dépassé */}
+        {quotaExceeded && (
+          <div className="mt-4 w-full max-w-lg rounded-card border border-brand/20 bg-brand/5 p-4 flex items-center gap-3">
+            <Crown className="h-5 w-5 text-brand shrink-0" />
+            <div>
+              <p className="text-sm font-semibold text-main dark:text-dark-main">Limite quotidienne atteinte</p>
+              <p className="text-xs text-text-secondary dark:text-dark-secondary mt-0.5">
+                Passe en Premium pour des analyses illimitées.
+              </p>
+            </div>
           </div>
         )}
       </div>
