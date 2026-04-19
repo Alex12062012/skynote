@@ -65,6 +65,8 @@ export function SignupForm() {
           birth_date: birthDate,
           grade_level: gradeLevel || null,
           parent_email: isMinor ? parentEmail.trim() : null,
+          terms_accepted_at: new Date().toISOString(),
+          terms_version: '1.2',
         },
       },
     })
@@ -80,7 +82,13 @@ export function SignupForm() {
           <div className="rounded-input bg-brand-soft/30 border border-brand/10 p-4 dark:bg-brand-dark-soft/30 dark:border-brand-dark/10">
             <p className="font-body text-[13px] text-brand dark:text-brand-dark font-medium mb-1">Code envoye au parent</p>
             <p className="font-body text-[12px] text-text-secondary dark:text-text-dark-secondary">
-              Un code a 6 chiffres a ete envoye a <strong>{parentEmail}</strong>. En donnant ce code a votre enfant pour qu'il se connecte, vous acceptez les <a href="/terms" target="_blank" className="text-brand hover:underline dark:text-brand-dark">CGU</a> et la <a href="/privacy" target="_blank" className="text-brand hover:underline dark:text-brand-dark">politique de confidentialite</a> de Skynote.
+              Un code à 6 chiffres a été envoyé à <strong>{parentEmail}</strong>. En transmettant ce code à votre enfant, vous autorisez son inscription et acceptez les{' '}
+              <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-brand hover:underline dark:text-brand-dark">CGU</a>
+              , la{' '}
+              <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-brand hover:underline dark:text-brand-dark">politique de confidentialité</a>
+              {' '}et les{' '}
+              <a href="/mentions-legales" target="_blank" rel="noopener noreferrer" className="text-brand hover:underline dark:text-brand-dark">mentions légales</a>
+              {' '}de Skynote au nom de votre enfant (art. 8 RGPD).
             </p>
           </div>
         )}
@@ -142,11 +150,13 @@ export function SignupForm() {
               <input type="checkbox" checked={rgpdAccepted} onChange={(e) => setRgpdAccepted(e.target.checked)}
                 className="mt-0.5 h-4 w-4 flex-shrink-0 rounded border-sky-border accent-brand dark:accent-brand-dark" />
               <span className="font-body text-[13px] text-text-secondary dark:text-text-dark-secondary leading-relaxed">
-                J'ai l'autorisation de mes parents et j'accepte les{' '}
-                <a href="/terms" target="_blank" className="text-brand hover:underline dark:text-brand-dark">CGU</a>
-                {' '}et la{' '}
-                <a href="/privacy" target="_blank" className="text-brand hover:underline dark:text-brand-dark">politique de confidentialite</a>
-                {' '}de Skynote.
+                J'ai obtenu l'autorisation d'un parent ou représentant légal et j'accepte les{' '}
+                <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-brand hover:underline dark:text-brand-dark">CGU</a>
+                {', '}la{' '}
+                <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-brand hover:underline dark:text-brand-dark">politique de confidentialité</a>
+                {' '}et les{' '}
+                <a href="/mentions-legales" target="_blank" rel="noopener noreferrer" className="text-brand hover:underline dark:text-brand-dark">mentions légales</a>
+                {' '}de Skynote (v1.2).
               </span>
             </label>
           ) : (
@@ -154,11 +164,13 @@ export function SignupForm() {
               <input type="checkbox" checked={rgpdAccepted} onChange={(e) => setRgpdAccepted(e.target.checked)}
                 className="mt-0.5 h-4 w-4 flex-shrink-0 rounded border-sky-border accent-brand dark:accent-brand-dark" />
               <span className="font-body text-[13px] text-text-secondary dark:text-text-dark-secondary leading-relaxed">
-                J'accepte les{' '}
-                <a href="/terms" target="_blank" className="text-brand hover:underline dark:text-brand-dark">CGU</a>
-                {' '}et la{' '}
-                <a href="/privacy" target="_blank" className="text-brand hover:underline dark:text-brand-dark">politique de confidentialite</a>
-                {' '}de Skynote.
+                J'ai lu et j'accepte les{' '}
+                <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-brand hover:underline dark:text-brand-dark">CGU</a>
+                {', '}la{' '}
+                <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-brand hover:underline dark:text-brand-dark">politique de confidentialité</a>
+                {' '}et les{' '}
+                <a href="/mentions-legales" target="_blank" rel="noopener noreferrer" className="text-brand hover:underline dark:text-brand-dark">mentions légales</a>
+                {' '}de Skynote (v1.2).
               </span>
             </label>
           )}
