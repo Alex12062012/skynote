@@ -104,9 +104,7 @@ async function checkStreakObjective(userId: string, currentStreak: number): Prom
     })
   }
 
-  if (isCompleted && !wasCompleted) {
-    await awardCoins(userId, obj.reward_coins, `Objectif complété : ${obj.title}`)
-  }
+  // Ne pas créditer ici — les coins sont versés uniquement via claimObjectiveReward
 }
 
 // ============================================================
@@ -159,7 +157,7 @@ export async function checkMasteryObjective(courseId: string, userId: string): P
     })
   }
 
-  await awardCoins(userId, obj.reward_coins, `Objectif complété : ${obj.title}`)
+  // Ne pas créditer ici — les coins sont versés uniquement via claimObjectiveReward
   revalidatePath('/objectives')
 }
 

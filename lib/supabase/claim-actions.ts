@@ -40,26 +40,25 @@ export async function claimObjectiveReward(
     .update({ claimed: true, claimed_at: new Date().toISOString() })
     .eq('id', userObj.id)
 
-  // Créditer les coins
+  // Créditer via RPC atomique (jamais de update direct sur sky_coins)
+  await supabase.rpc('increment_coins', {
+    p_user_id: user.id,
+    p_amount: obj.reward_coins,
+  })
+
+  await supabase.from('coin_transactions').insert({
+    user_id: user.id,
+    amount: obj.reward_coins,
+    reason: `Récompense réclamée : ${obj.title}`,
+  })
+
   const { data: profile } = await supabase
     .from('profiles')
     .select('sky_coins')
     .eq('id', user.id)
     .single()
 
-  const currentCoins = profile?.sky_coins ?? 0
-  const newBalance = currentCoins + obj.reward_coins
-
-  await supabase
-    .from('profiles')
-    .update({ sky_coins: newBalance })
-    .eq('id', user.id)
-
-  await supabase.from('coin_transactions').insert({
-    user_id: user.id,
-    amount: obj.reward_coins,
-    reason: `Récompense réclamée : ${obj.title} ${obj.icon}`,
-  })
+  const newBalance = profile?.sky_coins ?? 0
 
   revalidatePath('/objectives')
   revalidatePath('/dashboard')
