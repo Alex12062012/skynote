@@ -369,18 +369,11 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
             {streak > 1 ? `${streak} jours de suite !` : 'Pret a reviser ?'}
           </p>
         </div>
-        <div className="flex gap-2 w-full sm:w-auto">
-          <Link href="/eval/new">
-            <Button size="lg" className="gap-2 w-full sm:w-auto">
-              <Plus className="h-5 w-5" />Nouvelle éval
-            </Button>
-          </Link>
-          <Link href="/courses/new">
-            <Button size="lg" className="gap-2 w-full sm:w-auto">
-              <Plus className="h-5 w-5" />Nouveau cours
-            </Button>
-          </Link>
-        </div>
+        <Link href="/courses/new">
+          <Button size="lg" className="gap-2 w-full sm:w-auto">
+            <Plus className="h-5 w-5" />Nouveau cours
+          </Button>
+        </Link>
       </div>
 
       {needsPseudo && (
