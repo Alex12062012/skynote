@@ -4,7 +4,9 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdminClient } from '@supabase/supabase-js'
 import { getDashboardStats, getProfileWithCoins } from '@/lib/supabase/queries'
+import { getReviewStats } from '@/lib/supabase/review-actions'
 import { StatsBar } from '@/components/dashboard/StatsBar'
+import { ReviewBanner } from '@/components/dashboard/ReviewBanner'
 import { CourseCard } from '@/components/dashboard/CourseCard'
 import { Button } from '@/components/ui/Button'
 import { EmptyState } from '@/components/ui/EmptyState'
@@ -25,9 +27,10 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const [stats, profile] = await Promise.all([
+  const [stats, profile, reviewStats] = await Promise.all([
     getDashboardStats(user.id),
     getProfileWithCoins(user.id),
+    getReviewStats(),
   ])
 
   const { count: totalCourses } = await supabase
@@ -379,7 +382,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
 
       <StatsBar coursesCount={totalCourses ?? 0} qcmCount={totalQcm ?? 0} streak={streak} coins={coins} />
 
-      {/* Banner premium masqué */}
+      <ReviewBanner dueCount={reviewStats.dueCount} />
 
       <div>
         <div className="mb-4 flex items-center justify-between">
