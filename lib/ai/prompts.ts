@@ -140,34 +140,3 @@ Genere 5 questions QCM basees sur cette fiche.`
 
 // Legacy exports pour la compatibilite
 export const QCM_SYSTEM_PROMPT = getQcmSystemPrompt('easy')
-    {
-      "question": "La question posee a l'eleve ?",
-      "options": ["Option A", "Option B", "Option C", "Option D"],
-      "correct_index": 0,
-      "explanation": "Explication courte de pourquoi c'est la bonne reponse."
-    }
-  ]
-}`
-}
-
-export function buildFlashcardPrompt(courseTitle: string, subject: string, content: string): string {
-  return `MATIERE : ${subject}
-TITRE DU COURS : ${courseTitle}
-
-CONTENU DU COURS :
-${content}`
-}
-
-export function buildQcmPrompt(flashcardTitle: string, summary: string, keyPoints: string[]): string {
-  return `FICHE : ${flashcardTitle}
-
-RESUME : ${summary}
-
-POINTS CLES :
-${keyPoints.map((p, i) => `${i + 1}. ${p}`).join('\n')}
-
-Genere 5 questions QCM basees sur cette fiche.`
-}
-
-// Legacy exports pour la compatibilite
-export const QCM_SYSTEM_PROMPT = getQcmSystemPrompt('easy')
