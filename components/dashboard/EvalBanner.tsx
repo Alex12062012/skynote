@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { Calendar, ChevronRight, Plus, Brain } from 'lucide-react'
+import { Calendar, ChevronRight, Brain } from 'lucide-react'
 import type { Evaluation } from '@/lib/supabase/eval-actions'
 
 function daysLeft(examDate: string) {
@@ -47,13 +47,6 @@ export function EvalBanner({ evals }: { evals: Evaluation[] }) {
         )
       })}
 
-      <Link
-        href="/eval/new"
-        className="flex items-center gap-2 rounded-card border border-dashed border-sky-border dark:border-night-border px-4 py-3 text-sm text-text-tertiary dark:text-dark-tertiary hover:border-brand/40 hover:text-brand transition"
-      >
-        <Plus className="h-4 w-4" />
-        Nouvelle évaluation
-      </Link>
     </div>
   )
 }
