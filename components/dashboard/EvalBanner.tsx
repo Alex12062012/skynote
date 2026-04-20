@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { Calendar, ChevronRight, Brain, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
+import { useI18n } from '@/lib/i18n/context'
 import type { Evaluation } from '@/lib/supabase/eval-actions'
 
 function daysLeft(examDate: string) {
@@ -16,6 +17,7 @@ function formatDate(iso: string) {
 }
 
 export function EvalBanner({ evals }: { evals: Evaluation[] }) {
+  const { t } = useI18n()
   return (
     <div className="flex flex-col gap-2">
       {evals.map(ev => {
@@ -40,7 +42,7 @@ export function EvalBanner({ evals }: { evals: Evaluation[] }) {
               <p className={`text-sm font-semibold truncate ${textColor}`}>{ev.name}</p>
               <p className="text-xs text-text-tertiary dark:text-dark-tertiary flex items-center gap-1 mt-0.5">
                 <Calendar className="h-3 w-3" />
-                {formatDate(ev.exam_date)} · {j > 0 ? `J-${j}` : 'Aujourd\'hui'}
+                {formatDate(ev.exam_date)} · {j > 0 ? `J-${j}` : t('eval.today')}
               </p>
             </div>
             <ChevronRight className={`h-4 w-4 shrink-0 opacity-60 ${textColor}`} />
@@ -50,7 +52,7 @@ export function EvalBanner({ evals }: { evals: Evaluation[] }) {
 
       <Link href="/eval/new" className="w-full">
         <Button size="lg" className="gap-2 w-full">
-          <Plus className="h-5 w-5" />Nouvelle évaluation
+          <Plus className="h-5 w-5" />{t('eval.newEval')}
         </Button>
       </Link>
     </div>

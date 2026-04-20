@@ -329,7 +329,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
             {greeting}, {firstName}
           </h1>
           <p className="mt-1 font-body text-[15px] text-text-secondary dark:text-text-dark-secondary">
-            {streak > 1 ? `${streak} jours de suite !` : 'Pret a reviser ?'}
+            {streak > 1 ? t('dash.streakMsg').replace('{n}', String(streak)) : t('dash.readyToStudy')}
           </p>
         </div>
 
@@ -370,12 +370,12 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
             {greeting}, {firstName}
           </h1>
           <p className="mt-1 font-body text-[15px] text-text-secondary dark:text-text-dark-secondary">
-            {streak > 1 ? `${streak} jours de suite !` : 'Pret a reviser ?'}
+            {streak > 1 ? t('dash.streakMsg').replace('{n}', String(streak)) : t('dash.readyToStudy')}
           </p>
         </div>
         <Link href="/courses/new">
           <Button size="lg" className="gap-2 w-full sm:w-auto">
-            <Plus className="h-5 w-5" />Nouveau cours
+            <Plus className="h-5 w-5" />{t('dash.newCourse')}
           </Button>
         </Link>
       </div>
@@ -390,15 +390,15 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
 
       <div>
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="font-display text-h3 text-text-main dark:text-text-dark-main">Cours recents</h2>
+          <h2 className="font-display text-h3 text-text-main dark:text-text-dark-main">{t('dash.recentCourses')}</h2>
           <Link href="/courses" className="flex items-center gap-1 font-body text-[14px] text-brand hover:underline dark:text-brand-dark">
-            Voir tout <ArrowRight className="h-4 w-4" />
+            {t('dash.viewAll')} <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
         {stats.recentCourses.length === 0 ? (
-          <EmptyState icon="\uD83D\uDCDA" title="Aucun cours"
-            description="Cree ton premier cours pour reviser avec l'IA."
-            action={<Link href="/courses/new"><Button className="gap-2"><Plus className="h-4 w-4" />Creer mon premier cours</Button></Link>} />
+          <EmptyState icon="📚" title={t('dash.noCourses')}
+            description={t('dash.noCoursesDesc')}
+            action={<Link href="/courses/new"><Button className="gap-2"><Plus className="h-4 w-4" />{t('dash.createFirst')}</Button></Link>} />
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {stats.recentCourses.map((course) => (<CourseCard key={course.id} {...course} />))}
@@ -436,7 +436,7 @@ async function ObjectivesSummary({ userId }: { userId: string }) {
       <div className="mb-4 flex items-center justify-between">
         <h2 className="font-display text-h3 text-text-main dark:text-text-dark-main">{t('dash.objectivesInProgress')}</h2>
         <Link href="/objectives" className="flex items-center gap-1 font-body text-[14px] text-brand hover:underline dark:text-brand-dark">
-          Voir tout <ArrowRight className="h-4 w-4" />
+          {t('dash.viewAll')} <ArrowRight className="h-4 w-4" />
         </Link>
       </div>
       <div className="grid gap-3 sm:grid-cols-3">

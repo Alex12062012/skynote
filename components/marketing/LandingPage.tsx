@@ -303,25 +303,28 @@ function BackgroundOrbs() {
 }
 
 function PricingFree() {
+  const { t } = useI18n()
   return (
     <Link href="/signup" style={{ display: "block", marginTop: 20, textAlign: "center", fontSize: 13, fontWeight: 600, padding: "11px", borderRadius: 10, border: "1px solid #1E3A5F", color: "#94A3B8", textDecoration: "none" }}>
-      Commencer
+      {t('landing.pricing.start')}
     </Link>
   )
 }
 
 function PricingPlus() {
+  const { t } = useI18n()
   return (
     <Link href="/signup" className="sky-btn-primary" style={{ display: "block", marginTop: 20, textAlign: "center", fontSize: 13, padding: "11px", borderRadius: 10 }}>
-      S'abonner
+      {t('landing.pricing.subscribe')}
     </Link>
   )
 }
 
 function PricingFamily() {
+  const { t } = useI18n()
   return (
     <Link href="/signup" style={{ display: "block", marginTop: 20, textAlign: "center", fontSize: 13, fontWeight: 600, padding: "11px", borderRadius: 10, border: "1px solid rgba(167,139,250,0.3)", color: "#C4B5FD", textDecoration: "none" }}>
-      S'abonner
+      {t('landing.pricing.subscribe')}
     </Link>
   )
 }
