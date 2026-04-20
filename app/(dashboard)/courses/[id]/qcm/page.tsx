@@ -9,12 +9,16 @@ import { SubjectBadge } from '@/components/ui/Badge'
 import { EmptyState } from '@/components/ui/EmptyState'
 import type { Metadata } from 'next'
 import type { QcmQuestion } from '@/types/database'
+import { getServerLocale, createServerT } from '@/lib/i18n/server'
 
 interface Props { params: Promise<{ id: string }> }
 
 export const metadata: Metadata = { title: 'QCM' }
 
 export default async function QcmPage({ params }: Props) {
+  const locale = await getServerLocale()
+  const t = createServerT(locale)
+
   const { id } = await params
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -51,14 +55,14 @@ export default async function QcmPage({ params }: Props) {
           </div>
           <div>
             <h2 className="font-display text-h3 text-text-main dark:text-text-dark-main mb-2">
-              QCM en cours de génération...
+              {t('qcmPage.generating')}
             </h2>
             <p className="font-body text-[14px] text-text-secondary dark:text-text-dark-secondary max-w-sm">
-              L'IA crée tes questions. La page se met à jour automatiquement.
+              {t('qcmPage.generatingDesc')}
             </p>
           </div>
           <Link href={`/courses/${id}`} className="font-body text-[13px] text-text-secondary hover:text-text-main dark:text-text-dark-secondary transition-colors">
-            <ArrowLeft className="inline h-3.5 w-3.5 mr-1" />Retour aux fiches
+            <ArrowLeft className="inline h-3.5 w-3.5 mr-1" />{t('qcmPage.back')}
           </Link>
         </div>
       )
@@ -72,9 +76,9 @@ export default async function QcmPage({ params }: Props) {
     return (
       <div className="mx-auto max-w-2xl animate-fade-in">
         <Link href={`/courses/${id}`} className="mb-6 inline-flex items-center gap-2 font-body text-[14px] text-text-secondary hover:text-text-main dark:text-text-dark-secondary dark:hover:text-text-dark-main transition-colors">
-          <ArrowLeft className="h-4 w-4" /> Retour aux fiches
+          <ArrowLeft className="h-4 w-4" /> {t('qcmPage.back')}
         </Link>
-        <EmptyState title="Aucune fiche disponible" description="Les fiches doivent être générées avant de pouvoir faire le QCM." />
+        <EmptyState title={t('qcmPage.noFlashcards')} description={t('qcmPage.noFlashcardsDesc')} />
       </div>
     )
   }
@@ -98,7 +102,7 @@ export default async function QcmPage({ params }: Props) {
         className="mb-6 inline-flex items-center gap-2 font-body text-[14px] text-text-secondary hover:text-text-main dark:text-text-dark-secondary dark:hover:text-text-dark-main transition-colors"
       >
         <ArrowLeft className="h-4 w-4" />
-        Retour aux fiches
+        {t('qcmPage.back')}
       </Link>
 
       {/* Header */}
@@ -116,7 +120,7 @@ export default async function QcmPage({ params }: Props) {
           </span>
         </div>
         <p className="mt-2 font-body text-[14px] text-text-secondary dark:text-text-dark-secondary">
-          Réponds aux questions générées par l'IA
+          {t('qcmPage.subtitle')}
         </p>
       </div>
 

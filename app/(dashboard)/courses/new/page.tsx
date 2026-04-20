@@ -4,12 +4,16 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { CreateCourseForm } from '@/components/courses/CreateCourseForm'
 import type { Metadata } from 'next'
+import { getServerLocale, createServerT } from '@/lib/i18n/server'
 
 export const metadata: Metadata = { title: 'Nouveau cours' }
 
 interface Props { searchParams: Promise<{ folder?: string; classroom?: string }> }
 
 export default async function NewCoursePage({ searchParams }: Props) {
+  const locale = await getServerLocale()
+  const t = createServerT(locale)
+
   const params = await searchParams
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -43,12 +47,16 @@ export default async function NewCoursePage({ searchParams }: Props) {
       <Link href="/dashboard"
         className="mb-6 inline-flex items-center gap-2 font-body text-[14px] text-text-secondary hover:text-text-main dark:text-text-dark-secondary dark:hover:text-text-dark-main transition-colors">
         <ArrowLeft className="h-4 w-4" />
-        {folderName ? `Retour a ${folderName}` : 'Mes cours'}
+        {folderName ? t('newCourse.backToFolder').replace('{folder}', folderName) : t('newCourse.back')}
       </Link>
       <div className="mb-8">
-        <h1 className="font-display text-h2 text-text-main dark:text-text-dark-main">Nouveau cours</h1>
+        <h1 className="font-display text-h2 text-text-main dark:text-text-dark-main">{t('newCourse.title')}</h1>
         <p className="mt-1 font-body text-[15px] text-text-secondary dark:text-text-dark-secondary">
-          {folderName ? `Cours dans le dossier ${folderName}` : isTeacher ? "Ajoutez un cours dans un de vos dossiers" : "L'IA genere tes fiches de revision et ton QCM automatiquement"}
+          {folderName
+            ? t('newCourse.courseInFolder').replace('{folder}', folderName)
+            : isTeacher
+              ? t('newCourse.teacherSubtitle')
+              : t('newCourse.subtitle')}
         </p>
       </div>
       <div className="rounded-card-login bg-sky-surface p-6 shadow-card dark:bg-night-surface dark:shadow-card-dark">

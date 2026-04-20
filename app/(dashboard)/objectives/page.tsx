@@ -9,10 +9,14 @@ import { ClaimButton } from '@/components/objectives/ClaimButton'
 import { getReferralStats } from '@/lib/supabase/referral-actions'
 import { cn, formatDate } from '@/lib/utils'
 import type { Metadata } from 'next'
+import { getServerLocale, createServerT } from '@/lib/i18n/server'
 
 export const metadata: Metadata = { title: 'Objectifs & Sky Coins' }
 
 export default async function ObjectivesPage() {
+  const locale = await getServerLocale()
+  const t = createServerT(locale)
+
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
@@ -32,11 +36,11 @@ export default async function ObjectivesPage() {
     return (
       <div className="mx-auto max-w-2xl flex flex-col items-center justify-center py-24 text-center gap-4 animate-fade-in">
         <Lock className="h-12 w-12 text-text-secondary dark:text-text-dark-secondary" />
-        <h1 className="font-display text-h2 text-text-main dark:text-text-dark-main">Fonctionnalite bloquee</h1>
+        <h1 className="font-display text-h2 text-text-main dark:text-text-dark-main">{t('objectives.blockedTitle')}</h1>
         <p className="font-body text-[15px] text-text-secondary dark:text-text-dark-secondary max-w-sm">
           {profile.role === 'student'
-            ? 'Votre professeur a bloque cette fonctionnalite.'
-            : 'Les objectifs et Skycoins ne sont pas disponibles pour les professeurs.'}
+            ? t('objectives.blockedStudent')
+            : t('objectives.blockedTeacher')}
         </p>
       </div>
     )
@@ -53,9 +57,9 @@ export default async function ObjectivesPage() {
   return (
     <div className="mx-auto max-w-2xl flex flex-col gap-8 animate-fade-in">
       <div>
-        <h1 className="font-display text-h2 text-text-main dark:text-text-dark-main">Objectifs</h1>
+        <h1 className="font-display text-h2 text-text-main dark:text-text-dark-main">{t('objectives.title')}</h1>
         <p className="mt-1 font-body text-[14px] text-text-secondary dark:text-text-dark-secondary">
-          Complète des défis, récupère tes coins
+          {t('objectives.subtitle')}
         </p>
       </div>
 
@@ -64,7 +68,7 @@ export default async function ObjectivesPage() {
         <div className="flex items-center gap-4 flex-1">
           <SkyCoin size={64} />
           <div>
-            <p className="font-body text-label-caps text-text-tertiary dark:text-text-dark-tertiary">Ton solde</p>
+            <p className="font-body text-label-caps text-text-tertiary dark:text-text-dark-tertiary">{t('objectives.balance')}</p>
             <p className="font-display text-[44px] font-bold leading-none text-text-main dark:text-text-dark-main">{coins}</p>
             <p className="font-body text-[13px] text-text-secondary dark:text-text-dark-secondary mt-0.5">Sky Coins</p>
           </div>
@@ -73,7 +77,7 @@ export default async function ObjectivesPage() {
         {!isPremium ? (
           <div className="flex flex-col gap-2 sm:items-end">
             <div className="rounded-card-sm border border-brand/20 bg-brand-soft px-4 py-3 dark:border-brand-dark/20 dark:bg-brand-dark-soft sm:text-right">
-              <p className="font-display text-[15px] font-bold text-brand dark:text-brand-dark">Débloquer Plus</p>
+              <p className="font-display text-[15px] font-bold text-brand dark:text-brand-dark">{t('objectives.unlockPlus')}</p>
               <p className="font-body text-[13px] text-brand/70 dark:text-brand-dark/70">750 Sky Coins = 1 mois</p>
               <div className="mt-2">
                 {coins >= 750 ? (
@@ -94,7 +98,7 @@ export default async function ObjectivesPage() {
             <PlanBadge plan="premium" />
             {profile?.plan_expires_at && (
               <p className="font-body text-[12px] text-text-tertiary dark:text-text-dark-tertiary">
-                Expire le {formatDate(profile.plan_expires_at)}
+                {t('objectives.expireOn')} {formatDate(profile.plan_expires_at)}
               </p>
             )}
           </div>
@@ -110,7 +114,7 @@ export default async function ObjectivesPage() {
 
       {/* Défis */}
       <div>
-        <h2 className="mb-4 font-display text-h3 text-text-main dark:text-text-dark-main">Défis</h2>
+        <h2 className="mb-4 font-display text-h3 text-text-main dark:text-text-dark-main">{t('objectives.challenges')}</h2>
         <div className="flex flex-col gap-3">
           {objectives.map((obj: any) => {
             const uo = userObjMap.get(obj.id)
@@ -174,7 +178,7 @@ export default async function ObjectivesPage() {
                   {/* Date de completion */}
                   {claimed && uo?.completed_at && (
                     <p className="font-body text-[11px] text-success/70 dark:text-success-dark/70">
-                      Complété le {formatDate(uo.completed_at)}
+                      {t('objectives.completedOn')} {formatDate(uo.completed_at)}
                     </p>
                   )}
                 </div>
@@ -187,7 +191,7 @@ export default async function ObjectivesPage() {
       {/* Historique */}
       {transactions.length > 0 && (
         <div>
-          <h2 className="mb-4 font-display text-h3 text-text-main dark:text-text-dark-main">Historique</h2>
+          <h2 className="mb-4 font-display text-h3 text-text-main dark:text-text-dark-main">{t('objectives.history')}</h2>
           <div className="rounded-card border border-sky-border bg-sky-surface overflow-hidden dark:border-night-border dark:bg-night-surface">
             {transactions.map((tx: any, i: number) => (
               <div key={tx.id} className={cn('flex items-center justify-between px-5 py-3.5',
@@ -213,4 +217,3 @@ export default async function ObjectivesPage() {
     </div>
   )
 }
-

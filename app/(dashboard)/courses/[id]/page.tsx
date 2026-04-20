@@ -14,6 +14,7 @@ import { DeleteCourseButton } from '@/components/courses/DeleteCourseButton'
 import { SubjectBadge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { formatDate } from '@/lib/utils'
+import { getServerLocale, createServerT } from '@/lib/i18n/server'
 import type { Metadata } from 'next'
 
 interface Props { params: Promise<{ id: string }> }
@@ -28,6 +29,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function CourseDetailPage({ params }: Props) {
+  const locale = await getServerLocale()
+  const t = createServerT(locale)
   const { id } = await params
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -66,7 +69,7 @@ export default async function CourseDetailPage({ params }: Props) {
       <Link href="/courses"
         className="mb-6 inline-flex items-center gap-2 font-body text-[14px] text-text-secondary hover:text-text-main dark:text-text-dark-secondary dark:hover:text-text-dark-main transition-colors">
         <ArrowLeft className="h-4 w-4" />
-        {isStudent ? 'Cours de la classe' : 'Mes cours'}
+        {isStudent ? t('courses.classCourses') : t('courseDetail.back')}
       </Link>
 
       {/* Header */}
@@ -118,6 +121,8 @@ export default async function CourseDetailPage({ params }: Props) {
 }
 
 async function ReadyCourse({ courseId, userId, courseOwnerId, courseTitle, qcmStatus, isTeacher, isStudent }: { courseId: string; userId: string; courseOwnerId: string; courseTitle: string; qcmStatus?: string; isTeacher: boolean; isStudent: boolean }) {
+  const locale = await getServerLocale()
+  const t = createServerT(locale)
   const supabase = await createClient()
   const flashcards = await getCourseFlashcards(courseId)
 
@@ -203,6 +208,8 @@ async function ReadyCourse({ courseId, userId, courseOwnerId, courseTitle, qcmSt
 }
 
 async function TeacherCourseStats({ courseId, flashcardsCount }: { courseId: string; flashcardsCount: number }) {
+  const locale = await getServerLocale()
+  const t = createServerT(locale)
   const supabase = await createClient()
 
   // Récupérer la classe du prof
@@ -264,7 +271,7 @@ async function TeacherCourseStats({ courseId, flashcardsCount }: { courseId: str
         </div>
         <div>
           <h2 className="font-display text-[18px] font-semibold text-text-main dark:text-text-dark-main">
-            Suivi des élèves
+            {t('courseDetail.studentTracking')}
           </h2>
           <p className="font-body text-[13px] text-text-secondary dark:text-text-dark-secondary">
             {flashcardsCount} fiches · {classStudents?.length || 0} élèves
@@ -302,13 +309,13 @@ async function TeacherCourseStats({ courseId, flashcardsCount }: { courseId: str
                     </span>
                     {bestAttempt.perfect && (
                       <span className="rounded-pill bg-success/10 px-2 py-0.5 font-body text-[11px] font-medium text-success">
-                        Parfait
+                        {t('courseDetail.perfect')}
                       </span>
                     )}
                   </>
                 ) : (
                   <span className="font-body text-[12px] text-text-tertiary dark:text-text-dark-tertiary">
-                    Pas encore fait
+                    {t('courseDetail.notDoneYet')}
                   </span>
                 )}
               </div>

@@ -4,11 +4,15 @@ import { createClient } from '@/lib/supabase/server'
 import { getLeaderboard } from '@/lib/supabase/gamification-actions'
 import { LeaderboardClient } from '@/components/gamification/LeaderboardClient'
 import { PseudoModal } from '@/components/leaderboard/PseudoModal'
+import { getServerLocale, createServerT } from '@/lib/i18n/server'
 
 export const metadata: Metadata = { title: 'Classement — Skynote' }
 export const dynamic = 'force-dynamic'
 
 export default async function LeaderboardPage() {
+  const locale = await getServerLocale()
+  const t = createServerT(locale)
+
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
@@ -27,10 +31,10 @@ export default async function LeaderboardPage() {
     <div className="mx-auto max-w-2xl animate-fade-in">
       <header className="mb-6">
         <h1 className="font-display text-h2 font-black text-text-main dark:text-text-dark-main">
-          Classement
+          {t('leaderboard.title')}
         </h1>
         <p className="mt-1 font-body text-[14px] text-text-secondary dark:text-text-dark-secondary">
-          Affronte les meilleurs collecteurs de Sky Coins de Skynote.
+          {t('leaderboard.subtitle')}
         </p>
       </header>
 

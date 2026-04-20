@@ -16,11 +16,15 @@ import { PseudoModal } from '@/components/leaderboard/PseudoModal'
 import { ClassroomSetup } from '@/components/classroom/ClassroomSetup'
 import { TeacherDashboardClient } from '@/components/classroom/TeacherDashboardClient'
 import { StudentCourseFolders } from '@/components/courses/StudentCourseFolders'
+import { getServerLocale, createServerT } from '@/lib/i18n/server'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = { title: 'Tableau de bord' }
 
 export default async function DashboardPage({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
+  const locale = await getServerLocale()
+  const t = createServerT(locale)
+
   const { tab } = await searchParams
   const activeTab = tab === 'classCode' || tab === 'payment' ? tab : 'courses'
   const supabase = await createClient()
@@ -51,7 +55,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   const isStudent = (profile as any)?.role === 'student'
 
   const hour = new Date().getHours()
-  const greeting = hour < 12 ? 'Bonjour' : hour < 18 ? 'Bon apres-midi' : 'Bonsoir'
+  const greeting = hour < 12 ? t('dash.goodMorning') : hour < 18 ? t('dash.goodAfternoon') : t('dash.goodEvening')
 
   // ============================================
   // DASHBOARD PROFESSEUR
@@ -332,9 +336,9 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         <StatsBar coursesCount={totalCourses ?? 0} qcmCount={totalQcm ?? 0} streak={streak} coins={coins} />
 
         <div className="flex flex-col gap-4">
-          <h2 className="font-display text-h3 text-text-main dark:text-text-dark-main">Cours de la classe</h2>
+          <h2 className="font-display text-h3 text-text-main dark:text-text-dark-main">{t('dash.classCourses')}</h2>
           {foldersWithCourses.length === 0 ? (
-            <EmptyState icon={<BookOpen className="h-10 w-10 text-text-tertiary dark:text-text-dark-tertiary" />} title="Aucun cours" description="Ton professeur n'a pas encore ajouté de cours." />
+            <EmptyState icon={<BookOpen className="h-10 w-10 text-text-tertiary dark:text-text-dark-tertiary" />} title={t('courses.noCoursesTitle')} description={t('courses.noCoursesStudentDesc')} />
           ) : (
             <StudentCourseFolders folders={foldersWithCourses} />
           )}
@@ -408,6 +412,8 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
 }
 
 async function ObjectivesSummary({ userId }: { userId: string }) {
+  const locale = await getServerLocale()
+  const t = createServerT(locale)
   const supabase = await createClient()
   const { data: objectives } = await supabase.from('objectives').select('*')
   const { data: userObjectives } = await supabase
@@ -428,7 +434,7 @@ async function ObjectivesSummary({ userId }: { userId: string }) {
   return (
     <div>
       <div className="mb-4 flex items-center justify-between">
-        <h2 className="font-display text-h3 text-text-main dark:text-text-dark-main">Objectifs en cours</h2>
+        <h2 className="font-display text-h3 text-text-main dark:text-text-dark-main">{t('dash.objectivesInProgress')}</h2>
         <Link href="/objectives" className="flex items-center gap-1 font-body text-[14px] text-brand hover:underline dark:text-brand-dark">
           Voir tout <ArrowRight className="h-4 w-4" />
         </Link>
