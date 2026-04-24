@@ -1,38 +1,24 @@
 # Skynote
 
-Skynote est une application SaaS éducative basée sur l’intelligence artificielle pour les élèves de collège et lycée (10-17 ans).
+> Application SaaS éducative propulsée par l'IA, conçue pour les élèves de collège et lycée (10–17 ans).
 
-👉 Site officiel : https://skynote.fr
+**Site officiel :** [https://skynote.fr](https://skynote.fr)
 
-## 🚀 À propos de Skynote
+Skynote transforme n'importe quel cours (texte, PDF, photo, vocal) en fiches de révision, QCM et chatbot personnalisé — en quelques secondes — grâce à Claude (Anthropic). L'app intègre un système de répétition espacée (SM-2), une économie de Sky Coins, un leaderboard saisonnier et un espace classe pour les enseignants.
 
-Skynote permet de transformer automatiquement tes cours en :
-- fiches de révision intelligentes
-- QCM générés par IA
-- objectifs de progression personnalisés
+---
 
-L’objectif de Skynote est d’aider les élèves à apprendre plus vite et plus efficacement grâce à l’IA.
+## Table des matières
 
-## 🧠 Fonctionnalités principales
-
-- Génération de fiches avec IA (Anthropic Claude)
-- Création automatique de QCM
-- Système de streak et progression
-- Dashboard de suivi des objectifs
-- Système de monnaie virtuelle (Sky Coins)
-- Mode Premium
-
-## 🛠️ Stack technique
-
-- Next.js 14 (App Router)
-- TypeScript
-- Supabase (Auth, PostgreSQL, Storage)
-- Anthropic Claude (IA)
-- Tailwind CSS
-
-## ⚙️ Installation
-
-```bash
-npm install
-cp .env.local.example .env.local
-npm run dev
+1. [Stack technique](#stack-technique)
+2. [Architecture du projet](#architecture-du-projet)
+3. [Fonctionnalités](#fonctionnalités)
+4. [Base de données](#base-de-données)
+5. [API Routes](#api-routes)
+6. [Système de gamification](#système-de-gamification)
+7. [Plans & Paiement](#plans--paiement)
+8. [Authentification](#authentification)
+9. [i18n](#i18n)
+10. [Déploiement](#déploiement)
+11. [Installation locale](#installation-locale)
+12. [Variables d'environnement]
