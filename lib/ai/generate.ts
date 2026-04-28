@@ -1,7 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk'
 import {
   getFlashcardSystemPrompt,
-  QCM_SYSTEM_PROMPT,
   getQcmSystemPrompt,
   buildFlashcardPrompt,
   buildQcmPrompt,
@@ -67,7 +66,8 @@ export async function generateFlashcards(
 ): Promise<GeneratedFlashcard[]> {
   const message = await anthropic.messages.create({
     model: 'claude-sonnet-4-6',
-    max_tokens: 2048,
+    // OPTIMISATION: réduit de 2048 à 1200 — 6 fiches courtes ne dépassent jamais 800 tokens
+    max_tokens: 1200,
     system: getFlashcardSystemPrompt(lang),
     messages: [{ role: 'user', content: buildFlashcardPrompt(courseTitle, subject, content) }],
   })
@@ -103,17 +103,52 @@ export async function generateFlashcards(
   return limited
 }
 
-export async function generateQcmQuestions(
-  flashcardTitle: string,
-  summary: string,
-  keyPoints: string[],
+// OPTIMISATION: toutes les fiches d'un cours en 1 seul appel API
+// Avant : 1 appel par fiche (jusqu'à 6 appels). Maintenant : 1 appel total.
+export async function generateAllQcmQuestions(
+  flashcards: Array<{
+    title: string
+    summary: string
+    key_points: string[]
+  }>,
   difficulty: QcmDifficulty = 'easy'
-): Promise<GeneratedQuestion[]> {
+): Promise<Map<string, GeneratedQuestion[]>> {
+  if (flashcards.length === 0) return new Map()
+
+  const fichesList = flashcards
+    .map(
+      (f, i) =>
+        `--- Fiche ${i + 1}: ${f.title} ---\nRésumé: ${f.summary}\nPoints clés: ${f.key_points.join(', ')}`
+    )
+    .join('\n\n')
+
+  const userPrompt = `Génère exactement 3 questions QCM pour CHACUNE des ${flashcards.length} fiches suivantes.
+
+${fichesList}
+
+Réponds avec un JSON structuré ainsi :
+{
+  "fiches": [
+    {
+      "title": "titre exact de la fiche",
+      "questions": [
+        {
+          "question": "...",
+          "options": ["A", "B", "C", "D"],
+          "correct_index": 0,
+          "explanation": "..."
+        }
+      ]
+    }
+  ]
+}`
+
   const message = await anthropic.messages.create({
     model: 'claude-sonnet-4-6',
-    max_tokens: 2048,
+    // 3 questions × N fiches, budget confortable
+    max_tokens: Math.min(300 * flashcards.length * 3 + 200, 4096),
     system: getQcmSystemPrompt(difficulty),
-    messages: [{ role: 'user', content: buildQcmPrompt(flashcardTitle, summary, keyPoints) }],
+    messages: [{ role: 'user', content: userPrompt }],
   })
 
   const raw = message.content
@@ -121,46 +156,59 @@ export async function generateQcmQuestions(
     .map((b) => (b as { type: 'text'; text: string }).text)
     .join('')
 
-  const parsed = parseClaudeJSON<{ questions: any[] }>(raw)
-  if (!parsed?.questions || !Array.isArray(parsed.questions)) {
-    console.error('[generateQcmQuestions] Parse failed. Raw (first 500):', raw.slice(0, 500))
-    throw new Error('Réponse IA invalide pour le QCM')
+  const parsed = parseClaudeJSON<{ fiches: Array<{ title: string; questions: any[] }> }>(raw)
+  const result = new Map<string, GeneratedQuestion[]>()
+
+  if (!parsed?.fiches || !Array.isArray(parsed.fiches)) {
+    console.error('[generateAllQcmQuestions] Parse failed. Raw (first 500):', raw.slice(0, 500))
+    return result
   }
 
-  // Normalisation permissive : accepte camelCase, snake_case, index en string
-  const normalized = parsed.questions.map((q: any) => {
-    const idxRaw = q.correct_index ?? q.correctIndex ?? q.correct ?? q.answer_index ?? 0
-    const idx = typeof idxRaw === 'string' ? parseInt(idxRaw, 10) : Number(idxRaw)
-    return {
-      question: String(q.question || q.text || '').trim(),
-      options: Array.isArray(q.options)
-        ? q.options.map((o: any) => String(o).trim())
-        : Array.isArray(q.choices)
-          ? q.choices.map((o: any) => String(o).trim())
-          : [],
-      correct_index: Number.isFinite(idx) ? idx : 0,
-      explanation: String(q.explanation || q.explication || q.reason || '').trim(),
-    }
-  })
+  for (const fiche of parsed.fiches) {
+    if (!fiche.title || !Array.isArray(fiche.questions)) continue
 
-  const filtered = normalized.filter(
-    (q) =>
-      q.question &&
-      Array.isArray(q.options) &&
-      q.options.length === 4 &&
-      typeof q.correct_index === 'number' &&
-      q.correct_index >= 0 &&
-      q.correct_index <= 3 &&
-      q.explanation
-  )
+    const normalized = fiche.questions.map((q: any) => {
+      const idxRaw = q.correct_index ?? q.correctIndex ?? q.correct ?? q.answer_index ?? 0
+      const idx = typeof idxRaw === 'string' ? parseInt(idxRaw, 10) : Number(idxRaw)
+      return {
+        question: String(q.question || q.text || '').trim(),
+        options: Array.isArray(q.options)
+          ? q.options.map((o: any) => String(o).trim())
+          : Array.isArray(q.choices)
+            ? q.choices.map((o: any) => String(o).trim())
+            : [],
+        correct_index: Number.isFinite(idx) ? idx : 0,
+        explanation: String(q.explanation || q.explication || q.reason || '').trim(),
+      }
+    })
 
-  if (filtered.length === 0 && parsed.questions.length > 0) {
-    console.error(
-      '[generateQcmQuestions] All filtered out. Parsed:',
-      parsed.questions.length,
-      'First:',
-      JSON.stringify(parsed.questions[0] || {}).slice(0, 400)
+    const filtered = normalized.filter(
+      (q) =>
+        q.question &&
+        Array.isArray(q.options) &&
+        q.options.length === 4 &&
+        typeof q.correct_index === 'number' &&
+        q.correct_index >= 0 &&
+        q.correct_index <= 3 &&
+        q.explanation
     )
+
+    result.set(fiche.title, filtered.slice(0, 5))
   }
-  return filtered.slice(0, 5)
+
+  return result
+}
+
+// Conservé pour compatibilité si appelé sur une fiche isolée (ex: nouvelle fiche ajoutée)
+export async function generateQcmQuestions(
+  flashcardTitle: string,
+  summary: string,
+  keyPoints: string[],
+  difficulty: QcmDifficulty = 'easy'
+): Promise<GeneratedQuestion[]> {
+  const map = await generateAllQcmQuestions(
+    [{ title: flashcardTitle, summary, key_points: keyPoints }],
+    difficulty
+  )
+  return map.get(flashcardTitle) ?? []
 }
