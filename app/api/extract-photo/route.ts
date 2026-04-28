@@ -3,9 +3,10 @@ import Anthropic from '@anthropic-ai/sdk'
 
 export const dynamic = 'force-dynamic'
 
+const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
+
 export async function POST(request: NextRequest) {
   try {
-    // Verifier l'authentification
     const { createClient } = await import('@/lib/supabase/server')
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
@@ -13,18 +14,17 @@ export async function POST(request: NextRequest) {
 
     const formData = await request.formData()
     const file = formData.get('file') as File
-
     if (!file) return NextResponse.json({ error: 'Fichier manquant' }, { status: 400 })
 
-    // Convertir en base64
     const buffer = await file.arrayBuffer()
     const base64 = Buffer.from(buffer).toString('base64')
     const mediaType = file.type as 'image/jpeg' | 'image/png' | 'image/webp' | 'image/gif'
 
-    const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
-
+    // OPTIMISATION: claude-haiku-4-5 au lieu de claude-sonnet-4-6
+    // L'OCR est une tâche de transcription simple — Haiku le fait aussi bien.
+    // Tarif Haiku : $1 input / $5 output vs $3 / $15 pour Sonnet → ~3× moins cher.
     const response = await client.messages.create({
-      model: 'claude-sonnet-4-6',
+      model: 'claude-haiku-4-5-20251001',
       max_tokens: 2000,
       messages: [
         {
@@ -47,7 +47,6 @@ export async function POST(request: NextRequest) {
     })
 
     const text = response.content[0].type === 'text' ? response.content[0].text : ''
-
     return NextResponse.json({ text, success: true })
   } catch (error: any) {
     console.error('[extract-photo]', error)
