@@ -374,12 +374,18 @@ export function CreateCourseForm({
 
         {/* Photo — dropzone */}
         {sourceType === 'photo' && !showExtracted && (
-          <FileDropzone
-            accept="image/*" label="Photo du cours"
-            value={file}
-            onChange={(f) => { setFile(f); if (f) extractTextFromPhoto(f) }}
-            error={errors.file}
-          />
+          <>
+            <FileDropzone
+              accept="image/*" label="Photo du cours"
+              value={file}
+              onChange={(f) => { setFile(f); if (f) extractTextFromPhoto(f) }}
+              error={errors.file}
+            />
+            <p className="flex items-center gap-1.5 font-body text-[12px] text-text-tertiary dark:text-text-dark-tertiary -mt-2">
+              <img src="/nova-coin.png" alt="" width={12} height={12} className="object-contain" onError={e => (e.currentTarget.style.display='none')} />
+              2 ✦ par photo analysée
+            </p>
+          </>
         )}
 
         {/* Photo — texte extrait */}
@@ -445,7 +451,15 @@ export function CreateCourseForm({
         {sourceType !== 'list' && (
           <Button type="submit" loading={isPending} size="lg" className="w-full"
             disabled={sourceType === 'photo' && !showExtracted}>
-            {isPending ? 'Generation en cours...' : 'Creer le cours'}
+            {isPending ? 'Generation en cours...' : (
+              <span className="flex items-center justify-center gap-2">
+                Creer le cours
+                <span className="flex items-center gap-1 rounded-full bg-white/20 px-2 py-0.5 text-[12px] font-semibold">
+                  <img src="/nova-coin.png" alt="" width={13} height={13} className="object-contain opacity-90" onError={e => (e.currentTarget.style.display='none')} />
+                  118 ✦
+                </span>
+              </span>
+            )}
           </Button>
         )}
       </form>

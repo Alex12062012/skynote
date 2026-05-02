@@ -18,11 +18,11 @@ import { createClient } from './server'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
 
 // ─── COÛTS ───────────────────────────────────────────────────────────────────
-export const NOVA_COST_OCR         =  2
-export const NOVA_COST_FICHES      = 30
-export const NOVA_COST_QCM_BATCH   = 88
-export const NOVA_COST_QCM_SINGLE  =  4
-export const NOVA_COST_CHAT        = 12
+export const NOVA_COST_OCR         =  2   // par photo
+export const NOVA_COST_QCM_SINGLE  =  4   // régénération d'un QCM seul
+export const NOVA_COST_CHAT        = 12   // par message chat
+// Fiches + QCM générés ensemble → coût unique groupé
+export const NOVA_COST_COURSE      = 118  // 30✦ fiches + 88✦ QCM batch
 
 // ─── ALLOCATIONS PAR PLAN ────────────────────────────────────────────────────
 export const NOVA_ALLOC: Record<'free' | 'starter' | 'pro', number> = {

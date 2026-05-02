@@ -10,6 +10,7 @@ import { FeedbackButton } from '@/components/ui/FeedbackButton'
 import { FeedbackTrigger } from '@/components/providers/FeedbackTrigger'
 import { CoinRain } from '@/components/ui/CoinRain'
 import { getNovaBalance } from '@/lib/supabase/nova-actions'
+import { NovaUpgradeWidget } from '@/components/ui/NovaUpgradeWidget'
 import type { Profile } from '@/types/database'
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -55,6 +56,14 @@ export default async function DashboardLayout({ children }: { children: React.Re
       </main>
       <CoinRain active={boostActive} />
       <FeedbackButton userId={user.id} />
+
+      {/* Widget upgrade Nova — visible pour free et starter, caché pour pro */}
+      {profile && (profile as any).role !== 'teacher' && (
+        <NovaUpgradeWidget
+          novaBalance={novaBalance}
+          plan={(profile as any).plan ?? 'free'}
+        />
+      )}
 
       <FeedbackTrigger
         userId={user.id}

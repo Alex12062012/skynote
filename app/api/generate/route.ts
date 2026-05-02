@@ -2,12 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { processCourse } from '@/lib/ai/pipeline'
 import { waitUntil } from '@vercel/functions'
-import { NOVA_COST_FICHES, NOVA_COST_QCM_BATCH, deductNovasForUser } from '@/lib/supabase/nova-actions'
+import { NOVA_COST_COURSE, deductNovasForUser } from '@/lib/supabase/nova-actions'
 
 export const maxDuration = 60
-
-// Coût total d'un cours complet : fiches + QCM batch
-const NOVA_COST_COURSE = NOVA_COST_FICHES + NOVA_COST_QCM_BATCH  // 30 + 88 = 118 ✦
 
 export async function POST(request: NextRequest) {
   try {
@@ -53,7 +50,7 @@ export async function POST(request: NextRequest) {
     const deductResult = await deductNovasForUser(
       user.id,
       NOVA_COST_COURSE,
-      `Génération cours — fiches (${NOVA_COST_FICHES}✦) + QCM (${NOVA_COST_QCM_BATCH}✦)`
+      'Génération cours (fiches + QCM) — 118✦'
     )
     if (!deductResult.ok) {
       return NextResponse.json(

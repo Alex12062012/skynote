@@ -250,9 +250,14 @@ export function CourseChat({ courseId, courseTitle, isPremium }: CourseChatProps
               <button
                 onClick={handleSend}
                 disabled={loading || !input.trim()}
-                className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-input bg-brand text-white hover:bg-brand-hover disabled:opacity-40 dark:bg-brand-dark dark:text-night-bg transition-all active:scale-95"
+                title="Envoyer (12 ✦)"
+                className="flex h-10 flex-shrink-0 items-center justify-center gap-1.5 rounded-input bg-brand px-3 text-white hover:bg-brand-hover disabled:opacity-40 dark:bg-brand-dark dark:text-night-bg transition-all active:scale-95"
               >
                 <Send className="h-4 w-4" />
+                <span className="flex items-center gap-0.5 font-body text-[11px] font-semibold opacity-80">
+                  <img src="/nova-coin.png" alt="" width={11} height={11} className="object-contain" onError={e => (e.currentTarget.style.display='none')} />
+                  12
+                </span>
               </button>
             </div>
           </div>
