@@ -66,20 +66,28 @@ export function prestigeMultiplier(level: number): number {
 export const WHEEL_COST = 50
 
 /**
- * EV attendue (espérance de gain NET) :
- *   0.40×(-50) + 0.30×(-30) + 0.15×(-10) + 0.09×(10) + 0.04×(50) + 0.01×(150) + 0.01×(nova 50)
- * ≈ -26 coins → l'économie est protégée (EV < 50).
- *
- * Segment nova : donne 50 Novas ✦ (crédits IA) au lieu de coins.
+ * EV attendue (espérance de gain NET) — poids total = 100 :
+ *   lost      : 38/100 → −50 coins net
+ *   coins_20  : 28/100 → −30 coins net
+ *   coins_40  : 14/100 → −10 coins net
+ *   coins_60  :  8/100 → +10 coins net
+ *   coins_100 :  4/100 → +50 coins net
+ *   coins_200 :  1/100 → +150 coins net
+ *   nova_50   :  4/100 → 50 ✦  (crédits IA)
+ *   nova_100  :  2/100 → 100 ✦ (rare)
+ *   nova_200  :  1/100 → 200 ✦ (très rare)
+ * EV coins ≈ −27 → économie protégée (EV < coût du tour).
  */
 export const WHEEL_SEGMENTS = [
-  { id: 'lost',      label: 'Perdu',    type: 'lost'  as const, value:   0, weight: 40, color: '#EF4444', text: '#fff'    },
-  { id: 'coins_20',  label: '+20',      type: 'coins' as const, value:  20, weight: 30, color: '#FB923C', text: '#fff'    },
-  { id: 'coins_40',  label: '+40',      type: 'coins' as const, value:  40, weight: 15, color: '#FBBF24', text: '#fff'    },
-  { id: 'coins_60',  label: '+60',      type: 'coins' as const, value:  60, weight:  9, color: '#A3E635', text: '#1a2e05' },
-  { id: 'coins_100', label: '+100',     type: 'coins' as const, value: 100, weight:  4, color: '#34D399', text: '#022c22' },
-  { id: 'nova_50',   label: '+50 ✦',   type: 'nova'  as const, value:  50, weight:  1, color: '#6366f1', text: '#fff'    },
-  { id: 'coins_200', label: '+200',     type: 'coins' as const, value: 200, weight:  1, color: '#2DD4BF', text: '#042f2e' },
+  { id: 'lost',      label: 'Perdu',     type: 'lost'  as const, value:   0, weight: 38, color: '#EF4444', text: '#fff'    },
+  { id: 'coins_20',  label: '+20',       type: 'coins' as const, value:  20, weight: 28, color: '#FB923C', text: '#fff'    },
+  { id: 'coins_40',  label: '+40',       type: 'coins' as const, value:  40, weight: 14, color: '#FBBF24', text: '#fff'    },
+  { id: 'coins_60',  label: '+60',       type: 'coins' as const, value:  60, weight:  8, color: '#A3E635', text: '#1a2e05' },
+  { id: 'coins_100', label: '+100',      type: 'coins' as const, value: 100, weight:  4, color: '#34D399', text: '#022c22' },
+  { id: 'coins_200', label: '+200',      type: 'coins' as const, value: 200, weight:  1, color: '#2DD4BF', text: '#042f2e' },
+  { id: 'nova_50',   label: '+50 ✦',    type: 'nova'  as const, value:  50, weight:  4, color: '#6366f1', text: '#fff'    },
+  { id: 'nova_100',  label: '+100 ✦',   type: 'nova'  as const, value: 100, weight:  2, color: '#4F46E5', text: '#fff'    },
+  { id: 'nova_200',  label: '+200 ✦',   type: 'nova'  as const, value: 200, weight:  1, color: '#3730A3', text: '#fff'    },
 ] as const
 export type WheelSegment = typeof WHEEL_SEGMENTS[number]
 
