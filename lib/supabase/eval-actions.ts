@@ -3,6 +3,7 @@
 import { createClient } from './server'
 import { revalidatePath } from 'next/cache'
 import Anthropic from '@anthropic-ai/sdk'
+import { deductNovas, NOVA_COST_EVAL_PLAN } from './nova-actions'
 
 // ============================================================
 // TYPES
@@ -61,6 +62,12 @@ export async function createEvaluation(
 
   if (diffDays < 2) return { error: 'La date doit être au moins dans 2 jours' }
   if (courseIds.length === 0) return { error: 'Sélectionne au moins un cours' }
+
+  // Déduire les Novas avant de créer l'éval (paiement unique)
+  const deductResult = await deductNovas(NOVA_COST_EVAL_PLAN, 'Création plan de révision IA')
+  if (!deductResult.ok) {
+    return { error: `Novas insuffisantes (${NOVA_COST_EVAL_PLAN} ✦ requis)` }
+  }
 
   const { data, error } = await supabase
     .from('evaluations')
@@ -192,7 +199,7 @@ export async function buildEvalPlan(evalId: string): Promise<EvalPlan | null> {
       .slice(0, 5),
   })
 
-  // Générer les tips Anthropic
+  // Générer les tips Anthropic (coût déjà déduit à la création)
   const tips = await generateTips(evalData.name, rawDays)
 
   // Trouver le jour courant

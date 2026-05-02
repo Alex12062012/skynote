@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { createEvaluation } from '@/lib/supabase/eval-actions'
 import { BookOpen, Calendar, ChevronRight, Loader2 } from 'lucide-react'
+import { NovaCoin } from '@/components/ui/NovaCoin'
 
 type Course = { id: string; title: string; subject: string | null }
 
@@ -146,6 +147,9 @@ export default function NewEvalPage() {
           ) : (
             <>
               Créer le planning
+              <span className="flex items-center gap-1 rounded-full bg-white/20 px-2 py-0.5 text-[12px] font-semibold">
+                <NovaCoin size={12} />5
+              </span>
               <ChevronRight className="h-4 w-4" />
             </>
           )}
