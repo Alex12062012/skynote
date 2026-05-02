@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { Send, MessageCircle, X, Lock, Brain, AlertTriangle, Crown } from 'lucide-react'
+import { NovaCoin } from '@/components/ui/NovaCoin'
 import { cn } from '@/lib/utils'
 import Link from 'next/link'
 
@@ -255,7 +256,7 @@ export function CourseChat({ courseId, courseTitle, isPremium }: CourseChatProps
               >
                 <Send className="h-4 w-4" />
                 <span className="flex items-center gap-0.5 font-body text-[11px] font-semibold opacity-80">
-                  <img src="/nova-coin.png" alt="" width={11} height={11} className="object-contain" onError={e => (e.currentTarget.style.display='none')} />
+                  <NovaCoin size={11} />
                   12
                 </span>
               </button>

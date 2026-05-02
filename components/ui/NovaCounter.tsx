@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { NovaCoin } from '@/components/ui/NovaCoin'
 
 interface NovaCounterProps {
   initialBalance: number
@@ -70,26 +71,7 @@ export function NovaCounter({ initialBalance, userId }: NovaCounterProps) {
 
   return (
     <div className="relative flex items-center gap-1.5 rounded-pill border border-sky-border bg-sky-surface px-3 py-1.5 dark:border-night-border dark:bg-night-surface">
-      {/* Icône Nova — pièce bleue */}
-      <img
-        src="/nova-coin.png"
-        alt="Nova"
-        width={18}
-        height={18}
-        className="select-none object-contain"
-        onError={(e) => {
-          // Fallback texte si l'image n'est pas encore uploadée
-          const el = e.currentTarget
-          el.style.display = 'none'
-          const span = document.createElement('span')
-          span.textContent = '✦'
-          span.style.color = '#6366f1'
-          span.style.fontSize = '15px'
-          span.style.lineHeight = '1'
-          el.parentNode?.insertBefore(span, el)
-        }}
-        aria-hidden="true"
-      />
+      <NovaCoin size={18} />
       <span
         className="font-display text-[14px] font-bold tabular-nums text-text-main dark:text-text-dark-main transition-all duration-300"
         style={{ minWidth: 28 }}

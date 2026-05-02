@@ -9,6 +9,7 @@ import { VoiceRecorder } from './VoiceRecorder'
 import { FileDropzone } from './FileDropzone'
 import { createCourse } from '@/lib/supabase/course-actions'
 import { X, AlertTriangle, Camera, List, Plus, Folder, Check, Globe } from 'lucide-react'
+import { NovaCoin } from '@/components/ui/NovaCoin'
 import { useI18n } from '@/lib/i18n/context'
 import { CONTENT_LANGUAGES } from '@/lib/ai/prompts'
 
@@ -382,8 +383,8 @@ export function CreateCourseForm({
               error={errors.file}
             />
             <p className="flex items-center gap-1.5 font-body text-[12px] text-text-tertiary dark:text-text-dark-tertiary -mt-2">
-              <img src="/nova-coin.png" alt="" width={12} height={12} className="object-contain" onError={e => (e.currentTarget.style.display='none')} />
-              2 ✦ par photo analysée
+              <NovaCoin size={12} />
+              2 par photo analysée
             </p>
           </>
         )}
@@ -455,8 +456,8 @@ export function CreateCourseForm({
               <span className="flex items-center justify-center gap-2">
                 Creer le cours
                 <span className="flex items-center gap-1 rounded-full bg-white/20 px-2 py-0.5 text-[12px] font-semibold">
-                  <img src="/nova-coin.png" alt="" width={13} height={13} className="object-contain opacity-90" onError={e => (e.currentTarget.style.display='none')} />
-                  118 ✦
+                  <NovaCoin size={13} />
+                  118
                 </span>
               </span>
             )}
