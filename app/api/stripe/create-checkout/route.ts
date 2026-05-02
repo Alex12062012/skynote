@@ -9,7 +9,7 @@ export async function POST(request: NextRequest) {
     if (!user) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
 
     const { plan, billing } = await request.json()
-    // plan: 'plus' | 'famille'
+    // plan: 'starter' | 'pro'
     // billing: 'monthly' | 'yearly'
 
     // Vérifier que Stripe est configuré

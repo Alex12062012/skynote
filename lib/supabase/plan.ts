@@ -1,41 +1,47 @@
 import { createClient } from './server'
 
-export type PlanType = 'free' | 'plus' | 'famille'
+export type PlanType = 'free' | 'starter' | 'pro'
 
 export interface PlanLimits {
-  maxCoursesPerWeek: number
-  vocalEnabled: boolean
+  vocalEnabled:   boolean
   chatbotEnabled: boolean
-  isPlus: boolean
-  isFamille: boolean
-  coinsForPlus: number
+  isStarter:      boolean
+  isPro:          boolean
+  /** Novas allouées par mois (ou one-time pour free) */
+  novasPerMonth:  number
+  // Rétrocompat — indique si l'utilisateur a accès aux features premium
+  isPlus:         boolean
+  isFamille:      boolean
 }
 
 const FREE_LIMITS: PlanLimits = {
-  maxCoursesPerWeek: 1,
-  vocalEnabled: false,
+  vocalEnabled:   false,
   chatbotEnabled: false,
-  isPlus: false,
-  isFamille: false,
-  coinsForPlus: 750,
+  isStarter:      false,
+  isPro:          false,
+  novasPerMonth:  600,
+  isPlus:         false,
+  isFamille:      false,
 }
 
-const PLUS_LIMITS: PlanLimits = {
-  maxCoursesPerWeek: -1,
-  vocalEnabled: true,
+const STARTER_LIMITS: PlanLimits = {
+  vocalEnabled:   true,
   chatbotEnabled: true,
-  isPlus: true,
-  isFamille: false,
-  coinsForPlus: 750,
+  isStarter:      true,
+  isPro:          false,
+  novasPerMonth:  2000,
+  isPlus:         true,   // rétrocompat
+  isFamille:      false,
 }
 
-const FAMILLE_LIMITS: PlanLimits = {
-  maxCoursesPerWeek: -1,
-  vocalEnabled: true,
+const PRO_LIMITS: PlanLimits = {
+  vocalEnabled:   true,
   chatbotEnabled: true,
-  isPlus: true,
-  isFamille: true,
-  coinsForPlus: 750,
+  isStarter:      true,
+  isPro:          true,
+  novasPerMonth:  4000,
+  isPlus:         true,   // rétrocompat
+  isFamille:      true,   // rétrocompat
 }
 
 export async function isBetaModeActive(): Promise<boolean> {
@@ -52,7 +58,7 @@ export async function getUserPlanLimits(userId: string): Promise<PlanLimits> {
   const supabase = await createClient()
 
   const betaActive = await isBetaModeActive()
-  if (betaActive) return PLUS_LIMITS
+  if (betaActive) return PRO_LIMITS
 
   const { data: profile } = await supabase
     .from('profiles')
@@ -63,19 +69,31 @@ export async function getUserPlanLimits(userId: string): Promise<PlanLimits> {
   if (!profile) return FREE_LIMITS
 
   if (profile.plan_expires_at && new Date(profile.plan_expires_at) < new Date()) {
-    await supabase.from('profiles').update({ plan: 'free', plan_expires_at: null }).eq('id', userId)
+    await supabase
+      .from('profiles')
+      .update({ plan: 'free', plan_expires_at: null })
+      .eq('id', userId)
     return FREE_LIMITS
   }
 
   switch (profile.plan) {
-    case 'plus':
-      return PLUS_LIMITS
-    case 'famille':
-      return FAMILLE_LIMITS
-    default:
-      return FREE_LIMITS
+    // Nouveaux noms
+    case 'starter': return STARTER_LIMITS
+    case 'pro':     return PRO_LIMITS
+    // Rétrocompatibilité anciens plans
+    case 'plus':    return STARTER_LIMITS
+    case 'famille': return PRO_LIMITS
+    default:        return FREE_LIMITS
   }
 }
+
+/** Indique si l'utilisateur a accès aux fonctionnalités premium */
+export async function isPremiumUser(userId: string): Promise<boolean> {
+  const limits = await getUserPlanLimits(userId)
+  return limits.isStarter
+}
+
+// ─── FONCTIONS LEGACY (gardées pour compatibilité avec le reste du code) ─────
 
 export async function canCreateCourse(userId: string): Promise<{
   allowed: boolean
@@ -83,48 +101,9 @@ export async function canCreateCourse(userId: string): Promise<{
   coursesMax: number
   resetAt: string | null
 }> {
-  const limits = await getUserPlanLimits(userId)
-
-  if (limits.maxCoursesPerWeek === -1) {
-    return { allowed: true, coursesUsed: 0, coursesMax: -1, resetAt: null }
-  }
-
-  const supabase = await createClient()
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('courses_this_week, week_reset_at')
-    .eq('id', userId)
-    .single()
-
-  if (!profile) return { allowed: false, coursesUsed: 0, coursesMax: 1, resetAt: null }
-
-  const now = new Date()
-  const lastReset = new Date(profile.week_reset_at)
-  const daysSinceReset = Math.floor((now.getTime() - lastReset.getTime()) / (1000 * 60 * 60 * 24))
-
-  let coursesThisWeek = profile.courses_this_week
-  let weekResetAt = profile.week_reset_at
-
-  if (daysSinceReset >= 7) {
-    coursesThisWeek = 0
-    weekResetAt = now.toISOString()
-    await supabase
-      .from('profiles')
-      .update({ courses_this_week: 0, week_reset_at: weekResetAt })
-      .eq('id', userId)
-  }
-
-  const nextMonday = new Date()
-  const daysUntilMonday = (8 - nextMonday.getDay()) % 7 || 7
-  nextMonday.setDate(nextMonday.getDate() + daysUntilMonday)
-  nextMonday.setHours(0, 0, 0, 0)
-
-  return {
-    allowed: coursesThisWeek < limits.maxCoursesPerWeek,
-    coursesUsed: coursesThisWeek,
-    coursesMax: limits.maxCoursesPerWeek,
-    resetAt: nextMonday.toISOString(),
-  }
+  // Avec le système Nova, la limite n'est plus par cours/semaine mais par novas.
+  // On laisse toujours passer ici ; la vérification se fait au moment de la déduction.
+  return { allowed: true, coursesUsed: 0, coursesMax: -1, resetAt: null }
 }
 
 export async function incrementWeeklyCourseCount(userId: string): Promise<void> {

@@ -602,6 +602,14 @@ export async function spinWheel(): Promise<{ error: string | null; result: Wheel
       p_user_id: user.id, p_amount: seg.value, p_reason: `Roue ${seg.label}`,
     })
     if (typeof awarded === 'number') newBalance = awarded
+  } else if (seg.type === 'nova' && seg.value > 0) {
+    // Créditer des Novas ✦ via le wallet
+    reward = seg.value
+    await supabase.rpc('add_novas', {
+      p_user_id: user.id,
+      p_amount:  seg.value,
+      p_reason:  `Roue de la fortune — ${seg.label}`,
+    })
   }
 
   // Historique

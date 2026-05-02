@@ -2,7 +2,7 @@
 
 import { useState, useTransition, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { CheckCircle, XCircle, Zap, RotateCcw, ArrowLeft, Leaf, Target, Flame, Trophy, GraduationCap, Star, BookOpen, Dumbbell, Check, X } from 'lucide-react'
+import { CheckCircle, XCircle, Zap, RotateCcw, ArrowLeft, Leaf, Target, Flame, Trophy, GraduationCap, Star, BookOpen, Dumbbell, Check, X, Lightbulb } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { SkyCoin } from '@/components/ui/SkyCoin'
 import { CoinAnimation, CoinToast } from '@/components/ui/CoinAnimation'
@@ -27,10 +27,10 @@ type AnswerState = 'unanswered' | 'correct' | 'incorrect'
 interface UserAnswer { questionIndex: number; chosenIndex: number; correct: boolean }
 
 const DIFFICULTY_LABELS: Record<QcmDifficulty, { label: string; Icon: React.ElementType; color: string }> = {
-  peaceful: { label: 'Paisible', Icon: Leaf, color: 'text-emerald-600 dark:text-emerald-400' },
-  easy: { label: 'Normal', Icon: Target, color: 'text-brand dark:text-brand-dark' },
-  medium: { label: 'Hardcore', Icon: Flame, color: 'text-orange-600 dark:text-orange-400' },
-  hard: { label: 'Teste tes parents', Icon: Trophy, color: 'text-red-600 dark:text-red-400' },
+  peaceful: { label: 'Paisible',          Icon: Leaf,         color: 'text-emerald-600 dark:text-emerald-400' },
+  easy:     { label: 'Normal',            Icon: Target,       color: 'text-brand dark:text-brand-dark' },
+  medium:   { label: 'Hardcore',          Icon: Flame,        color: 'text-orange-600 dark:text-orange-400' },
+  hard:     { label: 'Teste tes parents', Icon: Trophy,       color: 'text-red-600 dark:text-red-400' },
 }
 
 export function QcmEngine({ flashcard, questions, courseId, difficulty = 'medium', onRegenerate, onChangeDifficulty }: QcmEngineProps) {
@@ -48,10 +48,12 @@ export function QcmEngine({ flashcard, questions, courseId, difficulty = 'medium
   const [showToast, setShowToast] = useState(false)
   const [retryCharges, setRetryCharges] = useState(0)
   const [retryPending, setRetryPending] = useState(false)
-  const [skipCharges, setSkipCharges] = useState(0)
-  const [skipPending, setSkipPending] = useState(false)
+  const [hintCharges, setHintCharges] = useState(0)
+  const [hintPending, setHintPending] = useState(false)
+  /** Index de l'option éliminée par l'indice (-1 = aucun) */
+  const [eliminatedOption, setEliminatedOption] = useState<number>(-1)
 
-  // Charger les charges retry/skip au montage
+  // Charger les charges retry/hint au montage
   useEffect(() => {
     let cancelled = false
     ;(async () => {
@@ -62,11 +64,11 @@ export function QcmEngine({ flashcard, questions, courseId, difficulty = 'medium
         const { data } = await supabase
           .from('user_boosts').select('boost_type, charges')
           .eq('user_id', user.id)
-          .in('boost_type', ['retry_qcm', 'skip_question'])
+          .in('boost_type', ['retry_qcm', 'hint_question'])
         if (cancelled) return
         const rows = data ?? []
         setRetryCharges(rows.filter((r: any) => r.boost_type === 'retry_qcm').reduce((s: number, r: any) => s + (r.charges ?? 1), 0))
-        setSkipCharges(rows.filter((r: any) => r.boost_type === 'skip_question').reduce((s: number, r: any) => s + (r.charges ?? 1), 0))
+        setHintCharges(rows.filter((r: any) => r.boost_type === 'hint_question').reduce((s: number, r: any) => s + (r.charges ?? 1), 0))
       } catch { /* table absente */ }
     })()
     return () => { cancelled = true }
@@ -80,6 +82,7 @@ export function QcmEngine({ flashcard, questions, courseId, difficulty = 'medium
 
   function handleOptionClick(i: number) {
     if (answerState !== 'unanswered') return
+    if (i === eliminatedOption) return  // option éliminée non cliquable
     setSelectedOption(i)
     setAnswerState(i === question.correct_index ? 'correct' : 'incorrect')
   }
@@ -92,6 +95,8 @@ export function QcmEngine({ flashcard, questions, courseId, difficulty = 'medium
       correct: selectedOption === question.correct_index,
     }]
     setAnswers(newAnswers)
+    // Réinitialiser l'indice pour la prochaine question
+    setEliminatedOption(-1)
     if (currentQ < total - 1) {
       setCurrentQ(currentQ + 1)
       setSelectedOption(null)
@@ -109,7 +114,7 @@ export function QcmEngine({ flashcard, questions, courseId, difficulty = 'medium
         setCoinsEarned(earned)
         if (earned > 0) { showReward({ amount: earned, reason: `Score parfait — ${DIFFICULTY_LABELS[difficulty].label} !` }) }
         setShowResult(true)
-        loadRetryCharges()
+        loadBoostCharges()
       })
     }
   }
@@ -118,6 +123,7 @@ export function QcmEngine({ flashcard, questions, courseId, difficulty = 'medium
     setCurrentQ(0); setAnswers([]); setSelectedOption(null)
     setAnswerState('unanswered'); setShowResult(false)
     setCoinsEarned(0); setShowCoinAnim(false); setShowToast(false)
+    setEliminatedOption(-1)
     if (onRegenerate) onRegenerate()
   }
 
@@ -131,7 +137,7 @@ export function QcmEngine({ flashcard, questions, courseId, difficulty = 'medium
     handleRestart()
   }
 
-  async function loadRetryCharges() {
+  async function loadBoostCharges() {
     try {
       const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
@@ -139,45 +145,31 @@ export function QcmEngine({ flashcard, questions, courseId, difficulty = 'medium
       const { data } = await supabase
         .from('user_boosts').select('boost_type, charges')
         .eq('user_id', user.id)
-        .in('boost_type', ['retry_qcm', 'skip_question'])
+        .in('boost_type', ['retry_qcm', 'hint_question'])
       const rows = data ?? []
       setRetryCharges(rows.filter((r: any) => r.boost_type === 'retry_qcm').reduce((s: number, r: any) => s + (r.charges ?? 1), 0))
-      setSkipCharges(rows.filter((r: any) => r.boost_type === 'skip_question').reduce((s: number, r: any) => s + (r.charges ?? 1), 0))
+      setHintCharges(rows.filter((r: any) => r.boost_type === 'hint_question').reduce((s: number, r: any) => s + (r.charges ?? 1), 0))
     } catch { /* table absente */ }
   }
 
-  async function handleSkipQuestion() {
-    if (skipPending || skipCharges <= 0 || answerState !== 'unanswered') return
-    setSkipPending(true)
-    const { error, remaining } = await consumeBoostCharge('skip_question')
-    setSkipPending(false)
+  /**
+   * Indice : élimine aléatoirement une mauvaise réponse (style 50/50).
+   * Consomme 1 charge hint_question.
+   */
+  async function handleHintQuestion() {
+    if (hintPending || hintCharges <= 0 || answerState !== 'unanswered' || eliminatedOption >= 0) return
+    setHintPending(true)
+    const { error, remaining } = await consumeBoostCharge('hint_question')
+    setHintPending(false)
     if (error) return
-    setSkipCharges(remaining)
+    setHintCharges(remaining)
 
-    // On avance sans compter la réponse comme correcte
-    const newAnswers = [...answers, { questionIndex: currentQ, chosenIndex: -1, correct: false }]
-    setAnswers(newAnswers)
-
-    if (currentQ < total - 1) {
-      setCurrentQ(q => q + 1)
-      setSelectedOption(null)
-      setAnswerState('unanswered')
-    } else {
-      const finalScore = newAnswers.filter(a => a.correct).length
-      startTransition(async () => {
-        const { coinsEarned: earned } = await saveQcmAttempt({
-          flashcardId: flashcard.id,
-          score: finalScore,
-          total,
-          answers: newAnswers.map(a => a.chosenIndex),
-          difficulty,
-        })
-        setCoinsEarned(earned)
-        if (earned > 0) showReward({ amount: earned, reason: `Score parfait — ${DIFFICULTY_LABELS[difficulty].label} !` })
-        setShowResult(true)
-        loadRetryCharges()
-      })
-    }
+    // Trouver un mauvais index aléatoire (différent de la bonne réponse)
+    const wrongIndexes = options
+      .map((_, i) => i)
+      .filter((i) => i !== question.correct_index)
+    const randomWrong = wrongIndexes[Math.floor(Math.random() * wrongIndexes.length)]
+    setEliminatedOption(randomWrong)
   }
 
   // ── Résultats ──────────────────────────────────────────────
@@ -250,11 +242,11 @@ export function QcmEngine({ flashcard, questions, courseId, difficulty = 'medium
     )
   }
 
-  // ── Question en cours — layout fixe avec bouton toujours visible ──
+  // ── Question en cours ──────────────────────────────────────
   return (
     <div className="flex flex-col gap-0 animate-fade-in">
 
-      {/* Zone scrollable : progression + question + options + explication */}
+      {/* Zone scrollable */}
       <div className="flex flex-col gap-4 pb-4">
 
         {/* Progression */}
@@ -269,15 +261,23 @@ export function QcmEngine({ flashcard, questions, courseId, difficulty = 'medium
               </span>
             </div>
             <div className="flex items-center gap-2">
-              {skipCharges > 0 && answerState === 'unanswered' && (
+              {/* Bouton Indice — disponible si charges > 0, question pas encore répondue, et indice pas déjà utilisé */}
+              {hintCharges > 0 && answerState === 'unanswered' && eliminatedOption < 0 && (
                 <button
-                  onClick={handleSkipQuestion}
-                  disabled={skipPending}
-                  className="flex items-center gap-1 rounded-pill bg-amber-100 px-2.5 py-1 font-body text-[11px] font-semibold text-amber-700 transition hover:bg-amber-200 disabled:opacity-50 dark:bg-amber-950/30 dark:text-amber-300"
+                  onClick={handleHintQuestion}
+                  disabled={hintPending}
+                  className="flex items-center gap-1 rounded-pill bg-violet-100 px-2.5 py-1 font-body text-[11px] font-semibold text-violet-700 transition hover:bg-violet-200 disabled:opacity-50 dark:bg-violet-950/30 dark:text-violet-300"
                 >
-                  <Zap className="h-3 w-3" />
-                  {skipPending ? '…' : `Skip (${skipCharges})`}
+                  <Lightbulb className="h-3 w-3" />
+                  {hintPending ? '…' : `Indice (${hintCharges})`}
                 </button>
+              )}
+              {/* Badge "Indice utilisé" quand l'option est éliminée */}
+              {eliminatedOption >= 0 && answerState === 'unanswered' && (
+                <span className="flex items-center gap-1 rounded-pill bg-violet-50 px-2.5 py-1 font-body text-[11px] font-semibold text-violet-500 dark:bg-violet-950/20 dark:text-violet-400">
+                  <Lightbulb className="h-3 w-3" />
+                  1 réponse éliminée
+                </span>
               )}
               <span className="font-body text-[13px] font-semibold text-success dark:text-success-dark">
                 {answers.filter((a) => a.correct).length} correctes
@@ -303,35 +303,49 @@ export function QcmEngine({ flashcard, questions, courseId, difficulty = 'medium
         {/* Options */}
         <div className="flex flex-col gap-2">
           {options.map((option, index) => {
-            const isSelected = selectedOption === index
-            const isCorrect = index === question.correct_index
-            const isAnswered = answerState !== 'unanswered'
+            const isSelected    = selectedOption === index
+            const isCorrect     = index === question.correct_index
+            const isAnswered    = answerState !== 'unanswered'
+            const isEliminated  = index === eliminatedOption
+
             let cls = ''
-            if (isAnswered) {
-              if (isCorrect) cls = 'border-success bg-success-soft text-success dark:border-success-dark dark:bg-emerald-950/30 dark:text-success-dark'
-              else if (isSelected) cls = 'border-error bg-red-50 text-error dark:bg-red-950/20 dark:border-error'
-              else cls = 'border-sky-border opacity-40 dark:border-night-border'
+            if (isEliminated && !isAnswered) {
+              // Option éliminée par l'indice — grisée et non cliquable
+              cls = 'border-dashed border-sky-border opacity-30 cursor-not-allowed dark:border-night-border'
+            } else if (isAnswered) {
+              if (isCorrect)          cls = 'border-success bg-success-soft text-success dark:border-success-dark dark:bg-emerald-950/30 dark:text-success-dark'
+              else if (isSelected)    cls = 'border-error bg-red-50 text-error dark:bg-red-950/20 dark:border-error'
+              else                    cls = 'border-sky-border opacity-40 dark:border-night-border'
             } else {
               cls = 'border-sky-border hover:border-brand hover:bg-brand-soft/40 dark:border-night-border dark:hover:border-brand-dark dark:hover:bg-brand-dark-soft/20 cursor-pointer'
             }
+
             return (
-              <button key={index} onClick={() => handleOptionClick(index)} disabled={isAnswered}
-                className={cn('flex w-full items-center gap-3 rounded-card-sm border-[1.5px] px-4 py-3 text-left transition-all duration-150', cls)}>
+              <button
+                key={index}
+                onClick={() => handleOptionClick(index)}
+                disabled={isAnswered || isEliminated}
+                className={cn('flex w-full items-center gap-3 rounded-card-sm border-[1.5px] px-4 py-3 text-left transition-all duration-150', cls)}
+              >
                 <span className={cn('flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full font-body text-[12px] font-bold',
-                  isAnswered && isCorrect ? 'bg-success text-white dark:bg-success-dark'
-                    : isAnswered && isSelected ? 'bg-error text-white'
-                      : 'bg-sky-cloud text-brand dark:bg-night-border dark:text-brand-dark')}>
+                  isAnswered && isCorrect       ? 'bg-success text-white dark:bg-success-dark'
+                  : isAnswered && isSelected    ? 'bg-error text-white'
+                  : isEliminated               ? 'bg-sky-cloud text-text-tertiary dark:bg-night-border line-through'
+                  :                              'bg-sky-cloud text-brand dark:bg-night-border dark:text-brand-dark')}>
                   {String.fromCharCode(65 + index)}
                 </span>
-                <span className="flex-1 font-body text-[14px] leading-snug">{option}</span>
-                {isAnswered && isCorrect && <CheckCircle className="h-4 w-4 flex-shrink-0 text-success dark:text-success-dark" />}
+                <span className={cn('flex-1 font-body text-[14px] leading-snug', isEliminated && 'line-through text-text-tertiary')}>
+                  {option}
+                </span>
+                {isAnswered && isCorrect  && <CheckCircle className="h-4 w-4 flex-shrink-0 text-success dark:text-success-dark" />}
                 {isAnswered && isSelected && !isCorrect && <XCircle className="h-4 w-4 flex-shrink-0 text-error" />}
+                {isEliminated && !isAnswered && <X className="h-3.5 w-3.5 flex-shrink-0 text-text-tertiary" />}
               </button>
             )
           })}
         </div>
 
-        {/* Explication — hauteur fixe pour éviter le saut */}
+        {/* Explication */}
         <div className="min-h-[72px]">
           {answerState !== 'unanswered' && (
             <div className={cn('rounded-input px-4 py-3 animate-slide-in',
@@ -351,7 +365,7 @@ export function QcmEngine({ flashcard, questions, courseId, difficulty = 'medium
         </div>
       </div>
 
-      {/* Bouton Suivant — TOUJOURS en bas, visible sans scroller */}
+      {/* Bouton Suivant */}
       <div className="sticky bottom-4 mt-2">
         <Button
           onClick={handleNext}
@@ -372,4 +386,3 @@ export function QcmEngine({ flashcard, questions, courseId, difficulty = 'medium
     </div>
   )
 }
-

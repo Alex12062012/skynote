@@ -67,16 +67,19 @@ export const WHEEL_COST = 50
 
 /**
  * EV attendue (espérance de gain NET) :
- *   0.40×(-50) + 0.30×(-30) + 0.15×(-10) + 0.10×(10) + 0.04×(50) + 0.01×(150)
- * = -20 -9 -1.5 +1 +2 +1.5 = -26 coins → l'économie est protégée (EV < 50).
+ *   0.40×(-50) + 0.30×(-30) + 0.15×(-10) + 0.09×(10) + 0.04×(50) + 0.01×(150) + 0.01×(nova 50)
+ * ≈ -26 coins → l'économie est protégée (EV < 50).
+ *
+ * Segment nova : donne 50 Novas ✦ (crédits IA) au lieu de coins.
  */
 export const WHEEL_SEGMENTS = [
-  { id: 'lost',      label: 'Perdu', type: 'lost'  as const, value:   0, weight: 40, color: '#EF4444', text: '#fff'    },
-  { id: 'coins_20',  label: '+20',   type: 'coins' as const, value:  20, weight: 30, color: '#FB923C', text: '#fff'    },
-  { id: 'coins_40',  label: '+40',   type: 'coins' as const, value:  40, weight: 15, color: '#FBBF24', text: '#fff'    },
-  { id: 'coins_60',  label: '+60',   type: 'coins' as const, value:  60, weight: 10, color: '#A3E635', text: '#1a2e05' },
-  { id: 'coins_100', label: '+100',  type: 'coins' as const, value: 100, weight:  4, color: '#34D399', text: '#022c22' },
-  { id: 'coins_200', label: '+200',  type: 'coins' as const, value: 200, weight:  1, color: '#2DD4BF', text: '#042f2e' },
+  { id: 'lost',      label: 'Perdu',    type: 'lost'  as const, value:   0, weight: 40, color: '#EF4444', text: '#fff'    },
+  { id: 'coins_20',  label: '+20',      type: 'coins' as const, value:  20, weight: 30, color: '#FB923C', text: '#fff'    },
+  { id: 'coins_40',  label: '+40',      type: 'coins' as const, value:  40, weight: 15, color: '#FBBF24', text: '#fff'    },
+  { id: 'coins_60',  label: '+60',      type: 'coins' as const, value:  60, weight:  9, color: '#A3E635', text: '#1a2e05' },
+  { id: 'coins_100', label: '+100',     type: 'coins' as const, value: 100, weight:  4, color: '#34D399', text: '#022c22' },
+  { id: 'nova_50',   label: '+50 ✦',   type: 'nova'  as const, value:  50, weight:  1, color: '#6366f1', text: '#fff'    },
+  { id: 'coins_200', label: '+200',     type: 'coins' as const, value: 200, weight:  1, color: '#2DD4BF', text: '#042f2e' },
 ] as const
 export type WheelSegment = typeof WHEEL_SEGMENTS[number]
 
@@ -137,9 +140,9 @@ export const TITLES: TitleCatalogEntry[] = [
 
 // ─── CONSOMMABLES BOUTIQUE ────────────────────────────────────────────────────
 export const CONSUMABLES = [
-  { id: 'x2_coins',      label: '×2 coins (1 h)', desc: 'Double tes gains pendant une heure — 1 seul actif à la fois', price: 50, durationHours: 1, maxCharges: 1  },
-  { id: 'retry_qcm',     label: 'Retry QCM',      desc: 'Refaire un QCM sans pénalité (max 5)',                        price: 15, durationHours: 0, maxCharges: 5  },
-  { id: 'skip_question', label: 'Skip question',  desc: 'Passer une question dans un QCM (max 5)',                     price: 10, durationHours: 0, maxCharges: 5  },
+  { id: 'x2_coins',      label: '×2 coins (1 h)',   desc: 'Double tes gains pendant une heure — 1 seul actif à la fois',    price: 50, durationHours: 1, maxCharges: 1 },
+  { id: 'retry_qcm',     label: 'Retry QCM',        desc: 'Refaire un QCM sans pénalité (max 5)',                            price: 15, durationHours: 0, maxCharges: 5 },
+  { id: 'hint_question', label: 'Indication',       desc: 'Révèle un indice sur une question dans un QCM (max 5)',           price: 10, durationHours: 0, maxCharges: 5 },
 ] as const
 
 // ─── SKINS DE CARTE ───────────────────────────────────────────────────────────

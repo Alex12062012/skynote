@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
+import { NOVA_COST_OCR } from '@/lib/supabase/nova-actions'
 
 export const dynamic = 'force-dynamic'
 
@@ -16,6 +17,16 @@ export async function POST(request: NextRequest) {
     const file = formData.get('file') as File
     if (!file) return NextResponse.json({ error: 'Fichier manquant' }, { status: 400 })
 
+    // Vérifier et déduire les Novas AVANT l'appel IA
+    const { deductNovasForUser } = await import('@/lib/supabase/nova-actions')
+    const deductResult = await deductNovasForUser(user.id, NOVA_COST_OCR, 'OCR photo')
+    if (!deductResult.ok) {
+      return NextResponse.json(
+        { error: deductResult.error ?? 'Novas insuffisantes', code: 'insufficient_novas' },
+        { status: 402 }
+      )
+    }
+
     const buffer = await file.arrayBuffer()
     const base64 = Buffer.from(buffer).toString('base64')
     const mediaType = file.type as 'image/jpeg' | 'image/png' | 'image/webp' | 'image/gif'
@@ -25,7 +36,7 @@ export async function POST(request: NextRequest) {
     // Tarif Haiku : $1 input / $5 output vs $3 / $15 pour Sonnet → ~3× moins cher.
     const response = await client.messages.create({
       model: 'claude-haiku-4-5-20251001',
-      max_tokens: 2000,
+      max_tokens: 1200,
       messages: [
         {
           role: 'user',
@@ -36,7 +47,7 @@ export async function POST(request: NextRequest) {
             },
             {
               type: 'text',
-              text: `Transcris exactement tout le texte visible sur cette image de cours scolaire. 
+              text: `Transcris exactement tout le texte visible sur cette image de cours scolaire.
               Préserve la structure (titres, listes, paragraphes).
               Si c'est manuscrit et difficile à lire, fais de ton mieux et indique [illisible] pour les parties incompréhensibles.
               Réponds UNIQUEMENT avec le texte transcrit, sans commentaire ni introduction.`,
@@ -47,7 +58,7 @@ export async function POST(request: NextRequest) {
     })
 
     const text = response.content[0].type === 'text' ? response.content[0].text : ''
-    return NextResponse.json({ text, success: true })
+    return NextResponse.json({ text, success: true, novaBalance: deductResult.balance })
   } catch (error: any) {
     console.error('[extract-photo]', error)
     return NextResponse.json({ error: error.message }, { status: 500 })

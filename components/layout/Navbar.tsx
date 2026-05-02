@@ -6,6 +6,7 @@ import { useState, Suspense } from 'react'
 import { Trophy, LayoutDashboard, Users, Menu, X, BookOpen, Key, CreditCard, ShoppingBag } from 'lucide-react'
 import { SkyCoin } from '@/components/ui/SkyCoin'
 import { CoinCounter } from '@/components/ui/CoinCounter'
+import { NovaCounter } from '@/components/ui/NovaCounter'
 import { ThemeToggle } from '@/components/ui/ThemeToggle'
 import { PlayerEmblem } from '@/components/gamification/PlayerEmblem'
 import { cn } from '@/lib/utils'
@@ -22,25 +23,36 @@ interface NavLink {
 function getNavLinks(role: string, t: (k: string) => string, isBetaEnabled: boolean): NavLink[] {
   if (role === 'teacher') {
     return [
-      { href: '/dashboard', label: 'Cours', icon: BookOpen },
-      { href: '/dashboard?tab=classCode', label: 'Code de classe', icon: Key, tab: 'classCode' },
-      { href: '/dashboard?tab=payment', label: 'Paiement', icon: CreditCard, tab: 'payment' },
+      { href: '/dashboard', label: t('nav.courses'), icon: BookOpen },
+      { href: '/dashboard?tab=classCode', label: t('nav.classCode'), icon: Key, tab: 'classCode' },
+      { href: '/dashboard?tab=payment', label: t('nav.payment'), icon: CreditCard, tab: 'payment' },
     ]
   }
 
   const links: NavLink[] = [
     { href: '/dashboard', label: t('nav.home'), icon: LayoutDashboard },
-    { href: '/leaderboard', label: 'Classement', icon: Trophy },
+    { href: '/leaderboard', label: t('nav.leaderboard'), icon: Trophy },
   ]
-  // Toujours afficher la boutique (pricing masqué)
-  links.push({ href: '/boutique', label: 'Boutique', icon: ShoppingBag })
+  // Toujours afficher la boutique
+  links.push({ href: '/boutique', label: t('nav.boutique'), icon: ShoppingBag })
   return links
 }
 
-function NavbarInner({ profile, isBetaEnabled = false }: { profile: Profile | null; isBetaEnabled?: boolean }) {
+function NavbarInner({
+  profile,
+  isBetaEnabled = false,
+  novaBalance = 0,
+  userId,
+}: {
+  profile: Profile | null
+  isBetaEnabled?: boolean
+  novaBalance?: number
+  userId?: string
+}) {
   const { t } = useI18n()
   const role = (profile as any)?.role ?? 'user'
-  const isFamille = profile?.plan === 'famille'
+  // Rétrocompat : famille → pro
+  const isFamille = profile?.plan === 'famille' || profile?.plan === 'pro'
   const navLinks = getNavLinks(role, t, isBetaEnabled)
   const pathname = usePathname()
   const searchParams = useSearchParams()
@@ -61,12 +73,13 @@ function NavbarInner({ profile, isBetaEnabled = false }: { profile: Profile | nu
       if (link.tab) {
         return pathname === '/dashboard' && currentTab === link.tab
       }
-      // Lien "Cours" : actif quand on est sur /dashboard sans tab
       return pathname === '/dashboard' && !currentTab
     }
     if (link.href === '/dashboard') return pathname === '/dashboard'
     return pathname.startsWith(link.href)
   }
+
+  const effectiveUserId = userId ?? profile?.id ?? ''
 
   return (
     <header className="sticky top-0 z-40 border-b border-sky-border bg-sky-surface/80 backdrop-blur-lg dark:border-night-border dark:bg-night-surface/80">
@@ -114,8 +127,14 @@ function NavbarInner({ profile, isBetaEnabled = false }: { profile: Profile | nu
         </nav>
 
         <div className="flex items-center gap-2">
-          {/* Le CoinCounter est masqué pour les professeurs */}
-          {profile && !isTeacher && <CoinCounter initialCoins={profile.sky_coins} userId={profile.id} />}
+          {/* Compteur Novas ✦ — caché pour les professeurs */}
+          {profile && !isTeacher && effectiveUserId && (
+            <NovaCounter initialBalance={novaBalance} userId={effectiveUserId} />
+          )}
+          {/* Compteur Sky Coins — caché pour les professeurs */}
+          {profile && !isTeacher && (
+            <CoinCounter initialCoins={profile.sky_coins} userId={profile.id} />
+          )}
           <ThemeToggle />
           {profile && (
             <Link href="/profile"
@@ -140,6 +159,13 @@ function NavbarInner({ profile, isBetaEnabled = false }: { profile: Profile | nu
 
       {open && (
         <div className="border-t border-sky-border px-4 py-3 dark:border-night-border md:hidden animate-slide-in">
+          {/* Solde Novas visible en mobile aussi */}
+          {profile && !isTeacher && effectiveUserId && (
+            <div className="mb-3 flex items-center justify-between px-1">
+              <span className="text-[13px] text-text-secondary dark:text-text-dark-secondary">Novas disponibles</span>
+              <NovaCounter initialBalance={novaBalance} userId={effectiveUserId} />
+            </div>
+          )}
           {navLinks.map((l) => (
             <Link key={l.href + l.label} href={l.href} onClick={() => setOpen(false)}
               className={cn(
@@ -168,10 +194,20 @@ function NavbarInner({ profile, isBetaEnabled = false }: { profile: Profile | nu
 }
 
 // Suspense requis par useSearchParams()
-export function Navbar({ profile, isBetaEnabled = false }: { profile: Profile | null; isBetaEnabled?: boolean }) {
+export function Navbar({
+  profile,
+  isBetaEnabled = false,
+  novaBalance = 0,
+  userId,
+}: {
+  profile: Profile | null
+  isBetaEnabled?: boolean
+  novaBalance?: number
+  userId?: string
+}) {
   return (
     <Suspense fallback={null}>
-      <NavbarInner profile={profile} isBetaEnabled={isBetaEnabled} />
+      <NavbarInner profile={profile} isBetaEnabled={isBetaEnabled} novaBalance={novaBalance} userId={userId} />
     </Suspense>
   )
 }

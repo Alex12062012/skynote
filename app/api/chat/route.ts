@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import Anthropic from '@anthropic-ai/sdk'
+import { NOVA_COST_CHAT, deductNovasForUser } from '@/lib/supabase/nova-actions'
 
 export const maxDuration = 30
 
@@ -50,7 +51,8 @@ export async function POST(request: NextRequest) {
       .eq('id', user.id)
       .single()
 
-    const isPremium = profile?.plan === 'plus' || profile?.plan === 'famille'
+    // Rétrocompat : starter/pro ET anciens plans plus/famille ont accès au chat
+    const isPremium = ['starter', 'pro', 'plus', 'famille'].includes(profile?.plan ?? '')
 
     const { data: beta } = await supabase
       .from('admin_settings')
@@ -61,12 +63,22 @@ export async function POST(request: NextRequest) {
 
     if (!isPremium && !betaActive) {
       return NextResponse.json({
-        answer: "Tu as des erreurs sur ce cours — passe premium pour que l'IA t'aide a les corriger.",
+        answer: "Le chatbot est réservé aux abonnés Starter et Pro. Passe à un abonnement premium pour débloquer cette fonctionnalité !",
         type: 'premium_prompt' as MessageType,
       })
     }
 
     const { courseId, question, history } = await request.json()
+
+    // Déduire les Novas AVANT l'appel IA
+    const deductResult = await deductNovasForUser(user.id, NOVA_COST_CHAT, `Chat: ${String(question).slice(0, 60)}`)
+    if (!deductResult.ok) {
+      return NextResponse.json({
+        answer: "Tu n'as plus assez de Novas ✦ pour utiliser le chatbot. Recharge ton solde depuis la page Abonnement.",
+        type: 'premium_prompt' as MessageType,
+        code: 'insufficient_novas',
+      })
+    }
     if (!courseId || !question) {
       return NextResponse.json({ error: 'Parametres manquants' }, { status: 400 })
     }

@@ -145,7 +145,7 @@ Réponds avec un JSON structuré ainsi :
 
   const message = await anthropic.messages.create({
     model: 'claude-sonnet-4-6',
-    // 3 questions × N fiches, budget confortable
+    // 3 questions × N fiches — budget dynamique, plafonné à 4096
     max_tokens: Math.min(300 * flashcards.length * 3 + 200, 4096),
     system: getQcmSystemPrompt(difficulty),
     messages: [{ role: 'user', content: userPrompt }],

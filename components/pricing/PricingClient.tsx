@@ -1,10 +1,9 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Check, X, ArrowLeft, Settings, CreditCard, Calendar, BookOpen, Star, Users } from 'lucide-react'
-import { SkyCoin } from '@/components/ui/SkyCoin'
+import { Check, X, ArrowLeft, Settings, Calendar, BookOpen, Star, Zap } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 type Billing = 'monthly' | 'yearly'
@@ -13,52 +12,62 @@ const PLANS = [
   {
     id: 'free', name: 'Gratuit',
     price: { monthly: 0, yearly: 0 },
-    description: 'Pour decouvrir Skynote',
+    description: 'Pour découvrir Skynote',
     color: 'border-slate-200 dark:border-slate-700',
+    novas: '600 ✦ offerts',
     features: [
-      { text: '1 cours par semaine', ok: true },
-      { text: 'Fiches generees par l\'IA', ok: true },
-      { text: 'QCM automatiques', ok: true },
-      { text: 'Sky Coins & objectifs', ok: true },
-      { text: 'Dictee vocale', ok: false },
-      { text: 'Chatbot IA par cours', ok: false },
-      { text: 'Cours illimites', ok: false },
+      { text: '600 Novas ✦ offerts',        ok: true  },
+      { text: 'Fiches générées par l\'IA',   ok: true  },
+      { text: 'QCM automatiques',            ok: true  },
+      { text: 'Sky Coins & objectifs',       ok: true  },
+      { text: 'Dictée vocale',               ok: false },
+      { text: 'Chatbot IA par cours',        ok: false },
+      { text: 'Recharge mensuelle de Novas', ok: false },
     ],
   },
   {
-    id: 'plus', name: 'Plus',
+    id: 'starter', name: 'Starter',
     price: { monthly: 4.99, yearly: 3.99 },
     yearlyTotal: 47.88,
-    description: 'Pour les eleves serieux',
+    description: 'Pour les élèves sérieux',
     color: 'border-brand dark:border-brand-dark ring-2 ring-brand/20',
     popular: true,
+    novas: '2 000 ✦ / mois',
     features: [
-      { text: 'Cours illimites', ok: true },
-      { text: 'Fiches generees par l\'IA', ok: true },
-      { text: 'QCM automatiques', ok: true },
-      { text: 'Sky Coins & objectifs', ok: true },
-      { text: 'Dictee vocale', ok: true },
-      { text: 'Chatbot IA par cours', ok: true },
-      { text: 'Acces prioritaire nouveautes', ok: true },
+      { text: '2 000 Novas ✦ / mois',       ok: true },
+      { text: 'Fiches générées par l\'IA',   ok: true },
+      { text: 'QCM automatiques',            ok: true },
+      { text: 'Sky Coins & objectifs',       ok: true },
+      { text: 'Dictée vocale',               ok: true },
+      { text: 'Chatbot IA par cours',        ok: true },
+      { text: 'Accès prioritaire nouveautés', ok: true },
     ],
   },
   {
-    id: 'famille', name: 'Famille',
-    price: { monthly: 11.99, yearly: 10.99 },
-    yearlyTotal: 131.88,
-    description: 'Pour toute la famille',
-    color: 'border-purple-400 dark:border-purple-500',
+    id: 'pro', name: 'Pro',
+    price: { monthly: 6.99, yearly: 5.99 },
+    yearlyTotal: 71.88,
+    description: 'Pour aller plus loin',
+    color: 'border-violet-400 dark:border-violet-500',
+    novas: '4 000 ✦ / mois',
     features: [
-      { text: 'Tout le plan Plus', ok: true },
-      { text: 'Jusqu\'a 6 comptes enfants', ok: true },
-      { text: 'Dashboard parent', ok: true },
-      { text: 'Navigation entre comptes', ok: true },
-      { text: 'Dictee vocale', ok: true },
-      { text: 'Chatbot IA par cours', ok: true },
-      { text: 'Support prioritaire', ok: true },
+      { text: '4 000 Novas ✦ / mois',       ok: true },
+      { text: 'Fiches générées par l\'IA',   ok: true },
+      { text: 'QCM automatiques',            ok: true },
+      { text: 'Sky Coins & objectifs',       ok: true },
+      { text: 'Dictée vocale',               ok: true },
+      { text: 'Chatbot IA par cours',        ok: true },
+      { text: 'Support prioritaire',         ok: true },
     ],
   },
 ]
+
+// Rétrocompat : mapper les anciens plans aux nouveaux IDs pour l'affichage
+function normalizePlan(plan: string) {
+  if (plan === 'plus')    return 'starter'
+  if (plan === 'famille') return 'pro'
+  return plan
+}
 
 interface PricingClientProps {
   currentPlan: string
@@ -73,7 +82,8 @@ export function PricingClient({ currentPlan, planExpiresAt, hasStripeSubscriptio
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null)
   const [portalLoading, setPortalLoading] = useState(false)
 
-  const isPaid = currentPlan === 'plus' || currentPlan === 'famille'
+  const normalizedPlan = normalizePlan(currentPlan)
+  const isPaid = normalizedPlan === 'starter' || normalizedPlan === 'pro'
 
   async function handleStripe(planId: string) {
     if (!isLoggedIn) { router.push('/signup'); return }
@@ -87,7 +97,7 @@ export function PricingClient({ currentPlan, planExpiresAt, hasStripeSubscriptio
       const data = await res.json()
       if (data.url) window.location.href = data.url
       else alert(data.error || 'Erreur Stripe')
-    } catch { alert('Erreur reseau') }
+    } catch { alert('Erreur réseau') }
     setLoadingPlan(null)
   }
 
@@ -101,7 +111,7 @@ export function PricingClient({ currentPlan, planExpiresAt, hasStripeSubscriptio
       const data = await res.json()
       if (data.url) window.location.href = data.url
       else alert(data.error || 'Erreur')
-    } catch { alert('Erreur reseau') }
+    } catch { alert('Erreur réseau') }
     setPortalLoading(false)
   }
 
@@ -118,23 +128,25 @@ export function PricingClient({ currentPlan, planExpiresAt, hasStripeSubscriptio
             {isPaid ? 'Ton abonnement' : 'Choisir son forfait'}
           </h1>
           <p className="font-body text-[15px] text-text-secondary dark:text-text-dark-secondary">
-            {isPaid ? 'Gere ton abonnement et ta facturation.' : 'Commence gratuitement, evolue quand tu veux.'}
+            {isPaid
+              ? 'Gère ton abonnement et ta facturation.'
+              : 'Les Novas ✦ alimentent toutes les fonctionnalités IA — fiches, QCM, chatbot.'}
           </p>
         </div>
 
-        {/* Banniere abonnement actif */}
+        {/* Bannière abonnement actif */}
         {isPaid && (
           <div className="mb-8 rounded-card border border-brand/20 bg-brand-soft p-6 dark:border-brand-dark/20 dark:bg-brand-dark-soft">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div className="flex items-center gap-4">
                 <div className="flex h-12 w-12 items-center justify-center rounded-full bg-brand dark:bg-brand-dark text-white dark:text-night-bg">
-                  {currentPlan === 'famille'
-                    ? <Users className="h-6 w-6" />
+                  {normalizedPlan === 'pro'
+                    ? <Zap className="h-6 w-6" />
                     : <Star className="h-6 w-6 fill-current" />}
                 </div>
                 <div>
                   <p className="font-display text-[18px] font-bold text-text-main dark:text-text-dark-main">
-                    Plan {currentPlan === 'famille' ? 'Famille' : 'Plus'}
+                    Plan {normalizedPlan === 'pro' ? 'Pro' : 'Starter'}
                   </p>
                   {planExpiresAt && (
                     <p className="font-body text-[13px] text-text-secondary dark:text-text-dark-secondary flex items-center gap-1">
@@ -148,7 +160,7 @@ export function PricingClient({ currentPlan, planExpiresAt, hasStripeSubscriptio
                 <button onClick={handleManageSubscription} disabled={portalLoading}
                   className="flex items-center justify-center gap-2 rounded-input border border-sky-border bg-sky-surface px-5 py-2.5 font-body text-[14px] font-medium text-text-main hover:bg-sky-cloud dark:border-night-border dark:bg-night-surface dark:text-text-dark-main dark:hover:bg-night-border transition-colors disabled:opacity-50">
                   <Settings className="h-4 w-4" />
-                  {portalLoading ? 'Chargement...' : 'Gerer mon abonnement'}
+                  {portalLoading ? 'Chargement...' : 'Gérer mon abonnement'}
                 </button>
               )}
             </div>
@@ -188,9 +200,8 @@ export function PricingClient({ currentPlan, planExpiresAt, hasStripeSubscriptio
           {PLANS.map((plan) => {
             const price = billing === 'yearly' ? plan.price.yearly : plan.price.monthly
             const isLoading = loadingPlan === plan.id
-            const isCurrentPlan = plan.id === currentPlan || (false)
-            const canUpgrade = !isCurrentPlan && plan.id !== 'free'
-            const isDowngrade = (currentPlan === 'famille' && plan.id === 'plus') || (isPaid && plan.id === 'free')
+            const isCurrentPlan = plan.id === normalizedPlan
+            const isDowngrade = (normalizedPlan === 'pro' && plan.id === 'starter') || (isPaid && plan.id === 'free')
 
             return (
               <div key={plan.id} className={cn(
@@ -204,7 +215,6 @@ export function PricingClient({ currentPlan, planExpiresAt, hasStripeSubscriptio
                     </span>
                   </div>
                 )}
-
                 {isCurrentPlan && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2">
                     <span className="rounded-pill bg-success px-4 py-1 font-body text-[12px] font-bold text-white">
@@ -216,11 +226,15 @@ export function PricingClient({ currentPlan, planExpiresAt, hasStripeSubscriptio
                 <div className="mb-5">
                   <div className="flex items-center gap-2 mb-1">
                     {plan.id === 'free'    && <BookOpen className="h-6 w-6 text-text-secondary dark:text-text-dark-secondary" />}
-                    {plan.id === 'plus'    && <Star className="h-6 w-6 fill-yellow-400 text-yellow-400" />}
-                    {plan.id === 'famille' && <Users className="h-6 w-6 text-purple-500" />}
+                    {plan.id === 'starter' && <Star className="h-6 w-6 fill-yellow-400 text-yellow-400" />}
+                    {plan.id === 'pro'     && <Zap className="h-6 w-6 text-violet-500" />}
                     <h2 className="font-display text-[22px] font-bold text-text-main dark:text-text-dark-main">{plan.name}</h2>
                   </div>
-                  <p className="font-body text-[13px] text-text-secondary dark:text-text-dark-secondary mb-3">{plan.description}</p>
+                  <p className="font-body text-[13px] text-text-secondary dark:text-text-dark-secondary mb-1">{plan.description}</p>
+                  {/* Badge Novas */}
+                  <span className="inline-flex items-center gap-1 rounded-pill bg-indigo-50 dark:bg-indigo-950/30 px-2.5 py-0.5 font-body text-[12px] font-semibold text-indigo-600 dark:text-indigo-400 mb-3">
+                    {plan.novas}
+                  </span>
                   {price === 0 ? (
                     <p className="font-display text-[34px] font-bold text-text-main dark:text-text-dark-main">Gratuit</p>
                   ) : (
@@ -268,11 +282,11 @@ export function PricingClient({ currentPlan, planExpiresAt, hasStripeSubscriptio
                     <button onClick={() => handleStripe(plan.id)} disabled={isLoading}
                       className={cn(
                         'flex items-center justify-center h-11 w-full rounded-input font-body text-[14px] font-semibold transition-all disabled:opacity-60',
-                        plan.id === 'plus'
+                        plan.id === 'starter'
                           ? 'bg-brand text-white hover:bg-brand-hover dark:bg-brand-dark dark:text-night-bg'
-                          : 'bg-purple-500 text-white hover:bg-purple-600'
+                          : 'bg-violet-500 text-white hover:bg-violet-600'
                       )}>
-                      {isLoading ? 'Chargement...' : 'S\'abonner — ' + price.toFixed(2) + '€/mois'}
+                      {isLoading ? 'Chargement...' : `S'abonner — ${price.toFixed(2)}€/mois`}
                     </button>
                   )}
                 </div>
@@ -284,10 +298,10 @@ export function PricingClient({ currentPlan, planExpiresAt, hasStripeSubscriptio
         {/* FAQ */}
         <div className="mt-10 grid gap-4 sm:grid-cols-2">
           {[
-            ['Comment annuler mon abonnement ?', 'Clique sur "Gerer mon abonnement" ci-dessus. Tu seras redirige vers le portail Stripe ou tu peux annuler en un clic. Ton plan reste actif jusqu\'a la fin de la periode payee.'],
-            ['Comment changer de forfait ?', 'Tu peux passer de Plus a Famille (ou l\'inverse) depuis le portail Stripe. Le changement prend effet immediatement avec un prorata.'],
-            ['C\'est quoi les Sky Coins ?', 'Monnaie virtuelle gagnee en revisant. 750 coins = 1 mois Plus.'],
-            ['Je peux payer avec des Sky Coins ?', 'Oui ! Quand tu as 750 Sky Coins, tu peux activer 1 mois de Plus gratuitement depuis la page Objectifs.'],
+            ['C\'est quoi les Novas ✦ ?', 'Les Novas sont la monnaie qui alimente les fonctionnalités IA : OCR (2✦), fiches (30✦), QCM (88✦), chatbot (12✦). Ils ne s\'expirent pas et s\'accumulent.'],
+            ['Comment annuler mon abonnement ?', 'Clique sur "Gérer mon abonnement" ci-dessus. Tu seras redirigé vers le portail Stripe où tu peux annuler en un clic. Ton plan reste actif jusqu\'à la fin de la période payée.'],
+            ['Comment changer de forfait ?', 'Tu peux passer de Starter à Pro (ou l\'inverse) depuis le portail Stripe. Le changement prend effet immédiatement avec un prorata.'],
+            ['Je peux gagner des Novas autrement ?', 'Oui ! La roue de la fortune en boutique peut donner des Novas ✦. Tu peux aussi en gagner via les objectifs de fidélité.'],
           ].map(([q, a]) => (
             <div key={q} className="rounded-card border border-sky-border bg-sky-surface p-4 dark:border-night-border dark:bg-night-surface">
               <p className="font-body text-[14px] font-semibold text-text-main dark:text-text-dark-main mb-1">{q}</p>
@@ -297,8 +311,8 @@ export function PricingClient({ currentPlan, planExpiresAt, hasStripeSubscriptio
         </div>
 
         <p className="mt-8 text-center font-body text-[12px] text-text-tertiary">
-          Paiement securise par Stripe · Annulation a tout moment ·{' '}
-          <Link href="/privacy" className="hover:underline">Politique de confidentialite</Link>
+          Paiement sécurisé par Stripe · Annulation à tout moment ·{' '}
+          <Link href="/privacy" className="hover:underline">Politique de confidentialité</Link>
         </p>
       </div>
     </div>

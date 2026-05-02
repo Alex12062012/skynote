@@ -12,6 +12,7 @@ import { PlayerEmblem } from './PlayerEmblem'
 import { PrestigeButton } from './PrestigeButton'
 import { SkinDecoration } from './SkinDecoration'
 import { RainbowText } from '@/components/ui/RainbowText'
+import { useI18n } from '@/lib/i18n/context'
 
 const ICON_MAP: Record<string, ElementType> = { Brain, Star, Rocket, Crown, Gem, Flame }
 
@@ -72,6 +73,7 @@ export function BoutiqueClientV2({
   ownedFrames = [], activeFrame: initialActiveFrame = null, pseudo = 'Moi',
   recentSpins, userStats, consumableState,
 }: Props) {
+  const { t } = useI18n()
   const defaultStats: UserStats = { total_qcm_perfect: 0, best_perfect_streak: 0, wheel_spins: 0 }
   const stats = userStats ?? defaultStats
   const cs: ConsumableState = consumableState ?? { x2_active: false, x2_expires: null, retry_qcm_charges: 0, skip_question_charges: 0 }
@@ -91,14 +93,14 @@ export function BoutiqueClientV2({
   }
 
   const handleBuy = (cat: 'badge' | 'title' | 'consumable', id: string, price: number) => {
-    if (coins < price) { notify('Coins insuffisants', 'err'); return }
+    if (coins < price) { notify(t('boutique.noCoins'), 'err'); return }
     start(async () => {
       const res = await buyItem(cat, id)
       if (res.error) { notify(res.error, 'err'); return }
       if (typeof res.newBalance === 'number') setCoins(res.newBalance)
       if (cat === 'badge') setBadges(new Set([...badges, id]))
       if (cat === 'title') setTitles(new Set([...titles, id]))
-      notify('Acheté !')
+      notify(t('boutique.bought'))
     })
   }
 
@@ -108,7 +110,7 @@ export function BoutiqueClientV2({
       if (res.error) { notify(res.error, 'err'); return }
       if (kind === 'badge') setEquippedBadge(id ?? 'letter')
       else setEquippedTitle(id)
-      notify(id ? 'Équipé !' : 'Retiré')
+      notify(id ? t('boutique.equippedOk') : t('boutique.removed'))
     })
   }
 
@@ -117,7 +119,7 @@ export function BoutiqueClientV2({
       const res = await equipFrame(itemId)
       if (res.error) { notify(res.error, 'err'); return }
       setEquippedFrame(itemId)
-      notify(itemId ? 'Cadre équipé !' : 'Cadre retiré')
+      notify(itemId ? t('boutique.frameEquipped') : t('boutique.frameRemoved'))
     })
   }
 
@@ -126,9 +128,9 @@ export function BoutiqueClientV2({
   return (
     <div className="mx-auto max-w-4xl animate-fade-in space-y-10">
       <header>
-        <h1 className="font-display text-h2 font-black text-text-main dark:text-text-dark-main">Boutique</h1>
+        <h1 className="font-display text-h2 font-black text-text-main dark:text-text-dark-main">{t('boutique.title')}</h1>
         <p className="mt-1 font-body text-[14px] text-text-secondary dark:text-text-dark-secondary">
-          Dépense tes Sky Coins pour personnaliser ton profil et booster tes gains.
+          {t('boutique.subtitle')}
         </p>
       </header>
 
@@ -152,8 +154,8 @@ export function BoutiqueClientV2({
 
       {/* PRESTIGE */}
       <section>
-        <SectionHeader icon={Sparkles} title="Prestige"
-          desc="Reset tes coins pour gagner un chevron permanent et +5% de gains cumulatifs." />
+        <SectionHeader icon={Sparkles} title={t('boutique.prestige')}
+          desc={t('boutique.prestigeDesc')} />
         <div className="mt-5">
           <PrestigeButton
             currentLevel={prestigeLevel}
@@ -166,8 +168,8 @@ export function BoutiqueClientV2({
 
       {/* ROUE */}
       <section>
-        <SectionHeader icon={FerrisWheel} title="Roue de la fortune" badge="CHANCE"
-          desc="50 coins le ticket. Espérance de gain équilibrée pour l'économie." />
+        <SectionHeader icon={FerrisWheel} title={t('boutique.wheel')} badge={t('boutique.wheelBadge')}
+          desc={t('boutique.wheelDesc')} />
         <div className="mt-5 rounded-card border border-sky-border bg-sky-surface p-6 dark:border-night-border dark:bg-night-surface">
           <div className="flex flex-col items-center gap-8 lg:flex-row lg:items-start lg:gap-12">
             <div className="flex-shrink-0">
@@ -176,7 +178,7 @@ export function BoutiqueClientV2({
             <div className="flex w-full flex-col gap-5">
               <div>
                 <p className="mb-3 font-display text-[13px] font-semibold uppercase tracking-wide text-text-tertiary dark:text-text-dark-tertiary">
-                  Lots possibles
+                  {t('boutique.lotsPossibles')}
                 </p>
                 <div className="grid grid-cols-2 gap-2">
                   {WHEEL_LEGACY.map((seg) => (
@@ -195,7 +197,7 @@ export function BoutiqueClientV2({
               {recentSpins.length > 0 && (
                 <div>
                   <p className="mb-3 font-display text-[13px] font-semibold uppercase tracking-wide text-text-tertiary dark:text-text-dark-tertiary">
-                    Derniers tours
+                    {t('boutique.lastSpins')}
                   </p>
                   <div className="space-y-1.5">
                     {recentSpins.map((spin, i) => (
@@ -219,14 +221,14 @@ export function BoutiqueClientV2({
 
       {/* BOUTIQUE TABS */}
       <section>
-        <SectionHeader icon={ShoppingBag} title="Personnalisation"
-          desc="Badges, consommables, titres : équipe-toi pour briller dans le classement." />
+        <SectionHeader icon={ShoppingBag} title={t('boutique.customize')}
+          desc={t('boutique.customizeDesc')} />
 
         <div className="mt-5 flex gap-1 rounded-card border border-sky-border bg-sky-surface-2 p-1 dark:border-night-border dark:bg-night-surface-2">
           {([
-            { key: 'badges',     icon: Palette, label: 'Badges' },
-            { key: 'consumables', icon: Zap,    label: 'Boosts' },
-            { key: 'titles',     icon: Award,   label: 'Titres' },
+            { key: 'badges',     icon: Palette, label: t('boutique.badges') },
+            { key: 'consumables', icon: Zap,    label: t('boutique.boosts') },
+            { key: 'titles',     icon: Award,   label: t('boutique.titles') },
             { key: 'frames',     icon: Frame,   label: `Skins${ownedFrames.length > 0 ? ` (${ownedFrames.length})` : ''}` },
           ] as { key: ShopTab; icon: ElementType; label: string }[]).map(({ key, icon: Icon, label }) => (
             <button key={key} onClick={() => setTab(key)}
@@ -271,7 +273,7 @@ export function BoutiqueClientV2({
                             : 'bg-brand text-white hover:bg-brand-hover',
                         )}
                       >
-                        {equipped ? <><Check className="inline h-3 w-3" /> Équipé</> : 'Équiper'}
+                        {equipped ? <><Check className="inline h-3 w-3" /> {t('boutique.equipped')}</> : t('boutique.equip')}
                       </button>
                     ) : (
                       <button
@@ -309,7 +311,7 @@ export function BoutiqueClientV2({
                 if (isX2 && cs.x2_active && cs.x2_expires) {
                   const ms = new Date(cs.x2_expires).getTime() - Date.now()
                   const min = Math.max(0, Math.round(ms / 60000))
-                  x2TimeLeft = min > 0 ? `Actif — ${min} min` : 'Expire bientôt'
+                  x2TimeLeft = min > 0 ? `${t('boutique.activeBoost')} — ${min} min` : t('boutique.expireSoon')
                 }
 
                 return (
@@ -355,7 +357,7 @@ export function BoutiqueClientV2({
                       )}
                     >
                       {isBlocked
-                        ? isX2 ? 'Boost actif' : 'Max atteint'
+                        ? isX2 ? t('boutique.boostActive') : t('boutique.maxReached')
                         : <><SkyCoin size={11} /> {c.price}</>
                       }
                     </button>
@@ -395,7 +397,7 @@ export function BoutiqueClientV2({
                               equipped ? 'bg-emerald-500 text-white' : 'bg-brand text-white hover:bg-brand-hover',
                             )}
                           >
-                            {equipped ? 'Équipé' : 'Équiper'}
+                            {equipped ? t('boutique.equipped') : t('boutique.equip')}
                           </button>
                         ) : buyable ? (
                           <button
@@ -420,7 +422,7 @@ export function BoutiqueClientV2({
                       <div className="mt-2.5">
                         <div className="mb-1 flex items-center justify-between">
                           <span className="font-body text-[10px] text-text-tertiary dark:text-text-dark-tertiary">
-                            Progression
+                            {t('boutique.progression')}
                           </span>
                           <span className="font-display text-[10px] font-bold tabular-nums text-text-secondary dark:text-text-dark-secondary">
                             {progress.current.toLocaleString('fr-FR')} / {progress.max.toLocaleString('fr-FR')}
@@ -444,7 +446,7 @@ export function BoutiqueClientV2({
               {/* Compteur */}
               <div className="flex items-center justify-between rounded-input border border-sky-border bg-sky-surface-2 px-4 py-2.5 dark:border-night-border dark:bg-night-surface-2">
                 <span className="font-body text-[13px] text-text-secondary dark:text-text-dark-secondary">
-                  Collection de skins
+                  {t('boutique.skinCollection')}
                 </span>
                 <span className="font-display text-[20px] font-black tabular-nums text-text-main dark:text-text-dark-main">
                   {ownedFrames.length}
@@ -455,9 +457,9 @@ export function BoutiqueClientV2({
               {ownedFrames.length === 0 ? (
                 <div className="flex flex-col items-center gap-3 rounded-card border border-dashed border-sky-border py-12 text-center dark:border-night-border">
                   <Frame className="h-10 w-10 text-text-tertiary dark:text-text-dark-tertiary" />
-                  <p className="font-display text-[15px] font-bold text-text-secondary dark:text-text-dark-secondary">Pas encore de skin</p>
+                  <p className="font-display text-[15px] font-bold text-text-secondary dark:text-text-dark-secondary">{t('boutique.noSkin')}</p>
                   <p className="font-body text-[13px] text-text-tertiary dark:text-text-dark-tertiary">
-                    Tente ta chance à la roue — skins à 5% et secrets encore plus rares…
+                    {t('boutique.skinHint')}
                   </p>
                 </div>
               ) : (
@@ -550,7 +552,7 @@ export function BoutiqueClientV2({
                               : 'bg-brand text-white hover:bg-brand-hover',
                           )}
                         >
-                          {isEquipped ? <><Check className="inline h-3 w-3 mr-1" />Équipé — cliquer pour retirer</> : 'Équiper'}
+                          {isEquipped ? <><Check className="inline h-3 w-3 mr-1" />{t('boutique.equippedRemove')}</> : t('boutique.equip')}
                         </button>
                       </div>
                     )

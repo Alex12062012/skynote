@@ -41,6 +41,8 @@ export function DemoLoginForm() {
           setLoading(false)
           return
         }
+        // Marque le début de la session demo — expire dans 2h (middleware vérifie)
+        document.cookie = `demo_session_at=${Date.now()}; path=/; max-age=7200; SameSite=Lax`
       }
 
       router.push('/dashboard')
