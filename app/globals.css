@@ -45,6 +45,12 @@
   animation: rainbow-shift 4s linear infinite;
 }
 
+/* ─── Nova delta float ───────────────────────────────────────── */
+@keyframes nova-delta-float {
+  0%   { opacity: 1; transform: translateX(-50%) translateY(0); }
+  100% { opacity: 0; transform: translateX(-50%) translateY(-24px); }
+}
+
 /* ─── X2 Coin Rain ───────────────────────────────────────────── */
 @keyframes coin-fall {
   0%   { transform: translateY(-40px) rotate(0deg); opacity: 0; }

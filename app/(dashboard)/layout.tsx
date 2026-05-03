@@ -60,7 +60,6 @@ export default async function DashboardLayout({ children }: { children: React.Re
       {/* Widget upgrade Nova — visible pour free et starter, caché pour pro */}
       {profile && (profile as any).role !== 'teacher' && (
         <NovaUpgradeWidget
-          novaBalance={novaBalance}
           plan={(profile as any).plan ?? 'free'}
         />
       )}

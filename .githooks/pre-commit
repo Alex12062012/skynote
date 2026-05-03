@@ -1,0 +1,19 @@
+#!/bin/sh
+# Pre-commit hook — bloque le commit si TS ou lint échoue
+
+echo "🔍 Vérification TypeScript..."
+npm run type-check
+if [ $? -ne 0 ]; then
+  echo "❌ Erreurs TypeScript détectées. Commit annulé."
+  exit 1
+fi
+
+echo "🔍 Vérification ESLint..."
+npm run lint
+if [ $? -ne 0 ]; then
+  echo "❌ Erreurs ESLint détectées. Commit annulé."
+  exit 1
+fi
+
+echo "✅ Tout est propre."
+exit 0

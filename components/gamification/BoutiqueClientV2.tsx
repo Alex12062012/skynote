@@ -28,7 +28,7 @@ interface ConsumableState {
   x2_active: boolean
   x2_expires: string | null
   retry_qcm_charges: number
-  skip_question_charges: number
+  hint_question_charges: number
 }
 
 interface FrameItem {
@@ -76,7 +76,7 @@ export function BoutiqueClientV2({
   const { t } = useI18n()
   const defaultStats: UserStats = { total_qcm_perfect: 0, best_perfect_streak: 0, wheel_spins: 0 }
   const stats = userStats ?? defaultStats
-  const cs: ConsumableState = consumableState ?? { x2_active: false, x2_expires: null, retry_qcm_charges: 0, skip_question_charges: 0 }
+  const cs: ConsumableState = consumableState ?? { x2_active: false, x2_expires: null, retry_qcm_charges: 0, hint_question_charges: 0 }
   const [coins, setCoins] = useState(initialCoins)
   const [tab, setTab]     = useState<ShopTab>('badges')
   const [badges, setBadges] = useState(new Set(ownedBadges))
@@ -300,8 +300,8 @@ export function BoutiqueClientV2({
               {CONSUMABLES.map(c => {
                 // État actuel de ce consommable
                 const isX2 = c.id === 'x2_coins'
-                const isCharged = c.id === 'retry_qcm' || c.id === 'skip_question'
-                const currentCharges = c.id === 'retry_qcm' ? cs.retry_qcm_charges : c.id === 'skip_question' ? cs.skip_question_charges : 0
+                const isCharged = c.id === 'retry_qcm' || c.id === 'hint_question'
+                const currentCharges = c.id === 'retry_qcm' ? cs.retry_qcm_charges : c.id === 'hint_question' ? cs.hint_question_charges : 0
                 const maxCharges = (c as any).maxCharges ?? 1
                 const isBlocked = isX2 ? cs.x2_active : isCharged ? currentCharges >= maxCharges : false
                 const canBuy = !isBlocked && coins >= c.price && !pending
@@ -369,28 +369,28 @@ export function BoutiqueClientV2({
 
           {tab === 'titles' && (
             <div className="space-y-2">
-              {TITLES.map(t => {
-                const owned = titles.has(t.id)
-                const equipped = equippedTitle === t.id
-                const buyable = Boolean(t.price)
-                const progress = !owned && !buyable ? parseTitleProgress(t.unlockRule, stats) : null
+              {TITLES.map(title => {
+                const owned = titles.has(title.id)
+                const equipped = equippedTitle === title.id
+                const buyable = Boolean(title.price)
+                const progress = !owned && !buyable ? parseTitleProgress(title.unlockRule, stats) : null
                 const pct = progress ? Math.round((progress.current / progress.max) * 100) : 0
                 return (
-                  <div key={t.id} className="rounded-card border border-sky-border bg-sky-surface px-4 py-3 dark:border-night-border dark:bg-night-surface">
+                  <div key={title.id} className="rounded-card border border-sky-border bg-sky-surface px-4 py-3 dark:border-night-border dark:bg-night-surface">
                     <div className="flex items-center justify-between">
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
-                          <span className="font-display text-[15px] font-bold text-rainbow">{t.label}</span>
+                          <span className="font-display text-[15px] font-bold text-rainbow">{title.label}</span>
                           <span className="rounded-pill bg-sky-cloud px-2 py-0.5 font-body text-[10px] font-bold uppercase text-text-tertiary dark:bg-night-border">
-                            {t.category}
+                            {title.category}
                           </span>
                         </div>
-                        <p className="truncate font-body text-[12px] text-text-secondary dark:text-text-dark-secondary">{t.desc}</p>
+                        <p className="truncate font-body text-[12px] text-text-secondary dark:text-text-dark-secondary">{title.desc}</p>
                       </div>
                       <div className="ml-3 flex flex-shrink-0 items-center gap-2">
                         {owned ? (
                           <button
-                            onClick={() => handleEquip('title', equipped ? null : t.id)}
+                            onClick={() => handleEquip('title', equipped ? null : title.id)}
                             disabled={pending}
                             className={cn(
                               'rounded-pill px-3 py-1 font-display text-[11px] font-bold transition',
@@ -401,16 +401,16 @@ export function BoutiqueClientV2({
                           </button>
                         ) : buyable ? (
                           <button
-                            onClick={() => handleBuy('title', t.id, t.price!)}
-                            disabled={coins < (t.price ?? 0) || pending}
+                            onClick={() => handleBuy('title', title.id, title.price!)}
+                            disabled={coins < (title.price ?? 0) || pending}
                             className={cn(
                               'flex items-center gap-1 rounded-pill px-3 py-1 font-display text-[11px] font-bold transition',
-                              coins >= (t.price ?? 0)
+                              coins >= (title.price ?? 0)
                                 ? 'bg-brand text-white hover:bg-brand-hover'
                                 : 'cursor-not-allowed bg-sky-cloud text-text-tertiary',
                             )}
                           >
-                            <SkyCoin size={10} /> {t.price}
+                            <SkyCoin size={10} /> {title.price}
                           </button>
                         ) : (
                           <Lock className="h-4 w-4 text-text-tertiary" />
@@ -469,7 +469,7 @@ export function BoutiqueClientV2({
                     const resolvedId = SKIN_ID_ALIASES[f.item_id] ?? f.item_id
                     const skinEntry = SKINS.find(s => s.id === resolvedId)
                     const isEquipped = equippedFrame === f.item_id
-                    const isSecret = f.data?.secret === true || skinEntry?.secret === true
+                    const isSecret = (f.data as any)?.secret === true || skinEntry?.secret === true
                     const rarity = skinEntry?.rarity ?? (f.data?.rarity as any) ?? 'rare'
                     const label = skinEntry?.label ?? f.data?.name ?? 'Skin'
                     const desc = skinEntry?.desc ?? ''

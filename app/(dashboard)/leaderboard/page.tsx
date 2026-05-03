@@ -17,14 +17,10 @@ export default async function LeaderboardPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  // Mode par défaut = all_time : affiche tout de suite la vraie hiérarchie
-  // (en weekly, tant qu'on est lundi/mardi, quasi tout le monde est à 0 et
-  //  le classement semble vide)
-  const { rows, me } = await getLeaderboard('all_time')
-
-  // Forcer le choix d'un pseudo si pas encore défini
-  const { data: myProf } = await supabase
-    .from('profiles').select('pseudo, role').eq('id', user.id).single()
+  const [{ rows, me }, { data: myProf }] = await Promise.all([
+    getLeaderboard('all_time'),
+    supabase.from('profiles').select('pseudo, role').eq('id', user.id).single(),
+  ])
   const needsPseudo = !myProf?.pseudo && myProf?.role !== 'teacher'
 
   return (

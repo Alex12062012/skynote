@@ -52,7 +52,7 @@ function NavbarInner({
   const { t } = useI18n()
   const role = (profile as any)?.role ?? 'user'
   // Rétrocompat : famille → pro
-  const isFamille = profile?.plan === 'famille' || profile?.plan === 'pro'
+  const isFamille = (profile?.plan as string) === 'famille' || (profile?.plan as string) === 'pro'
   const navLinks = getNavLinks(role, t, isBetaEnabled)
   const pathname = usePathname()
   const searchParams = useSearchParams()

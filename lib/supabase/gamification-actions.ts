@@ -669,7 +669,7 @@ async function unlockDerivedTitles(userId: string) {
  * Supprime la row si charges <= 0.
  */
 export async function consumeBoostCharge(
-  boostType: 'retry_qcm' | 'skip_question'
+  boostType: 'retry_qcm' | 'skip_question' | 'hint_question'
 ): Promise<{ error: string | null; remaining: number }> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()

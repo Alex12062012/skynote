@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import Anthropic from '@anthropic-ai/sdk'
-import { NOVA_COST_CHAT, deductNovasForUser } from '@/lib/supabase/nova-actions'
+import { NOVA_COST_CHAT, deductNovasForUser, addNovasForUser } from '@/lib/supabase/nova-actions'
+import { Errors, apiError } from '@/lib/errors'
 
 export const maxDuration = 30
 
@@ -40,10 +41,14 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  let novaDeducted = false
+  let userId: string | null = null
+
   try {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return NextResponse.json({ error: 'Non autorise' }, { status: 401 })
+    if (!user) throw Errors.unauthorized()
+    userId = user.id
 
     const { data: profile } = await supabase
       .from('profiles')
@@ -70,6 +75,8 @@ export async function POST(request: NextRequest) {
 
     const { courseId, question, history } = await request.json()
 
+    if (!courseId || !question) throw Errors.badRequest('Parametres manquants')
+
     // Déduire les Novas AVANT l'appel IA
     const deductResult = await deductNovasForUser(user.id, NOVA_COST_CHAT, `Chat: ${String(question).slice(0, 60)}`)
     if (!deductResult.ok) {
@@ -79,9 +86,7 @@ export async function POST(request: NextRequest) {
         code: 'insufficient_novas',
       })
     }
-    if (!courseId || !question) {
-      return NextResponse.json({ error: 'Parametres manquants' }, { status: 400 })
-    }
+    novaDeducted = true
 
     const { data: course } = await supabase
       .from('courses')
@@ -256,7 +261,9 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ answer, type: detectedType })
   } catch (error: unknown) {
-    const msg = error instanceof Error ? error.message : 'Erreur serveur'
-    return NextResponse.json({ error: msg }, { status: 500 })
+    if (novaDeducted && userId) {
+      await addNovasForUser(userId, NOVA_COST_CHAT, 'Remboursement chat échoué').catch(() => {})
+    }
+    return apiError(error)
   }
 }
