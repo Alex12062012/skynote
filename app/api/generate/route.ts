@@ -4,6 +4,7 @@ import { processCourse } from '@/lib/ai/pipeline'
 import { waitUntil } from '@vercel/functions'
 import { NOVA_COST_COURSE, deductNovasForUser, addNovasForUser } from '@/lib/supabase/nova-actions'
 import { AppError, Errors, apiError } from '@/lib/errors'
+import { rateLimit, rateLimitResponse } from '@/lib/rate-limit'
 
 export const maxDuration = 60
 
@@ -13,6 +14,7 @@ export async function POST(request: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) throw Errors.unauthorized()
+    if (!rateLimit(`generate:${user.id}`, 10, 60_000)) return rateLimitResponse()
 
     const body = await request.json()
     const { courseId, contentLang } = body

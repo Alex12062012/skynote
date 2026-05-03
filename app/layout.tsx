@@ -11,10 +11,28 @@ const dmSans = DM_Sans({
   subsets: ['latin'], variable: '--font-dm-sans', display: 'swap', weight: ['400','500','600','700']
 })
 
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://skynote.app'
+const OG_TITLE = 'Skynote — Révise plus vite, Réussis mieux'
+const OG_DESC  = "Transforme tes cours en fiches de révision et QCM grâce à l'IA. Gamification, répétition espacée et suivi de progression."
+
 export const metadata: Metadata = {
-  title: { default: 'Skynote — Révise plus vite, Réussis mieux', template: '%s | Skynote' },
-  description: "Transforme tes cours en fiches de révision et QCM grâce à l'IA.",
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://skynote.app'),
+  title: { default: OG_TITLE, template: '%s | Skynote' },
+  description: OG_DESC,
+  metadataBase: new URL(APP_URL),
+  openGraph: {
+    type:        'website',
+    siteName:    'Skynote',
+    title:       OG_TITLE,
+    description: OG_DESC,
+    url:         APP_URL,
+    images: [{ url: '/og-image.png', width: 1200, height: 630, alt: 'Skynote' }],
+  },
+  twitter: {
+    card:        'summary_large_image',
+    title:       OG_TITLE,
+    description: OG_DESC,
+    images:      ['/og-image.png'],
+  },
   icons: {
     icon: [
       { url: '/favicon-16x16.png', sizes: '16x16', type: 'image/png' },

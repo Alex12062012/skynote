@@ -1,3 +1,5 @@
+import { withSentryConfig } from '@sentry/nextjs'
+
 /** @type {import('next').NextConfig} */
 
 const securityHeaders = [
@@ -9,7 +11,7 @@ const securityHeaders = [
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "font-src 'self' https://fonts.gstatic.com",
       "img-src 'self' data: blob: https://*.supabase.co https://lh3.googleusercontent.com",
-      "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.anthropic.com",
+      "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.anthropic.com https://*.sentry.io https://o*.ingest.sentry.io",
       "frame-ancestors 'none'",
       "base-uri 'self'",
       "form-action 'self'",
@@ -32,4 +34,11 @@ const nextConfig = {
     ],
   },
 }
-export default nextConfig
+
+export default withSentryConfig(nextConfig, {
+  silent:                 !process.env.CI,
+  widenClientFileUpload:  true,
+  hideSourceMaps:         true,
+  disableLogger:          true,
+  automaticVercelMonitors: true,
+})
