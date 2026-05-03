@@ -261,7 +261,7 @@ function ResultBanner({ result, onClose }: { result: SpinResult; onClose: () => 
   const seg = result.segment
   const isLoss    = seg.type === 'lost' || result.netGain < 0
   const isWin     = result.netGain > 0
-  const isSpecial = seg.type === 'boost_xp' || seg.type === 'skin' || seg.type === 'frame'
+  const isSpecial = seg.type === 'boost_xp' || seg.type === 'skin'
 
   return (
     <div
@@ -295,7 +295,7 @@ function ResultBanner({ result, onClose }: { result: SpinResult; onClose: () => 
         {seg.type === 'coins' && `Tu as reçu ${(seg as any).value} coins pour un coût de ${SPIN_COST} coins.`}
         {seg.type === 'lost' && 'Retente ta chance !'}
         {seg.type === 'boost_xp' && 'Tes XP sont doublés pendant 1 heure.'}
-        {(seg.type === 'skin' || seg.type === 'frame') && 'Un skin a été ajouté à ta collection dans la boutique.'}
+        {seg.type === 'skin' && 'Un skin a été ajouté à ta collection dans la boutique.'}
       </p>
       <button
         onClick={onClose}

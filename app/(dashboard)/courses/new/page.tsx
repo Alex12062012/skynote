@@ -19,17 +19,16 @@ export default async function NewCoursePage({ searchParams }: Props) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+  const [{ data: profile }, folderResult] = await Promise.all([
+    supabase.from('profiles').select('role').eq('id', user.id).single(),
+    params.folder
+      ? supabase.from('course_folders').select('name').eq('id', params.folder).single()
+      : Promise.resolve({ data: null }),
+  ])
   if (profile?.role === 'student') redirect('/dashboard')
 
   const isTeacher = profile?.role === 'teacher'
-
-  // Si un folder est passe, recuperer son nom pour l'afficher
-  let folderName = ''
-  if (params.folder) {
-    const { data: folder } = await supabase.from('course_folders').select('name').eq('id', params.folder).single()
-    folderName = folder?.name || ''
-  }
+  const folderName = (folderResult as any)?.data?.name || ''
 
   // Si prof, recuperer tous ses dossiers
   let teacherFolders: { id: string; name: string; color: string; classroom_id: string }[] = []

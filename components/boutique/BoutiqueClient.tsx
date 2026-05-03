@@ -80,7 +80,7 @@ export function BoutiqueClient({ initialCoins, recentSpins }: BoutiqueClientProp
                       <span className="font-body text-[12px] font-medium text-text-secondary dark:text-text-dark-secondary">
                         {seg.label}
                       </span>
-                      {(seg.type === 'frame' || seg.type === 'boost_xp') && (
+                      {(seg.type === 'skin' || seg.type === 'boost_xp') && (
                         <span className="ml-auto rounded-pill bg-brand-soft px-1.5 py-0.5 font-body text-[10px] font-bold text-brand dark:bg-brand-dark-soft dark:text-brand-dark">
                           RARE
                         </span>

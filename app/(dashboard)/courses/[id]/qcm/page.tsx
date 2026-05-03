@@ -31,17 +31,18 @@ export default async function QcmPage({ params }: Props) {
     redirect(`/courses/${id}`)
   }
 
+  const flashcards = await getCourseFlashcards(id)
+
   // Si les QCM sont encore en cours de génération → vérifier si des questions existent quand même
   if ((course as any).qcm_status === 'processing') {
     // Vérifier si des questions existent déjà (cas élève : le prof a généré mais qcm_status pas encore à jour)
-    const flashcardsForCheck = await getCourseFlashcards(id)
-    const flashcardIdsForCheck = flashcardsForCheck.map((f) => f.id)
+    const flashcardIds = flashcards.map((f) => f.id)
     let hasExistingQuestions = false
-    if (flashcardIdsForCheck.length > 0) {
+    if (flashcardIds.length > 0) {
       const { count } = await supabase
         .from('qcm_questions')
         .select('*', { count: 'exact', head: true })
-        .in('flashcard_id', flashcardIdsForCheck)
+        .in('flashcard_id', flashcardIds)
         .eq('user_id', course.user_id)
       hasExistingQuestions = (count ?? 0) > 0
     }
@@ -69,8 +70,6 @@ export default async function QcmPage({ params }: Props) {
     }
     // Des questions existent → continuer comme si le QCM était prêt
   }
-
-  const flashcards = await getCourseFlashcards(id)
 
   if (flashcards.length === 0) {
     return (

@@ -18,7 +18,8 @@ export function NovaCounter({ initialBalance, userId }: NovaCounterProps) {
   const [animating, setAnimating] = useState(false)
   const [delta, setDelta]         = useState(0)
   const prevBalance               = useRef(initialBalance)
-  const supabase                  = createClient()
+  const supabaseRef               = useRef(createClient())
+  const supabase                  = supabaseRef.current
 
   const fetchBalance = useCallback(async () => {
     const { data } = await supabase
@@ -95,12 +96,6 @@ export function NovaCounter({ initialBalance, userId }: NovaCounterProps) {
         </span>
       )}
 
-      <style>{`
-        @keyframes nova-delta-float {
-          0%   { opacity: 1; transform: translateX(-50%) translateY(0); }
-          100% { opacity: 0; transform: translateX(-50%) translateY(-24px); }
-        }
-      `}</style>
     </div>
   )
 }

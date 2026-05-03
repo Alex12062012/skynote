@@ -1,21 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
-import { NOVA_COST_OCR } from '@/lib/supabase/nova-actions'
+import { NOVA_COST_OCR, addNovasForUser } from '@/lib/supabase/nova-actions'
+import { Errors, apiError } from '@/lib/errors'
 
 export const dynamic = 'force-dynamic'
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 
 export async function POST(request: NextRequest) {
+  let novaDeducted = false
+  let userId: string | null = null
+
   try {
     const { createClient } = await import('@/lib/supabase/server')
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return NextResponse.json({ error: 'Non autorise' }, { status: 401 })
+    if (!user) throw Errors.unauthorized()
+    userId = user.id
 
     const formData = await request.formData()
     const file = formData.get('file') as File
-    if (!file) return NextResponse.json({ error: 'Fichier manquant' }, { status: 400 })
+    if (!file) throw Errors.badRequest('Fichier manquant')
 
     // Vérifier et déduire les Novas AVANT l'appel IA
     const { deductNovasForUser } = await import('@/lib/supabase/nova-actions')
@@ -26,6 +31,7 @@ export async function POST(request: NextRequest) {
         { status: 402 }
       )
     }
+    novaDeducted = true
 
     const buffer = await file.arrayBuffer()
     const base64 = Buffer.from(buffer).toString('base64')
@@ -59,8 +65,10 @@ export async function POST(request: NextRequest) {
 
     const text = response.content[0].type === 'text' ? response.content[0].text : ''
     return NextResponse.json({ text, success: true, novaBalance: deductResult.balance })
-  } catch (error: any) {
-    console.error('[extract-photo]', error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+  } catch (error: unknown) {
+    if (novaDeducted && userId) {
+      await addNovasForUser(userId, NOVA_COST_OCR, 'Remboursement OCR échoué').catch(() => {})
+    }
+    return apiError(error)
   }
 }

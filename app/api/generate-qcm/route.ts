@@ -1,16 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { generateQcmQuestions } from '@/lib/ai/generate'
-import { NOVA_COST_QCM_SINGLE, deductNovasForUser } from '@/lib/supabase/nova-actions'
+import { NOVA_COST_QCM_SINGLE, deductNovasForUser, addNovasForUser } from '@/lib/supabase/nova-actions'
+import { Errors, apiError } from '@/lib/errors'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 60
 
 export async function POST(request: NextRequest) {
+  let novaDeducted = false
+  let userId: string | null = null
+
   try {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return NextResponse.json({ error: 'Non autorise' }, { status: 401 })
+    if (!user) throw Errors.unauthorized()
+    userId = user.id
 
     const body = await request.json()
     const { flashcardId, regenerate, difficulty = 'medium' } = body
@@ -22,7 +27,7 @@ export async function POST(request: NextRequest) {
       .eq('user_id', user.id)
       .single()
 
-    if (!flashcard) return NextResponse.json({ error: 'Fiche introuvable' }, { status: 404 })
+    if (!flashcard) throw Errors.notFound('Fiche')
 
     if (!regenerate) {
       // Vérifier si les QCM existent déjà pour ce niveau
@@ -49,6 +54,7 @@ export async function POST(request: NextRequest) {
         { status: 402 }
       )
     }
+    novaDeducted = true
 
     if (regenerate) {
       // Supprimer les questions existantes pour ce niveau
@@ -71,11 +77,7 @@ export async function POST(request: NextRequest) {
     )
 
     if (!questions || questions.length === 0) {
-      console.error('[generate-qcm] Zero questions generated', { flashcardId, difficulty })
-      return NextResponse.json(
-        { error: "Aucune question générée par l'IA" },
-        { status: 500 }
-      )
+      throw Errors.internal("Aucune question générée par l'IA")
     }
 
     const { error: insertError } = await supabase.from('qcm_questions').insert(
@@ -92,16 +94,14 @@ export async function POST(request: NextRequest) {
     )
 
     if (insertError) {
-      console.error('[generate-qcm] Supabase insert failed:', insertError)
-      return NextResponse.json(
-        { error: `Insert DB: ${insertError.message}` },
-        { status: 500 }
-      )
+      throw Errors.internal(`Insert DB: ${insertError.message}`)
     }
 
     return NextResponse.json({ ok: true, inserted: questions.length, novaBalance: deductResult.balance })
-  } catch (error: any) {
-    console.error('[generate-qcm] Error:', error)
-    return NextResponse.json({ error: error.message || 'Erreur inconnue' }, { status: 500 })
+  } catch (error: unknown) {
+    if (novaDeducted && userId) {
+      await addNovasForUser(userId, NOVA_COST_QCM_SINGLE, 'Remboursement QCM échoué').catch(() => {})
+    }
+    return apiError(error)
   }
 }

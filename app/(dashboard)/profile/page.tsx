@@ -21,12 +21,13 @@ export default async function ProfilePage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const profile = await getProfileWithCoins(user.id)
-
-  const [{ count: coursesCount }, { count: qcmCount }, { count: perfectCount }] = await Promise.all([
-    supabase.from('courses').select('id', { count: 'exact' }).eq('user_id', user.id).eq('status', 'ready'),
-    supabase.from('qcm_attempts').select('id', { count: 'exact' }).eq('user_id', user.id),
-    supabase.from('qcm_attempts').select('id', { count: 'exact' }).eq('user_id', user.id).eq('perfect', true),
+  const [profile, [{ count: coursesCount }, { count: qcmCount }, { count: perfectCount }]] = await Promise.all([
+    getProfileWithCoins(user.id),
+    Promise.all([
+      supabase.from('courses').select('id', { count: 'exact' }).eq('user_id', user.id).eq('status', 'ready'),
+      supabase.from('qcm_attempts').select('id', { count: 'exact' }).eq('user_id', user.id),
+      supabase.from('qcm_attempts').select('id', { count: 'exact' }).eq('user_id', user.id).eq('perfect', true),
+    ]),
   ])
 
   const firstName = profile?.full_name?.split(' ')[0] ?? user.email?.split('@')[0] ?? 'User'
