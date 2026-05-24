@@ -3,6 +3,7 @@
 import { Leaf, Target, Flame, Trophy } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { SkyCoin } from '@/components/ui/SkyCoin'
+import { DIFFICULTY_COINS } from '@/lib/gamification/config'
 import type { QcmDifficulty } from '@/lib/supabase/qcm-actions'
 
 interface DifficultySelectorProps {
@@ -28,7 +29,7 @@ const DIFFICULTIES: {
     label: 'Paisible',
     Icon: Leaf,
     description: 'Questions tres directes sur les definitions. Zero piege.',
-    coins: 1,
+    coins: DIFFICULTY_COINS.peaceful,
     color: 'text-emerald-600 dark:text-emerald-400',
     bgLight: 'bg-emerald-50',
     bgDark: 'dark:bg-emerald-950/30',
@@ -40,7 +41,7 @@ const DIFFICULTIES: {
     label: 'Normal',
     Icon: Target,
     description: 'Questions de cours avec quelques pieges simples.',
-    coins: 2,
+    coins: DIFFICULTY_COINS.easy,
     color: 'text-brand dark:text-brand-dark',
     bgLight: 'bg-brand-soft',
     bgDark: 'dark:bg-brand-dark-soft',
@@ -52,7 +53,7 @@ const DIFFICULTIES: {
     label: 'Hardcore',
     Icon: Flame,
     description: 'Pieges subtils + quelques connaissances supplementaires.',
-    coins: 3,
+    coins: DIFFICULTY_COINS.medium,
     color: 'text-orange-600 dark:text-orange-400',
     bgLight: 'bg-orange-50',
     bgDark: 'dark:bg-orange-950/20',
@@ -64,7 +65,7 @@ const DIFFICULTIES: {
     label: 'Teste tes parents',
     Icon: Trophy,
     description: 'Niveau expert : pieges avances + culture generale du domaine.',
-    coins: 5,
+    coins: DIFFICULTY_COINS.hard,
     color: 'text-red-600 dark:text-red-400',
     bgLight: 'bg-red-50',
     bgDark: 'dark:bg-red-950/20',
