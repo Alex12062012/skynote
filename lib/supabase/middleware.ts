@@ -3,8 +3,6 @@ import { NextResponse, type NextRequest } from 'next/server'
 import type { Database } from '@/types/database'
 
 const DEMO_EMAILS = new Set([
-  'demo-teacher@skynote.app',
-  'demo-student@skynote.app',
   'demo-skynote@tutamail.com',
 ])
 const DEMO_SESSION_TTL_MS = 2 * 60 * 60 * 1000
@@ -84,7 +82,7 @@ export async function updateSession(request: NextRequest) {
   }
 
   const protectedPaths = ['/dashboard', '/courses', '/objectives', '/profile']
-  const authPaths = ['/login', '/signup', '/signup-teacher', '/classroom-login', '/demo-login']
+  const authPaths = ['/login', '/signup', '/demo-login']
   const isProtected = protectedPaths.some((p) => request.nextUrl.pathname.startsWith(p))
   const isAuth = authPaths.some((p) => request.nextUrl.pathname.startsWith(p))
 

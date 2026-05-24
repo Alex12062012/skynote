@@ -1,9 +1,9 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname, useSearchParams } from 'next/navigation'
+import { usePathname } from 'next/navigation'
 import { useState, Suspense } from 'react'
-import { Trophy, LayoutDashboard, Users, Menu, X, BookOpen, Key, CreditCard, ShoppingBag } from 'lucide-react'
+import { Trophy, LayoutDashboard, Menu, X, ShoppingBag } from 'lucide-react'
 import { SkyCoin } from '@/components/ui/SkyCoin'
 import { CoinCounter } from '@/components/ui/CoinCounter'
 import { NovaCounter } from '@/components/ui/NovaCounter'
@@ -17,50 +17,31 @@ interface NavLink {
   href: string
   label: string
   icon: React.ElementType
-  tab?: string // paramètre tab dans l'URL (pour les profs)
 }
 
-function getNavLinks(role: string, t: (k: string) => string, isBetaEnabled: boolean): NavLink[] {
-  if (role === 'teacher') {
-    return [
-      { href: '/dashboard', label: t('nav.courses'), icon: BookOpen },
-      { href: '/dashboard?tab=classCode', label: t('nav.classCode'), icon: Key, tab: 'classCode' },
-      { href: '/dashboard?tab=payment', label: t('nav.payment'), icon: CreditCard, tab: 'payment' },
-    ]
-  }
-
-  const links: NavLink[] = [
+function getNavLinks(t: (k: string) => string): NavLink[] {
+  return [
     { href: '/dashboard', label: t('nav.home'), icon: LayoutDashboard },
     { href: '/leaderboard', label: t('nav.leaderboard'), icon: Trophy },
+    { href: '/boutique', label: t('nav.boutique'), icon: ShoppingBag },
   ]
-  // Toujours afficher la boutique
-  links.push({ href: '/boutique', label: t('nav.boutique'), icon: ShoppingBag })
-  return links
 }
 
 function NavbarInner({
   profile,
-  isBetaEnabled = false,
   novaBalance = 0,
   userId,
 }: {
   profile: Profile | null
-  isBetaEnabled?: boolean
   novaBalance?: number
   userId?: string
 }) {
   const { t } = useI18n()
-  const role = (profile as any)?.role ?? 'user'
-  // Rétrocompat : famille → pro
-  const isFamille = (profile?.plan as string) === 'famille' || (profile?.plan as string) === 'pro'
-  const navLinks = getNavLinks(role, t, isBetaEnabled)
+  const navLinks = getNavLinks(t)
   const pathname = usePathname()
-  const searchParams = useSearchParams()
-  const currentTab = searchParams.get('tab')
   const [open, setOpen] = useState(false)
   const [coinSpinning, setCoinSpinning] = useState(false)
   const isDashboard = pathname === '/dashboard'
-  const isTeacher = role === 'teacher'
 
   function handleLogoClick() {
     if (!isDashboard || coinSpinning) return
@@ -69,12 +50,6 @@ function NavbarInner({
   }
 
   function isActive(link: NavLink): boolean {
-    if (isTeacher) {
-      if (link.tab) {
-        return pathname === '/dashboard' && currentTab === link.tab
-      }
-      return pathname === '/dashboard' && !currentTab
-    }
     if (link.href === '/dashboard') return pathname === '/dashboard'
     return pathname.startsWith(link.href)
   }
@@ -103,7 +78,7 @@ function NavbarInner({
 
         <nav className="hidden gap-1 md:flex">
           {navLinks.map((l) => (
-            <Link key={l.href + l.label} href={l.href}
+            <Link key={l.href} href={l.href}
               className={cn(
                 'flex items-center gap-2 rounded-input px-3 py-2 font-body text-[14px] transition-colors',
                 isActive(l)
@@ -113,26 +88,13 @@ function NavbarInner({
               <l.icon className="h-4 w-4" />{l.label}
             </Link>
           ))}
-          {isFamille && (
-            <Link href="/famille"
-              className={cn(
-                'flex items-center gap-2 rounded-input px-3 py-2 font-body text-[14px] transition-colors',
-                pathname.startsWith('/famille')
-                  ? 'bg-purple-100 text-purple-700 dark:bg-purple-950/30 dark:text-purple-400 font-medium'
-                  : 'text-text-secondary hover:bg-sky-cloud hover:text-text-main dark:text-text-dark-secondary dark:hover:bg-night-border'
-              )}>
-              <Users className="h-4 w-4" /> {t('nav.family')}
-            </Link>
-          )}
         </nav>
 
         <div className="flex items-center gap-2">
-          {/* Compteur Novas ✦ — caché pour les professeurs */}
-          {profile && !isTeacher && effectiveUserId && (
+          {profile && effectiveUserId && (
             <NovaCounter initialBalance={novaBalance} userId={effectiveUserId} />
           )}
-          {/* Compteur Sky Coins — caché pour les professeurs */}
-          {profile && !isTeacher && (
+          {profile && (
             <CoinCounter initialCoins={profile.sky_coins} userId={profile.id} />
           )}
           <ThemeToggle />
@@ -159,15 +121,14 @@ function NavbarInner({
 
       {open && (
         <div className="border-t border-sky-border px-4 py-3 dark:border-night-border md:hidden animate-slide-in">
-          {/* Solde Novas visible en mobile aussi */}
-          {profile && !isTeacher && effectiveUserId && (
+          {profile && effectiveUserId && (
             <div className="mb-3 flex items-center justify-between px-1">
               <span className="text-[13px] text-text-secondary dark:text-text-dark-secondary">Novas disponibles</span>
               <NovaCounter initialBalance={novaBalance} userId={effectiveUserId} />
             </div>
           )}
           {navLinks.map((l) => (
-            <Link key={l.href + l.label} href={l.href} onClick={() => setOpen(false)}
+            <Link key={l.href} href={l.href} onClick={() => setOpen(false)}
               className={cn(
                 'flex items-center gap-3 rounded-input px-3 py-2.5 font-body text-[14px] transition-colors',
                 isActive(l)
@@ -177,12 +138,6 @@ function NavbarInner({
               <l.icon className="h-4 w-4" />{l.label}
             </Link>
           ))}
-          {isFamille && (
-            <Link href="/famille" onClick={() => setOpen(false)}
-              className="flex items-center gap-3 rounded-input px-3 py-2.5 font-body text-[14px] text-text-main hover:bg-sky-cloud dark:text-text-dark-main dark:hover:bg-night-border">
-              <Users className="h-4 w-4" /> {t('nav.family')}
-            </Link>
-          )}
           <Link href="/profile" onClick={() => setOpen(false)}
             className="flex items-center gap-3 rounded-input px-3 py-2.5 font-body text-[14px] text-text-main hover:bg-sky-cloud dark:text-text-dark-main dark:hover:bg-night-border">
             {t('nav.myAccount')}
@@ -193,21 +148,18 @@ function NavbarInner({
   )
 }
 
-// Suspense requis par useSearchParams()
 export function Navbar({
   profile,
-  isBetaEnabled = false,
   novaBalance = 0,
   userId,
 }: {
   profile: Profile | null
-  isBetaEnabled?: boolean
   novaBalance?: number
   userId?: string
 }) {
   return (
     <Suspense fallback={null}>
-      <NavbarInner profile={profile} isBetaEnabled={isBetaEnabled} novaBalance={novaBalance} userId={userId} />
+      <NavbarInner profile={profile} novaBalance={novaBalance} userId={userId} />
     </Suspense>
   )
 }

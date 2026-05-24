@@ -37,7 +37,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
     boostActive = Boolean(boostRow)
   } catch { /* table absente */ }
 
-  const isBetaEnabled = betaRow?.value === 'true'
+  // betaRow unused after B2B removal — kept for future use
+  void betaRow
 
   return (
     <CoinRewardProvider>
@@ -45,7 +46,6 @@ export default async function DashboardLayout({ children }: { children: React.Re
       <SkyBackground />
       <Navbar
         profile={profile as Profile | null}
-        isBetaEnabled={isBetaEnabled}
         novaBalance={novaBalance}
         userId={user.id}
       />
@@ -57,8 +57,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
       <CoinRain active={boostActive} />
       <FeedbackButton userId={user.id} />
 
-      {/* Widget upgrade Nova — visible pour free et starter, caché pour pro */}
-      {profile && (profile as any).role !== 'teacher' && (
+      {/* Widget upgrade Nova */}
+      {profile && (
         <NovaUpgradeWidget
           plan={(profile as any).plan ?? 'free'}
         />
