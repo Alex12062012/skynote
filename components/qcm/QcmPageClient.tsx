@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { RefreshCw, AlertCircle, Loader2 } from 'lucide-react'
 import { QcmEngine } from './QcmEngine'
 import { FlashcardQcmSelector } from './FlashcardQcmSelector'
@@ -12,28 +13,34 @@ import type { QcmDifficulty } from '@/lib/supabase/qcm-actions'
 
 interface QcmPageClientProps {
   flashcards: Flashcard[]
-  // Toutes les questions pre-generees pour toutes les fiches et tous les niveaux
   allQuestions: QcmQuestion[]
   courseId: string
 }
 
 export function QcmPageClient({ flashcards, allQuestions, courseId }: QcmPageClientProps) {
   const { t } = useI18n()
-  const [selectedFlashcardId, setSelectedFlashcardId] = useState<string | null>(flashcards[0]?.id ?? null)
+  const searchParams = useSearchParams()
+
+  // Lire le param ?fiche=N pour pré-sélectionner la bonne fiche
+  // (transmis par le bouton "QCM fiche N" dans FlashcardViewer)
+  const ficheParam = searchParams.get('fiche')
+  const initialIndex = ficheParam !== null ? parseInt(ficheParam, 10) : 0
+  const safeInitialIndex = Number.isFinite(initialIndex)
+    ? Math.max(0, Math.min(initialIndex, flashcards.length - 1))
+    : 0
+  const initialFlashcardId = flashcards[safeInitialIndex]?.id ?? flashcards[0]?.id ?? null
+
+  const [selectedFlashcardId, setSelectedFlashcardId] = useState<string | null>(initialFlashcardId)
   const [difficulty, setDifficulty] = useState<QcmDifficulty | null>(null)
   const [isRegenerating, setIsRegenerating] = useState(false)
   const [regenError, setRegenError] = useState<string | null>(null)
-  // Cache local pour les questions regenerees
   const [localOverrides, setLocalOverrides] = useState<Record<string, Record<QcmDifficulty, QcmQuestion[]>>>({})
 
   const selectedFlashcard = flashcards.find((f) => f.id === selectedFlashcardId)
 
-  // Obtenir les questions pour la fiche + difficulte courante
   function getQuestions(flashcardId: string, diff: QcmDifficulty): QcmQuestion[] {
-    // Verifier si une regeneration locale existe
     const override = localOverrides[flashcardId]?.[diff]
     if (override && override.length > 0) return override
-    // Sinon utiliser les questions pre-generees
     return allQuestions.filter(
       (q) => q.flashcard_id === flashcardId && q.difficulty === diff
     )
@@ -60,7 +67,7 @@ export function QcmPageClient({ flashcards, allQuestions, courseId }: QcmPageCli
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ flashcardId: selectedFlashcardId, regenerate: true, difficulty }),
       })
-      if (!res.ok) throw new Error('Erreur lors de la regeneration')
+      if (!res.ok) throw new Error('Erreur lors de la régénération')
       const reloadRes = await fetch(`/api/qcm-questions?flashcardId=${selectedFlashcardId}&difficulty=${difficulty}`)
       if (reloadRes.ok) {
         const data = await reloadRes.json()
@@ -100,7 +107,6 @@ export function QcmPageClient({ flashcards, allQuestions, courseId }: QcmPageCli
 
       {selectedFlashcard && (
         <div>
-          {/* Header avec bouton regenerer */}
           {difficulty && (
             <div className="mb-4 flex items-center justify-between">
               <div>
@@ -120,7 +126,7 @@ export function QcmPageClient({ flashcards, allQuestions, courseId }: QcmPageCli
                   ? <Loader2 className="h-4 w-4 animate-spin" />
                   : <RefreshCw className="h-4 w-4" />
                 }
-                {isRegenerating ? 'Regeneration...' : 'Regenerer'}
+                {isRegenerating ? 'Régénération...' : 'Régénérer'}
               </button>
             </div>
           )}
@@ -132,22 +138,19 @@ export function QcmPageClient({ flashcards, allQuestions, courseId }: QcmPageCli
             </div>
           )}
 
-          {/* Chargement apres regeneration */}
           {isRegenerating ? (
             <div className="flex flex-col items-center justify-center gap-4 py-16 text-center animate-fade-in">
               <div className="h-10 w-10 rounded-full border-[3px] border-brand border-t-transparent animate-spin dark:border-brand-dark" />
               <p className="font-display text-[16px] font-bold text-text-main dark:text-text-dark-main">
-                Regeneration en cours...
+                Régénération en cours...
               </p>
             </div>
           ) : !difficulty ? (
-            /* Selecteur de difficulte */
             <DifficultySelector
               flashcardTitle={selectedFlashcard.title}
               onSelect={handleDifficultySelect}
             />
           ) : currentQuestions.length > 0 ? (
-            /* QCM Engine avec les questions pre-generees */
             <QcmEngine
               key={`${selectedFlashcardId}-${difficulty}`}
               flashcard={selectedFlashcard}
@@ -158,7 +161,6 @@ export function QcmPageClient({ flashcards, allQuestions, courseId }: QcmPageCli
               onChangeDifficulty={handleRestartWithNewDifficulty}
             />
           ) : (
-            /* Aucune question disponible — bouton pour regenerer */
             <div className="flex flex-col items-center justify-center py-16 text-center gap-4">
               <AlertCircle className="h-10 w-10 text-text-tertiary dark:text-text-dark-tertiary" />
               <div>
@@ -166,12 +168,12 @@ export function QcmPageClient({ flashcards, allQuestions, courseId }: QcmPageCli
                   Questions non disponibles
                 </h3>
                 <p className="mt-1 max-w-xs font-body text-[14px] text-text-secondary dark:text-text-dark-secondary">
-                  Les questions pour ce niveau n'ont pas pu etre chargees.
+                  Les questions pour ce niveau n'ont pas pu être chargées.
                 </p>
               </div>
               <Button onClick={handleRegenerate} loading={isRegenerating} variant="secondary" className="gap-2">
                 <RefreshCw className="h-4 w-4" />
-                Generer les questions
+                Générer les questions
               </Button>
             </div>
           )}

@@ -26,6 +26,8 @@
   @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; } }
   .text-gradient-sky { @apply bg-gradient-to-r from-brand to-brand-dark bg-clip-text text-transparent; }
   .glass { backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+  /* Overflow guard — évite le scroll horizontal causé par des éléments fixed débordants */
+  .overflow-x-hidden-safe { overflow-x: hidden; }
 }
 
 /* ─── Rainbow ARGB title ─────────────────────────────────────── */
@@ -33,7 +35,6 @@
   0%   { background-position: 100% 50%; }
   100% { background-position: 0% 50%; }
 }
-/* Dégradé dupliqué → loop sans saut visible (fin = début) */
 .text-rainbow {
   background: linear-gradient(90deg,
     #ff0000, #ff6600, #ffcc00, #00ff88, #00ccff, #6600ff, #ff00cc,
@@ -57,4 +58,50 @@
   10%  { opacity: 1; }
   90%  { opacity: 1; }
   100% { transform: translateY(100vh) rotate(360deg); opacity: 0; }
+}
+
+/* ─── Hover lift — carte interactive ────────────────────────── */
+.hover-lift {
+  transition: transform 0.18s cubic-bezier(0.34,1.3,0.64,1), box-shadow 0.18s ease;
+}
+.hover-lift:hover {
+  transform: translateY(-3px) scale(1.01);
+  box-shadow: 0 8px 28px rgba(37,99,235,0.14);
+}
+.dark .hover-lift:hover {
+  box-shadow: 0 8px 32px rgba(0,0,0,0.45);
+}
+
+/* ─── Press effect — boutons primaires ──────────────────────── */
+.press-effect {
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+  will-change: transform;
+}
+.press-effect:active {
+  transform: scale(0.96);
+  box-shadow: 0 2px 8px rgba(37,99,235,0.2);
+}
+
+/* ─── Glow ring — éléments mis en avant ─────────────────────── */
+.glow-ring {
+  box-shadow: 0 0 0 3px rgba(37,99,235,0.2), 0 0 20px rgba(37,99,235,0.15);
+}
+.glow-ring-amber {
+  box-shadow: 0 0 0 3px rgba(251,191,36,0.25), 0 0 20px rgba(251,191,36,0.2);
+}
+.glow-ring-success {
+  box-shadow: 0 0 0 3px rgba(5,150,105,0.2), 0 0 20px rgba(5,150,105,0.15);
+}
+
+/* ─── Stagger helpers ────────────────────────────────────────── */
+.stagger-1 { animation-delay: 60ms !important; }
+.stagger-2 { animation-delay: 120ms !important; }
+.stagger-3 { animation-delay: 180ms !important; }
+.stagger-4 { animation-delay: 240ms !important; }
+.stagger-5 { animation-delay: 300ms !important; }
+.stagger-6 { animation-delay: 360ms !important; }
+
+/* ─── Transition de page (layout) ───────────────────────────── */
+.page-transition {
+  animation: fade-in 0.35s ease-out forwards;
 }

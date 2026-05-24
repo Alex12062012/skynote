@@ -1,7 +1,7 @@
 export type Locale = 'fr' | 'en' | 'ru' | 'zh'
 
 export const LOCALES: { code: Locale; label: string; flag: string }[] = [
-  { code: 'fr', label: 'Francais', flag: '\uD83C\uDDEB\uD83C\uDDF7' },
+  { code: 'fr', label: 'Fran\u00E7ais', flag: '\uD83C\uDDEB\uD83C\uDDF7' },
   { code: 'en', label: 'English', flag: '\uD83C\uDDEC\uD83C\uDDE7' },
   { code: 'ru', label: '\u0420\u0443\u0441\u0441\u043A\u0438\u0439', flag: '\uD83C\uDDF7\uD83C\uDDFA' },
   { code: 'zh', label: '\u4E2D\u6587', flag: '\uD83C\uDDE8\uD83C\uDDF3' },

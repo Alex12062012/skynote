@@ -452,12 +452,12 @@ export function CreateCourseForm({
         {sourceType !== 'list' && (
           <Button type="submit" loading={isPending} size="lg" className="w-full"
             disabled={sourceType === 'photo' && !showExtracted}>
-            {isPending ? 'Generation en cours...' : (
+            {isPending ? 'Génération en cours...' : (
               <span className="flex items-center justify-center gap-2">
-                Creer le cours
-                <span className="flex items-center gap-1 rounded-full bg-white/20 px-2 py-0.5 text-[12px] font-semibold">
+                Créer le cours
+                <span className="flex items-center gap-1 rounded-full bg-white/20 px-2 py-0.5 text-[12px] font-semibold" title="Coût en Novas : fiches + QCM">
                   <NovaCoin size={13} />
-                  118
+                  118 ✦
                 </span>
               </span>
             )}

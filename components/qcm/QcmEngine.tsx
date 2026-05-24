@@ -2,10 +2,9 @@
 
 import { useState, useTransition, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { CheckCircle, XCircle, Zap, RotateCcw, ArrowLeft, Leaf, Target, Flame, Trophy, GraduationCap, Star, BookOpen, Dumbbell, Check, X, Lightbulb } from 'lucide-react'
+import { CheckCircle, XCircle, Zap, RotateCcw, ArrowLeft, Leaf, Target, Flame, Trophy, Star, BookOpen, Check, X, Lightbulb } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { SkyCoin } from '@/components/ui/SkyCoin'
-import { CoinAnimation, CoinToast } from '@/components/ui/CoinAnimation'
 import { useCoinReward } from '@/components/providers/CoinRewardProvider'
 import { saveQcmAttempt, type QcmDifficulty } from '@/lib/supabase/qcm-actions'
 import { consumeBoostCharge } from '@/lib/supabase/gamification-actions'
@@ -44,8 +43,6 @@ export function QcmEngine({ flashcard, questions, courseId, difficulty = 'medium
   const [showResult, setShowResult] = useState(false)
   const [coinsEarned, setCoinsEarned] = useState(0)
   const { showReward } = useCoinReward()
-  const [showCoinAnim, setShowCoinAnim] = useState(false)
-  const [showToast, setShowToast] = useState(false)
   const [retryCharges, setRetryCharges] = useState(0)
   const [retryPending, setRetryPending] = useState(false)
   const [hintCharges, setHintCharges] = useState(0)
@@ -122,7 +119,7 @@ export function QcmEngine({ flashcard, questions, courseId, difficulty = 'medium
   function handleRestart() {
     setCurrentQ(0); setAnswers([]); setSelectedOption(null)
     setAnswerState('unanswered'); setShowResult(false)
-    setCoinsEarned(0); setShowCoinAnim(false); setShowToast(false)
+    setCoinsEarned(0)
     setEliminatedOption(-1)
     if (onRegenerate) onRegenerate()
   }
@@ -179,8 +176,6 @@ export function QcmEngine({ flashcard, questions, courseId, difficulty = 'medium
     const pct = Math.round((finalScore / total) * 100)
     return (
       <>
-        <CoinAnimation trigger={showCoinAnim} count={14} onDone={() => setShowCoinAnim(false)} />
-        <CoinToast amount={coinsEarned} visible={showToast} onHide={() => setShowToast(false)} />
         <div className="flex flex-col items-center gap-6 py-8 text-center animate-fade-in">
           <div className={cn('flex h-24 w-24 items-center justify-center rounded-full animate-pop-in',
             isPerfect ? 'bg-success-soft dark:bg-emerald-950/30'
@@ -325,7 +320,13 @@ export function QcmEngine({ flashcard, questions, courseId, difficulty = 'medium
                 key={index}
                 onClick={() => handleOptionClick(index)}
                 disabled={isAnswered || isEliminated}
-                className={cn('flex w-full items-center gap-3 rounded-card-sm border-[1.5px] px-4 py-3 text-left transition-all duration-150', cls)}
+                className={cn(
+                  'flex w-full items-center gap-3 rounded-card-sm border-[1.5px] px-4 py-3 text-left transition-all duration-150',
+                  cls,
+                  // Animations de feedback
+                  isAnswered && isCorrect && isSelected ? 'animate-bounce-in' : '',
+                  isAnswered && isSelected && !isCorrect ? 'animate-shake' : '',
+                )}
               >
                 <span className={cn('flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full font-body text-[12px] font-bold',
                   isAnswered && isCorrect       ? 'bg-success text-white dark:bg-success-dark'

@@ -26,18 +26,23 @@ export async function updateLoginStreak(userId: string): Promise<void> {
   if (!lastLogin) {
     newStreak = 1
   } else {
-    const daysSinceLastLogin = Math.floor(
-      (now.getTime() - lastLogin.getTime()) / (1000 * 60 * 60 * 24)
+    // Comparaison par DATE CALENDAIRE (pas par ms écoulées).
+    // Corrige le bug : login à 23h50 puis 00h05 le lendemain = 0 ms écoulées
+    // mais bien 1 jour calendaire de différence → streak devait s'incrémenter.
+    const nowMidnight  = new Date(now.getFullYear(),       now.getMonth(),       now.getDate())
+    const lastMidnight = new Date(lastLogin.getFullYear(), lastLogin.getMonth(), lastLogin.getDate())
+    const daysDiff = Math.round(
+      (nowMidnight.getTime() - lastMidnight.getTime()) / (1000 * 60 * 60 * 24)
     )
 
-    if (daysSinceLastLogin === 0) {
+    if (daysDiff === 0) {
       // Déjà connecté aujourd'hui — ne pas changer le streak
       return
-    } else if (daysSinceLastLogin === 1) {
-      // Connexion le lendemain — incrémenter le streak
+    } else if (daysDiff === 1) {
+      // Connexion le lendemain exact — incrémenter le streak
       newStreak = profile.streak_days + 1
     } else {
-      // Streak brisé
+      // Gap > 1 jour : streak brisé, on repart de 1
       newStreak = 1
     }
   }
@@ -241,20 +246,19 @@ export async function activatePremiumWithCoins(): Promise<{ success: boolean; er
     profile?.plan_expires_at &&
     new Date(profile.plan_expires_at) > now
   ) {
-    // Prolonger depuis la date d'expiration actuelle
-    baseDate = new Date(profile.plan_expires_at)
+    // Prolonger la base de calcul pour les utilisateurs Plus
+    baseDate = new Date(profile.plan_expires_at!)
   }
 
   const expiresAt = new Date(baseDate)
-  expiresAt.setMonth(expiresAt.getMonth() + 1)
+  expiresAt.setDate(expiresAt.getDate() + 30)
 
-  await supabase
+  const { error: updateError } = await supabase
     .from('profiles')
     .update({ plan: 'plus', plan_expires_at: expiresAt.toISOString() })
     .eq('id', user.id)
 
-  revalidatePath('/profile')
-  revalidatePath('/objectives')
-  revalidatePath('/pricing')
+  if (updateError) return { success: false, error: updateError.message }
+
   return { success: true }
 }

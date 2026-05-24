@@ -202,7 +202,8 @@ async function ReadyCourse({ courseId, userId, courseOwnerId, courseTitle, qcmSt
         </>
       )}
 
-      <FlashcardViewer flashcards={flashcards} courseId={courseId} userId={userId} />
+      {/* qcmReady transmis pour que le bouton QCM contextuel (fiche → QCM N) fonctionne */}
+      <FlashcardViewer flashcards={flashcards} courseId={courseId} userId={userId} qcmReady={qcmReady} />
     </div>
   )
 }

@@ -17,20 +17,20 @@ type Testimonial = { text: string; name: string; grade: string }
 const FEATURES: Feature[] = [
   { icon: "", title: "Photo, texte, vocal, PDF", desc: "Importe ton cours comme tu veux. L'IA s'adapte." },
   { icon: "", title: "Fiches en 15 secondes",   desc: "Pas en 15 minutes. En 15 secondes. Chrono en main." },
-  { icon: "", title: "QCM intelligents",         desc: "Des questions qui testent ta comprehension, pas ta memoire." },
-  { icon: "", title: "Chatbot par cours",        desc: "Pose tes questions. L'IA connait ton cours par coeur." },
+  { icon: "", title: "QCM intelligents",         desc: "Des questions qui testent ta compréhension, pas ta mémoire." },
+  { icon: "", title: "Chatbot par cours",        desc: "Pose tes questions. L'IA connaît ton cours par cœur." },
 ]
 
 const STATS: Stat[] = [
-  { value: "15s",   label: "pour generer tes fiches" },
-  { value: "4x",    label: "plus rapide que reecrire" },
-  { value: "100%",  label: "adapte college & lycee" },
+  { value: "15s",   label: "pour générer tes fiches" },
+  { value: "4x",    label: "plus rapide que réécrire" },
+  { value: "100%",  label: "adapté collège & lycée" },
 ]
 
 const FALLBACK_TESTIMONIALS: Testimonial[] = [
-  { text: "J'ai eu 17 en histoire grace aux fiches Skynote. Ma prof a cru que j'avais revise 3h.", name: "Ines, 3eme",  grade: "17/20" },
-  { text: "Le QCM m'a fait comprendre des trucs que j'avais pas capte en cours. C'est ouf.",       name: "Yanis, 2nde", grade: "15/20" },
-  { text: "Je prends mon cours en photo et 15 secondes apres j'ai mes fiches. C'est magique.",     name: "Lea, 4eme",   grade: "16/20" },
+  { text: "J'ai eu 17 en histoire grâce aux fiches Skynote. Ma prof a cru que j'avais révisé 3h.", name: "Inès, 3ème",  grade: "17/20" },
+  { text: "Le QCM m'a fait comprendre des trucs que j'avais pas captés en cours. C'est ouf.",       name: "Yanis, 2nde", grade: "15/20" },
+  { text: "Je prends mon cours en photo et 15 secondes après j'ai mes fiches. C'est magique.",      name: "Léa, 4ème",   grade: "16/20" },
 ]
 
 // Positions fixes des etoiles — generees une seule fois, pas dans le render
