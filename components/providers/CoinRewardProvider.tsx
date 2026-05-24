@@ -7,6 +7,7 @@ interface RewardData {
   amount: number
   reason: string
   icon?: string
+  variant?: 'normal' | 'prestige'
 }
 
 interface CoinRewardContextType {
@@ -22,23 +23,37 @@ export function useCoinReward() {
 export function CoinRewardProvider({ children }: { children: React.ReactNode }) {
   const [reward, setReward] = useState<RewardData | null>(null)
   const [visible, setVisible] = useState(false)
-  // Garde un flag pour bloquer les declenchements en rafale (double-click, StrictMode, etc.)
   const isShowingRef = useRef(false)
+  // File d'attente : si une animation est en cours, on empile la suivante
+  const queueRef = useRef<RewardData[]>([])
 
-  const showReward = useCallback((data: RewardData) => {
-    // Si une animation est deja en cours -> ignorer, jamais de double-play
-    if (isShowingRef.current) return
+  const playNext = useCallback((data: RewardData) => {
     isShowingRef.current = true
     setReward(data)
     setVisible(true)
   }, [])
 
-  // Stable via useCallback -> ne change jamais de reference -> pas de re-declenchement du useEffect de CoinReward
+  const showReward = useCallback((data: RewardData) => {
+    if (isShowingRef.current) {
+      // Empiler — sera joué après la fin de l'animation courante
+      queueRef.current.push(data)
+      return
+    }
+    playNext(data)
+  }, [playNext])
+
   const handleDone = useCallback(() => {
     setVisible(false)
     isShowingRef.current = false
-    setTimeout(() => setReward(null), 400)
-  }, [])
+    setTimeout(() => {
+      setReward(null)
+      // Dépiler et jouer le suivant après un court silence
+      if (queueRef.current.length > 0) {
+        const next = queueRef.current.shift()!
+        setTimeout(() => playNext(next), 250)
+      }
+    }, 400)
+  }, [playNext])
 
   return (
     <CoinRewardContext.Provider value={{ showReward }}>
@@ -48,6 +63,7 @@ export function CoinRewardProvider({ children }: { children: React.ReactNode }) 
           amount={reward.amount}
           reason={reward.reason}
           icon={reward.icon ? <span>{reward.icon}</span> : undefined}
+          variant={reward.variant}
           visible={visible}
           onDone={handleDone}
         />

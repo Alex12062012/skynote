@@ -85,6 +85,7 @@ interface CoinRewardProps {
   amount: number
   reason: string
   icon?: ReactNode
+  variant?: 'normal' | 'prestige'
   onDone?: () => void
 }
 
@@ -93,9 +94,16 @@ export function CoinReward({
   visible,
   amount,
   reason,
-  icon = <Trophy className="h-7 w-7 text-amber-500" />,
+  icon,
+  variant = 'normal',
   onDone,
 }: CoinRewardProps) {
+  const isPrestige = variant === 'prestige'
+  // Icône par défaut selon le variant
+  const defaultIcon = isPrestige
+    ? <span style={{ fontSize: 26, lineHeight: 1 }}>🏆</span>
+    : <Trophy className="h-7 w-7 text-amber-500" />
+  const resolvedIcon = icon ?? defaultIcon
   const [active, setActive]               = useState(false)
   const [flyPhase, setFlyPhase]           = useState(false)
   const [displayedCoins, setDisplayedCoins] = useState(0)
@@ -182,12 +190,15 @@ export function CoinReward({
       }
     })
 
-    // Sparkles au point de spawn
+    // Sparkles au point de spawn — or pur en mode prestige
+    const sparkleColors = isPrestige
+      ? ['#FCD34D', '#F59E0B', '#FBBF24', '#FDE68A', '#F97316']  // tout ambre/or
+      : ['#FCD34D', '#60A5FA', '#A78BFA', '#34D399', '#FB923C']   // multicolore normal
     const newSparkles = Array.from({ length: 10 }, (_, i) => ({
       id: i,
       angle: (i / 10) * 360,
       dist: 38 + ((i * 11) % 4) * 12,
-      color: ['#FCD34D', '#60A5FA', '#A78BFA', '#34D399', '#FB923C'][i % 5],
+      color: sparkleColors[i % sparkleColors.length],
     }))
 
 
@@ -198,7 +209,8 @@ export function CoinReward({
     addTimer(() => {
       setActive(true)
       setToastVisible(true)
-      playRewardChord()
+      if (isPrestige) playPrestigeChord()
+      else playRewardChord()
     }, 50)
 
     // Vol en arc vers le compteur
@@ -254,6 +266,32 @@ export function CoinReward({
         }, i * 65)
       })
       setTimeout(() => { soundCooldown.current = false }, 600)
+    } catch (_e) { soundCooldown.current = false }
+  }
+
+  /** Son prestige : arpège plus haut et cristallin, type "récompense rare" */
+  function playPrestigeChord() {
+    if (soundCooldown.current) return
+    soundCooldown.current = true
+    try {
+      const ctx = new (window.AudioContext || (window as any).webkitAudioContext)()
+      // Mi majeur aigu + shimmer
+      const notes = [659, 830, 988, 1319, 1661]
+      notes.forEach((freq, i) => {
+        setTimeout(() => {
+          const osc = ctx.createOscillator()
+          const gain = ctx.createGain()
+          osc.type = i < 3 ? 'sine' : 'triangle'
+          osc.frequency.value = freq
+          gain.gain.setValueAtTime(0.10, ctx.currentTime)
+          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35)
+          osc.connect(gain)
+          gain.connect(ctx.destination)
+          osc.start()
+          osc.stop(ctx.currentTime + 0.38)
+        }, i * 55)
+      })
+      setTimeout(() => { soundCooldown.current = false }, 700)
     } catch (_e) { soundCooldown.current = false }
   }
 
@@ -330,6 +368,8 @@ export function CoinReward({
             ['--cp-y' as string]: `${p.cpOffY}px`,
             ['--t-x' as string]: `${p.tOffX}px`,
             ['--t-y' as string]: `${p.tOffY}px`,
+            // Coins dorés en mode prestige
+            filter: isPrestige ? 'sepia(0.6) saturate(2.5) hue-rotate(-10deg) brightness(1.25)' : undefined,
           }}
         >
           <SkyCoin size={p.size} />
@@ -371,20 +411,22 @@ export function CoinReward({
             display: 'flex',
             alignItems: 'center',
             gap: 10,
-            background: 'rgba(15,23,42,0.93)',
+            background: isPrestige ? 'rgba(28,18,6,0.95)' : 'rgba(15,23,42,0.93)',
             backdropFilter: 'blur(14px)',
             WebkitBackdropFilter: 'blur(14px)',
-            border: '1px solid rgba(251,191,36,0.28)',
+            border: isPrestige ? '1.5px solid rgba(251,191,36,0.75)' : '1px solid rgba(251,191,36,0.28)',
             borderRadius: 999,
             padding: '10px 22px',
-            boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+            boxShadow: isPrestige
+              ? '0 0 24px rgba(251,191,36,0.35), 0 8px 32px rgba(0,0,0,0.5)'
+              : '0 8px 32px rgba(0,0,0,0.4)',
             animation: toastExiting
               ? 'sk-toast-out 0.3s ease-in forwards'
               : 'sk-toast-in 0.3s cubic-bezier(0.34,1.3,0.64,1) forwards',
           }}
         >
-          {icon}
-          <span style={{ color: '#F0F6FF', fontWeight: 700, fontSize: 15 }}>{reason}</span>
+          {resolvedIcon}
+          <span style={{ color: isPrestige ? '#FDE68A' : '#F0F6FF', fontWeight: 700, fontSize: 15 }}>{reason}</span>
           <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
             <span style={{
               color: '#FCD34D',
@@ -395,7 +437,9 @@ export function CoinReward({
             }}>
               +{displayedCoins}
             </span>
-            <SkyCoin size={18} />
+            <div style={isPrestige ? { filter: 'sepia(0.5) saturate(2) brightness(1.3)' } : undefined}>
+              <SkyCoin size={18} />
+            </div>
           </div>
         </div>
       )}
