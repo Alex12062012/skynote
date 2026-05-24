@@ -3,6 +3,7 @@
 import { createClient } from './server'
 import { revalidatePath } from 'next/cache'
 import { saveQcmAttemptV2 } from './gamification-actions'
+import type { RewardBreakdown } from '@/lib/gamification/rewards'
 
 export type QcmDifficulty = 'peaceful' | 'easy' | 'medium' | 'hard'
 
@@ -29,6 +30,7 @@ export interface SaveAttemptInput {
  */
 export async function saveQcmAttempt(input: SaveAttemptInput): Promise<{
   coinsEarned: number
+  reward: RewardBreakdown | null
   error: string | null
 }> {
   const res = await saveQcmAttemptV2({
@@ -37,7 +39,7 @@ export async function saveQcmAttempt(input: SaveAttemptInput): Promise<{
     total: input.total,
     difficulty: input.difficulty ?? 'medium',
   })
-  if (res.error) return { coinsEarned: 0, error: res.error }
+  if (res.error) return { coinsEarned: 0, reward: null, error: res.error }
 
   // Garde la logique objectifs existante (perfect_qcm_10, qcm_50, …)
   const supabase = await createClient()
@@ -45,7 +47,7 @@ export async function saveQcmAttempt(input: SaveAttemptInput): Promise<{
   if (user) await checkQcmObjectives(user.id)
   revalidatePath('/objectives')
 
-  return { coinsEarned: res.reward?.total ?? 0, error: null }
+  return { coinsEarned: res.reward?.total ?? 0, reward: res.reward, error: null }
 }
 
 // ─── Ancienne implémentation conservée comme référence ────────────────────────

@@ -12,6 +12,7 @@ import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
 import { useI18n } from '@/lib/i18n/context'
 import type { QcmQuestion, Flashcard } from '@/types/database'
+import type { RewardBreakdown } from '@/lib/gamification/rewards'
 
 interface QcmEngineProps {
   flashcard: Flashcard
@@ -42,6 +43,7 @@ export function QcmEngine({ flashcard, questions, courseId, difficulty = 'medium
   const [answerState, setAnswerState] = useState<AnswerState>('unanswered')
   const [showResult, setShowResult] = useState(false)
   const [coinsEarned, setCoinsEarned] = useState(0)
+  const [rewardBreakdown, setRewardBreakdown] = useState<RewardBreakdown | null>(null)
   const { showReward } = useCoinReward()
   const [retryCharges, setRetryCharges] = useState(0)
   const [retryPending, setRetryPending] = useState(false)
@@ -101,7 +103,7 @@ export function QcmEngine({ flashcard, questions, courseId, difficulty = 'medium
     } else {
       const finalScore = newAnswers.filter((a) => a.correct).length
       startTransition(async () => {
-        const { coinsEarned: earned } = await saveQcmAttempt({
+        const { coinsEarned: earned, reward } = await saveQcmAttempt({
           flashcardId: flashcard.id,
           score: finalScore,
           total,
@@ -109,6 +111,7 @@ export function QcmEngine({ flashcard, questions, courseId, difficulty = 'medium
           difficulty,
         })
         setCoinsEarned(earned)
+        setRewardBreakdown(reward)
         if (earned > 0) { showReward({ amount: earned, reason: `Score parfait — ${DIFFICULTY_LABELS[difficulty].label} !` }) }
         setShowResult(true)
         loadBoostCharges()
@@ -119,7 +122,7 @@ export function QcmEngine({ flashcard, questions, courseId, difficulty = 'medium
   function handleRestart() {
     setCurrentQ(0); setAnswers([]); setSelectedOption(null)
     setAnswerState('unanswered'); setShowResult(false)
-    setCoinsEarned(0)
+    setCoinsEarned(0); setRewardBreakdown(null)
     setEliminatedOption(-1)
     if (onRegenerate) onRegenerate()
   }
@@ -200,9 +203,42 @@ export function QcmEngine({ flashcard, questions, courseId, difficulty = 'medium
             ))}
           </div>
           {coinsEarned > 0 && (
-            <div className="flex items-center gap-2 rounded-pill bg-brand-soft px-5 py-2.5 animate-pop-in dark:bg-brand-dark-soft">
-              <SkyCoin size={24} />
-              <span className="font-body text-[15px] font-bold text-brand dark:text-brand-dark">+{coinsEarned} Sky Coins !</span>
+            <div className="flex flex-col items-center gap-2 animate-pop-in w-full max-w-xs">
+              {/* Total coins */}
+              <div className="flex items-center gap-2 rounded-pill bg-brand-soft px-5 py-2.5 dark:bg-brand-dark-soft">
+                <SkyCoin size={24} />
+                <span className="font-body text-[15px] font-bold text-brand dark:text-brand-dark">+{coinsEarned} Sky Coins !</span>
+              </div>
+              {/* Breakdown — visible only when bonuses exist (prestige, streak, etc.) */}
+              {rewardBreakdown && rewardBreakdown.breakdown.length > 1 && (
+                <div className="w-full rounded-card bg-sky-surface-2 border border-sky-border px-4 py-3 dark:bg-night-surface-2 dark:border-night-border">
+                  <p className="font-body text-[11px] font-semibold text-text-tertiary dark:text-text-dark-tertiary uppercase tracking-wide mb-2">
+                    Détail
+                  </p>
+                  <ul className="space-y-1.5">
+                    {rewardBreakdown.breakdown.map((line, i) => (
+                      <li key={i} className="flex items-center justify-between font-body text-[13px]">
+                        <span className={cn(
+                          'text-text-secondary dark:text-text-dark-secondary',
+                          line.label.startsWith('Prestige') && 'text-amber-600 dark:text-amber-400 font-semibold',
+                          line.label.startsWith('Streak')   && 'text-violet-600 dark:text-violet-400 font-semibold',
+                          line.label === 'Early game'        && 'text-emerald-600 dark:text-emerald-400 font-semibold',
+                          line.label.startsWith('Boost')    && 'text-pink-600 dark:text-pink-400 font-semibold',
+                        )}>
+                          {line.label.startsWith('Prestige') && '🏆 '}
+                          {line.label.startsWith('Streak')   && '🔥 '}
+                          {line.label === 'Early game'        && '⚡ '}
+                          {line.label.startsWith('Boost')    && '×2 '}
+                          {line.label}
+                        </span>
+                        <span className="font-display font-bold tabular-nums text-text-main dark:text-text-dark-main">
+                          +{line.value}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
           )}
           {!isPerfect && (
