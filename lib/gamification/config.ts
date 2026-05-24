@@ -53,9 +53,9 @@ export const EARLY_GAME_WINDOW = 10        // 10 premières fiches parfaites
 export const EARLY_GAME_BONUS = 5          // +5 coins par 5/5 sur cette fenêtre
 
 // ─── PRESTIGE ─────────────────────────────────────────────────────────────────
-/** Coût pour passer de P{n} à P{n+1} : 500, 1000, 1500… (500 × (n+1)) */
+/** Coût pour passer de P{n} à P{n+1} : 100, 200, 300… (100 × (n+1)) */
 export function prestigeCost(currentLevel: number): number {
-  return 500 * (currentLevel + 1)
+  return 100 * (currentLevel + 1)
 }
 /** Multiplicateur de gain : +5 % cumulatif par prestige. */
 export function prestigeMultiplier(level: number): number {
