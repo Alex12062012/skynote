@@ -162,6 +162,14 @@ export async function GET(request: NextRequest) {
       })
     }
 
+    // Merge novas_balance from wallets into user list
+    const { data: wallets } = await supabase.from('wallets').select('user_id, novas_balance')
+    const walletsMap = new Map((wallets || []).map((w: any) => [w.user_id, w.novas_balance ?? 0]))
+    const recentUsersWithNovas = (recentUsers || []).map((u: any) => ({
+      ...u,
+      novas_balance: walletsMap.get(u.id) ?? 0,
+    }))
+
     return NextResponse.json({
       stats: {
         totalUsers: totalUsers ?? 0,
@@ -174,7 +182,7 @@ export async function GET(request: NextRequest) {
         avgCoursesPerUser: totalUsers ? ((totalCourses ?? 0) / totalUsers).toFixed(1) : '0',
         avgQcmPerUser,
       },
-      recentUsers: recentUsers || [],
+      recentUsers: recentUsersWithNovas,
       topUsers: topUsers || [],
       activeUsersToday: activeUsersToday || [],
       usersWithCourses: dedup(usersWithCourses || []),

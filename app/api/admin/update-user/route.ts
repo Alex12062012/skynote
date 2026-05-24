@@ -88,6 +88,20 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ ok: true, newCoins: coins })
       }
 
+      case 'add_novas': {
+        const amount = Number(value)
+        const { data: wallet } = await supabase.from('wallets').select('novas_balance').eq('user_id', userId).single()
+        const newBalance = Math.max(0, (wallet?.novas_balance ?? 0) + amount)
+        await supabase.from('wallets').upsert({ user_id: userId, novas_balance: newBalance }, { onConflict: 'user_id' })
+        return NextResponse.json({ ok: true, newBalance })
+      }
+
+      case 'set_novas': {
+        const balance = Math.max(0, Number(value))
+        await supabase.from('wallets').upsert({ user_id: userId, novas_balance: balance }, { onConflict: 'user_id' })
+        return NextResponse.json({ ok: true, newBalance: balance })
+      }
+
       default:
         return NextResponse.json({ error: 'Action inconnue' }, { status: 400 })
     }

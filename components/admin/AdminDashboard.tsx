@@ -18,7 +18,7 @@ interface TimeSeries { date: string; count: number }
 interface User {
   id: string; email: string; full_name: string | null; sky_coins: number
   plan: string; streak_days: number; created_at: string; last_login_at: string | null
-  is_beta_tester?: boolean
+  is_beta_tester?: boolean; novas_balance?: number
 }
 
 type Period = '7' | '30' | 'all'
@@ -244,6 +244,7 @@ export function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   const [search, setSearch] = useState('')
   const [selectedUser, setSelectedUser] = useState<User | null>(null)
   const [coinAmount, setCoinAmount] = useState('')
+  const [novaAmount, setNovaAmount] = useState('')
   const [newName, setNewName] = useState('')
   const [actionLoading, setActionLoading] = useState(false)
   const [feedback, setFeedback] = useState('')
@@ -314,8 +315,22 @@ export function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     try {
       const res = await fetch('/api/admin/update-user', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId, action, value }) })
       const data = await res.json()
-      if (data.ok) { setFeedback('OK: Action effectuée'); loadData(); if (action === 'delete_user') setSelectedUser(null) }
-      else setFeedback(`Erreur : ${data.error}`)
+      if (data.ok) {
+        setFeedback('OK: Action effectuée')
+        loadData()
+        if (action === 'delete_user') setSelectedUser(null)
+        if (action === 'add_novas' || action === 'set_novas') {
+          setSelectedUser(prev => prev ? { ...prev, novas_balance: data.newBalance } : prev)
+          setNovaAmount('')
+        }
+        if (action === 'add_coins' || action === 'set_coins') {
+          setSelectedUser(prev => prev ? { ...prev, sky_coins: data.newCoins ?? prev.sky_coins } : prev)
+          setCoinAmount('')
+        }
+        if (action === 'set_plan') {
+          setSelectedUser(prev => prev ? { ...prev, plan: value } : prev)
+        }
+      } else setFeedback(`Erreur : ${data.error}`)
     } catch { setFeedback('Erreur réseau') }
     setActionLoading(false)
     setTimeout(() => setFeedback(''), 3000)
@@ -574,6 +589,7 @@ export function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                     <button onClick={() => setSelectedUser(null)} className="text-slate-500 hover:text-white text-xl">×</button>
                   </div>
                   <div className="space-y-4">
+                    {/* Sky Coins */}
                     <div className="rounded-xl bg-slate-800 p-4">
                       <p className="text-[12px] text-slate-400 mb-1">Sky Coins actuels</p>
                       <p className="flex items-center gap-1 font-bold text-[24px] text-blue-400">{selectedUser.sky_coins} <Coins className="h-5 w-5" /></p>
@@ -587,6 +603,31 @@ export function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                           className="px-4 rounded-xl bg-blue-600 text-[13px] font-semibold text-white hover:bg-blue-500 disabled:opacity-50">+/-</button>
                       </div>
                     </div>
+
+                    {/* Novas ✦ */}
+                    <div className="rounded-xl bg-slate-800 p-4">
+                      <p className="text-[12px] text-slate-400 mb-1">Novas ✦ actuels</p>
+                      <p className="flex items-center gap-1 font-bold text-[24px] text-indigo-400">{selectedUser.novas_balance ?? '—'} <Sparkles className="h-5 w-5" /></p>
+                    </div>
+                    <div>
+                      <p className="text-[13px] font-medium text-white mb-2">Ajouter / retirer des Novas</p>
+                      <div className="flex gap-2">
+                        <input type="number" value={novaAmount} onChange={(e) => setNovaAmount(e.target.value)} placeholder="Ex: 500 ou -100"
+                          className="flex-1 h-10 rounded-xl border border-slate-700 bg-slate-800 px-3 text-[14px] text-white focus:border-indigo-500 focus:outline-none" />
+                        <button onClick={() => doAction(selectedUser.id, 'add_novas', novaAmount)} disabled={actionLoading || !novaAmount}
+                          className="px-4 rounded-xl bg-indigo-600 text-[13px] font-semibold text-white hover:bg-indigo-500 disabled:opacity-50">+/-</button>
+                      </div>
+                      <div className="flex gap-2 mt-2">
+                        {[600, 2000, 4000].map(v => (
+                          <button key={v} onClick={() => doAction(selectedUser.id, 'set_novas', v)} disabled={actionLoading}
+                            className="flex-1 h-8 rounded-lg border border-slate-700 text-[12px] text-slate-400 hover:bg-slate-800 disabled:opacity-50">
+                            = {v}✦
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Prénom */}
                     <div>
                       <p className="text-[13px] font-medium text-white mb-2">Changer le prénom</p>
                       <div className="flex gap-2">
@@ -596,16 +637,19 @@ export function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                           className="px-4 rounded-xl bg-slate-700 text-[13px] font-semibold text-white hover:bg-slate-600 disabled:opacity-50">OK</button>
                       </div>
                     </div>
+
+                    {/* Plan */}
                     <div>
-                      <p className="text-[13px] font-medium text-white mb-2">Plan</p>
+                      <p className="text-[13px] font-medium text-white mb-2">
+                        Plan actuel : <span className={`font-bold ${selectedUser.plan === 'plus' ? 'text-amber-400' : 'text-slate-400'}`}>{selectedUser.plan}</span>
+                      </p>
                       <div className="flex gap-2">
                         {([
-                          ['free',    'Gratuit', 'bg-slate-600',  null],
-                          ['plus',    'Plus',    'bg-amber-600',  Star],
-                          ['famille', 'Famille', 'bg-purple-600', Users],
+                          ['free', 'Gratuit', 'bg-slate-600', null],
+                          ['plus', 'Plus',    'bg-amber-600', Star],
                         ] as const).map(([p, l, bg, Icon]) => (
                           <button key={p} onClick={() => doAction(selectedUser.id, 'set_plan', p)} disabled={actionLoading}
-                            className={`flex flex-1 h-10 items-center justify-center gap-1.5 rounded-xl text-[13px] font-semibold transition-colors ${selectedUser.plan === p || (p === 'plus' && false) ? `${bg} text-white` : 'border border-slate-700 text-slate-400 hover:bg-slate-800'}`}>
+                            className={`flex flex-1 h-10 items-center justify-center gap-1.5 rounded-xl text-[13px] font-semibold transition-colors ${selectedUser.plan === p ? `${bg} text-white` : 'border border-slate-700 text-slate-400 hover:bg-slate-800'}`}>
                             {Icon && <Icon className="h-3.5 w-3.5" />}
                             {l}
                           </button>
