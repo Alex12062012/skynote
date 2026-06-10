@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { generateQcmQuestions } from '@/lib/ai/generate'
 import { NOVA_COST_QCM_SINGLE, deductNovasForUser, addNovasForUser } from '@/lib/supabase/nova-actions'
 import { Errors, apiError } from '@/lib/errors'
-import { rateLimit, rateLimitResponse } from '@/lib/rate-limit'
+import { checkRateLimit, RATE_LIMITS } from '@/lib/rate-limit'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 60
@@ -17,7 +17,14 @@ export async function POST(request: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) throw Errors.unauthorized()
     userId = user.id
-    if (!rateLimit(`generate-qcm:${user.id}`, 20, 60_000)) return rateLimitResponse()
+
+    const rl = await checkRateLimit(user.id, 'generate-qcm', RATE_LIMITS.generateQcm)
+    if (!rl.allowed) {
+      return NextResponse.json(
+        { error: 'Limite atteinte : 20 générations de QCM par jour. Réessaie demain.' },
+        { status: 429, headers: { 'X-RateLimit-Reset': String(rl.resetAt) } }
+      )
+    }
 
     const body = await request.json()
     const { flashcardId, regenerate, difficulty = 'medium' } = body

@@ -1,28 +1,53 @@
-import { NextResponse } from 'next/server'
+import { createClient } from '@supabase/supabase-js'
 
-// In-memory sliding window per serverless instance.
-// Provides basic protection; resets on cold start.
-// For cross-instance rate limiting, replace with Upstash Redis.
-
-interface Window { count: number; resetAt: number }
-const store = new Map<string, Window>()
-
-export function rateLimit(key: string, max: number, windowMs: number): boolean {
-  const now = Date.now()
-  const entry = store.get(key)
-
-  if (!entry || now >= entry.resetAt) {
-    store.set(key, { count: 1, resetAt: now + windowMs })
-    return true
-  }
-  if (entry.count >= max) return false
-  entry.count++
-  return true
+export interface RateLimitResult {
+  allowed: boolean
+  remaining: number
+  resetAt: number  // timestamp ms
 }
 
-export function rateLimitResponse(): NextResponse {
-  return NextResponse.json(
-    { error: 'Trop de requêtes. Réessaie dans un moment.' },
-    { status: 429, headers: { 'Retry-After': '60' } }
+// Service role : contourne RLS, pas de dépendance aux cookies de la requête
+function getClient() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
 }
+
+export async function checkRateLimit(
+  userId: string,
+  endpoint: string,
+  { limit, windowMs }: { limit: number; windowMs: number }
+): Promise<RateLimitResult> {
+  const windowSeconds = Math.floor(windowMs / 1000)
+
+  const { data, error } = await getClient().rpc('check_and_increment_rate_limit', {
+    p_user_id:        userId,
+    p_endpoint:       endpoint,
+    p_limit:          limit,
+    p_window_seconds: windowSeconds,
+  })
+
+  if (error || !data) {
+    // En cas d'erreur DB, on laisse passer plutôt que de bloquer l'utilisateur
+    console.error('[rate-limit] RPC error:', error?.message)
+    return { allowed: true, remaining: limit, resetAt: Date.now() + windowMs }
+  }
+
+  const resetAt = new Date(data.reset_at as string).getTime()
+  const remaining = Math.max(0, limit - (data.count as number))
+
+  return {
+    allowed:   data.allowed as boolean,
+    remaining,
+    resetAt,
+  }
+}
+
+export const RATE_LIMITS = {
+  chat:         { limit: 20, windowMs: 60 * 60 * 1000 },        // 20/heure
+  generateFree: { limit: 5,  windowMs: 24 * 60 * 60 * 1000 },   // 5/jour (free)
+  generatePaid: { limit: 10, windowMs: 24 * 60 * 60 * 1000 },   // 10/jour (premium)
+  extractPhoto: { limit: 10, windowMs: 24 * 60 * 60 * 1000 },   // 10/jour
+  generateQcm:  { limit: 20, windowMs: 24 * 60 * 60 * 1000 },   // 20/jour
+} as const

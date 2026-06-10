@@ -2,6 +2,9 @@ import { createClient } from './server'
 
 export type PlanType = 'free' | 'starter' | 'pro'
 
+// Cache module-level — persiste entre les invocations chaudes (TTL 60s)
+let betaCache: { value: boolean; expiresAt: number } | null = null
+
 export interface PlanLimits {
   vocalEnabled:   boolean
   chatbotEnabled: boolean
@@ -45,13 +48,18 @@ const PRO_LIMITS: PlanLimits = {
 }
 
 export async function isBetaModeActive(): Promise<boolean> {
+  const now = Date.now()
+  if (betaCache && now < betaCache.expiresAt) return betaCache.value
+
   const supabase = await createClient()
   const { data } = await supabase
     .from('admin_settings')
     .select('value')
     .eq('key', 'beta_mode')
     .single()
-  return data?.value === 'true'
+  const value = data?.value === 'true'
+  betaCache = { value, expiresAt: now + 60_000 }
+  return value
 }
 
 export async function getUserPlanLimits(userId: string): Promise<PlanLimits> {
