@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { processCourse } from '@/lib/ai/pipeline'
 import { waitUntil } from '@vercel/functions'
+import { checkRateLimit, RATE_LIMITS } from '@/lib/rate-limit'
 
 export const maxDuration = 60
 
@@ -12,6 +13,23 @@ export async function POST(request: NextRequest) {
 
     if (!user) {
       return NextResponse.json({ error: 'Non autorise' }, { status: 401 })
+    }
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('plan')
+      .eq('id', user.id)
+      .single()
+    const isPremium = profile?.plan === 'plus' || profile?.plan === 'famille'
+    const rlConfig = isPremium ? RATE_LIMITS.generatePaid : RATE_LIMITS.generateFree
+
+    const rl = await checkRateLimit(user.id, 'generate', rlConfig)
+    if (!rl.allowed) {
+      const limit = isPremium ? 10 : 5
+      return NextResponse.json(
+        { error: `Limite atteinte : ${limit} générations par jour. Réessaie demain.` },
+        { status: 429, headers: { 'X-RateLimit-Reset': String(rl.resetAt) } }
+      )
     }
 
     const body = await request.json()

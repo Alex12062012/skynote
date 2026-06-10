@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { ChevronLeft, ChevronRight, CheckCircle, Circle } from 'lucide-react'
+import { ChevronLeft, ChevronRight, CheckCircle, Circle, Share2, Check } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { ProgressBar } from '@/components/ui/ProgressBar'
 import { ObjectiveBadge } from '@/components/ui/ObjectiveBadge'
@@ -23,6 +23,15 @@ export function FlashcardViewer({ flashcards, courseId, userId }: FlashcardViewe
   const [localCards, setLocalCards] = useState(flashcards)
   const [isPending, startTransition] = useTransition()
   const [showMasteryBadge, setShowMasteryBadge] = useState(false)
+  const [copied, setCopied] = useState(false)
+
+  function handleShare() {
+    const url = `${window.location.origin}/fiche/${localCards[index].id}`
+    navigator.clipboard.writeText(url).then(() => {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    })
+  }
 
   const card = localCards[index]
   const mastered = localCards.filter((f) => f.is_mastered).length
@@ -94,13 +103,22 @@ export function FlashcardViewer({ flashcards, courseId, userId }: FlashcardViewe
               </span>
               <h2 className="mt-1 font-display text-h3 text-text-main dark:text-text-dark-main">{card.title}</h2>
             </div>
-            <button onClick={handleToggleMastered} disabled={isPending}
-              className="flex-shrink-0 transition-transform hover:scale-110 disabled:opacity-50"
-              title={card.is_mastered ? 'Marquer non maîtrisée' : 'Marquer maîtrisée'}>
-              {card.is_mastered
-                ? <CheckCircle className="h-7 w-7 text-success dark:text-success-dark" />
-                : <Circle className="h-7 w-7 text-sky-border dark:text-night-border" />}
-            </button>
+            <div className="flex flex-shrink-0 items-center gap-2">
+              <button onClick={handleShare}
+                className="flex items-center gap-1.5 rounded-input border border-sky-border px-2.5 py-1.5 font-body text-[12px] text-text-secondary transition-all hover:border-brand hover:text-brand dark:border-night-border dark:text-text-dark-secondary dark:hover:border-brand-dark dark:hover:text-brand-dark"
+                title="Copier le lien de partage">
+                {copied
+                  ? <><Check className="h-3.5 w-3.5 text-success" /><span className="text-success">Copié !</span></>
+                  : <><Share2 className="h-3.5 w-3.5" />Partager</>}
+              </button>
+              <button onClick={handleToggleMastered} disabled={isPending}
+                className="transition-transform hover:scale-110 disabled:opacity-50"
+                title={card.is_mastered ? 'Marquer non maîtrisée' : 'Marquer maîtrisée'}>
+                {card.is_mastered
+                  ? <CheckCircle className="h-7 w-7 text-success dark:text-success-dark" />
+                  : <Circle className="h-7 w-7 text-sky-border dark:text-night-border" />}
+              </button>
+            </div>
           </div>
 
           <p className="mb-5 font-body text-[15px] leading-relaxed text-text-secondary dark:text-text-dark-secondary">

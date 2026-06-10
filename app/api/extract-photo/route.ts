@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
+import { checkRateLimit, RATE_LIMITS } from '@/lib/rate-limit'
 
 export const dynamic = 'force-dynamic'
 
@@ -10,6 +11,14 @@ export async function POST(request: NextRequest) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Non autorise' }, { status: 401 })
+
+    const rl = await checkRateLimit(user.id, 'extract-photo', RATE_LIMITS.extractPhoto)
+    if (!rl.allowed) {
+      return NextResponse.json(
+        { error: 'Limite atteinte : 10 extractions photo par jour. Réessaie demain.' },
+        { status: 429, headers: { 'X-RateLimit-Reset': String(rl.resetAt) } }
+      )
+    }
 
     const formData = await request.formData()
     const file = formData.get('file') as File

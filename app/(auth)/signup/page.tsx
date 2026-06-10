@@ -28,12 +28,6 @@ export default function SignupPage() {
               Se connecter
             </Link>
           </p>
-          <p className="mt-3 text-center font-body text-[13px] text-text-secondary dark:text-text-dark-secondary">
-            Vous êtes professeur ?{' '}
-            <Link href="/signup-teacher" className="font-medium text-brand hover:underline dark:text-brand-dark">
-              Créer une classe virtuelle
-            </Link>
-          </p>
         </div>
       </div>
     </div>

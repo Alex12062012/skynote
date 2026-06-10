@@ -2,6 +2,7 @@ export const revalidate = 30
 
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { isBetaModeActive } from '@/lib/supabase/plan'
 import { Navbar } from '@/components/layout/Navbar'
 import { SkyBackground } from '@/components/ui/SkyBackground'
 import { StreakTracker } from '@/components/dashboard/StreakTracker'
@@ -15,12 +16,10 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const [{ data: profile }, { data: betaRow }] = await Promise.all([
+  const [{ data: profile }, isBetaEnabled] = await Promise.all([
     supabase.from('profiles').select('*').eq('id', user.id).single(),
-    supabase.from('admin_settings').select('value').eq('key', 'beta_mode').maybeSingle(),
+    isBetaModeActive(),
   ])
-
-  const isBetaEnabled = betaRow?.value === 'true'
 
   return (
     <CoinRewardProvider>

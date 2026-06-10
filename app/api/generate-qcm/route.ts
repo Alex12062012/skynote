@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { generateQcmQuestions } from '@/lib/ai/generate'
+import { checkRateLimit, RATE_LIMITS } from '@/lib/rate-limit'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 60
@@ -10,6 +11,14 @@ export async function POST(request: NextRequest) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
+
+    const rl = await checkRateLimit(user.id, 'generate-qcm', RATE_LIMITS.generateQcm)
+    if (!rl.allowed) {
+      return NextResponse.json(
+        { error: 'Limite atteinte : 20 générations de QCM par jour. Réessaie demain.' },
+        { status: 429, headers: { 'X-RateLimit-Reset': String(rl.resetAt) } }
+      )
+    }
 
     const body = await request.json()
     const { flashcardId, regenerate, difficulty = 'medium' } = body

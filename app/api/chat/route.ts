@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import Anthropic from '@anthropic-ai/sdk'
+import { checkRateLimit, RATE_LIMITS } from '@/lib/rate-limit'
+import { isBetaModeActive } from '@/lib/supabase/plan'
 
 export const maxDuration = 30
 
@@ -12,6 +14,14 @@ export async function POST(request: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Non autorise' }, { status: 401 })
 
+    const rl = await checkRateLimit(user.id, 'chat', RATE_LIMITS.chat)
+    if (!rl.allowed) {
+      return NextResponse.json(
+        { error: 'Limite atteinte : 20 messages par heure. Réessaie dans ' + Math.ceil((rl.resetAt - Date.now()) / 60000) + ' min.' },
+        { status: 429, headers: { 'X-RateLimit-Reset': String(rl.resetAt) } }
+      )
+    }
+
     const { data: profile } = await supabase
       .from('profiles')
       .select('plan')
@@ -19,13 +29,7 @@ export async function POST(request: NextRequest) {
       .single()
 
     const isPremium = profile?.plan === 'plus' || profile?.plan === 'famille'
-
-    const { data: beta } = await supabase
-      .from('admin_settings')
-      .select('value')
-      .eq('key', 'beta_mode')
-      .single()
-    const betaActive = beta?.value === 'true'
+    const betaActive = await isBetaModeActive()
 
     if (!isPremium && !betaActive) {
       return NextResponse.json({ error: 'Chatbot reserve aux abonnes Plus et Famille' }, { status: 403 })
