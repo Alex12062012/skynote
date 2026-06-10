@@ -18,7 +18,12 @@ const GRADES = [
   { value: 'autre', label: 'Autre' },
 ]
 
-export function SignupForm() {
+interface SignupFormProps {
+  /** ID du cours partagé à récupérer une fois le compte créé (lien /cours/[id]) */
+  sharedCourseId?: string
+}
+
+export function SignupForm({ sharedCourseId }: SignupFormProps = {}) {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [birthDate, setBirthDate] = useState('')
@@ -92,7 +97,7 @@ export function SignupForm() {
             </p>
           </div>
         )}
-        <OtpForm email={targetEmail} onBack={() => setOtpSent(false)} />
+        <OtpForm email={targetEmail} onBack={() => setOtpSent(false)} sharedCourseId={sharedCourseId} />
       </div>
     )
   }

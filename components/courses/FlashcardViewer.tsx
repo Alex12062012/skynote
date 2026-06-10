@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import Link from 'next/link'
-import { ChevronLeft, ChevronRight, CheckCircle, Circle, GraduationCap, Zap, Share2, Check, Copy } from 'lucide-react'
+import { ChevronLeft, ChevronRight, CheckCircle, Circle, GraduationCap, Zap, Share2 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { ProgressBar } from '@/components/ui/ProgressBar'
 import { ObjectiveBadge } from '@/components/ui/ObjectiveBadge'
@@ -26,30 +26,20 @@ export function FlashcardViewer({ flashcards, courseId, userId, qcmReady = false
   const [localCards, setLocalCards] = useState(flashcards)
   const [isPending, startTransition] = useTransition()
   const [showMasteryBadge, setShowMasteryBadge] = useState(false)
-  const [copied, setCopied] = useState(false)
 
   function handleShare() {
-    const card = localCards[index]
-    const url = `${window.location.origin}/fiche/${card.id}`
+    const url = `${window.location.origin}/cours/${courseId}`
 
     // Sur mobile (iOS/Android) : ouvre le menu de partage natif (Messages, WhatsApp, Mail...)
     if (navigator.share) {
-      navigator.share({ title: card.title, url }).catch(() => {
+      navigator.share({ title: 'Mon cours Skynote', url }).catch(() => {
         // L'utilisateur a annulé le partage, ou l'API a échoué — on ne fait rien
       })
       return
     }
 
     // Desktop / navigateurs sans support : on copie le lien dans le presse-papiers
-    handleCopyLink()
-  }
-
-  function handleCopyLink() {
-    const url = `${window.location.origin}/fiche/${localCards[index].id}`
-    navigator.clipboard.writeText(url).then(() => {
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
-    })
+    navigator.clipboard.writeText(url)
   }
 
   const card = localCards[index]
@@ -124,15 +114,8 @@ export function FlashcardViewer({ flashcards, courseId, userId, qcmReady = false
             <div className="flex flex-shrink-0 items-center gap-2">
               <button onClick={handleShare}
                 className="flex items-center gap-1.5 rounded-input border border-sky-border px-2.5 py-1.5 font-body text-[12px] text-text-secondary transition-all hover:border-brand hover:text-brand dark:border-night-border dark:text-text-dark-secondary dark:hover:border-brand-dark dark:hover:text-brand-dark"
-                title="Partager">
+                title="Partager le cours">
                 <Share2 className="h-3.5 w-3.5" />Partager
-              </button>
-              <button onClick={handleCopyLink}
-                className="flex items-center gap-1.5 rounded-input border border-sky-border px-2.5 py-1.5 font-body text-[12px] text-text-secondary transition-all hover:border-brand hover:text-brand dark:border-night-border dark:text-text-dark-secondary dark:hover:border-brand-dark dark:hover:text-brand-dark"
-                title="Copier le lien">
-                {copied
-                  ? <><Check className="h-3.5 w-3.5 text-success" /><span className="text-success">Copié !</span></>
-                  : <><Copy className="h-3.5 w-3.5" />Copier le lien</>}
               </button>
               <button onClick={handleToggleMastered} disabled={isPending}
                 className="transition-transform hover:scale-110 disabled:opacity-50"
