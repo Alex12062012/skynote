@@ -28,7 +28,7 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
               </p>
             </div>
           )}
-          <GithubButton label="Continuer avec GitHub" />
+          <GithubButton label="Continuer avec GitHub" sharedCourseId={shared} ficheIndex={fiche} />
           <div className="my-5 flex items-center gap-3">
             <div className="flex-1 border-t border-sky-border dark:border-night-border" />
             <span className="font-body text-[12px] text-text-tertiary">ou</span>

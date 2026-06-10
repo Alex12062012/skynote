@@ -2,15 +2,27 @@
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 
-export function GithubButton({ label = 'Continuer avec GitHub' }: { label?: string }) {
+interface GithubButtonProps {
+  label?: string
+  /** ID du cours partagé à récupérer une fois le compte créé (lien /cours/[id]) */
+  sharedCourseId?: string
+  /** Index de la fiche pour laquelle ouvrir le QCM directement après récupération du cours */
+  ficheIndex?: string
+}
+
+export function GithubButton({ label = 'Continuer avec GitHub', sharedCourseId, ficheIndex }: GithubButtonProps) {
   const [loading, setLoading] = useState(false)
   const supabase = createClient()
 
   async function handleGithub() {
     setLoading(true)
+    const params = new URLSearchParams()
+    if (sharedCourseId) params.set('shared', sharedCourseId)
+    if (ficheIndex !== undefined) params.set('fiche', ficheIndex)
+    const query = params.toString()
     await supabase.auth.signInWithOAuth({
       provider: 'github',
-      options: { redirectTo: `${location.origin}/auth/callback` },
+      options: { redirectTo: `${location.origin}/auth/callback${query ? `?${query}` : ''}` },
     })
   }
 
