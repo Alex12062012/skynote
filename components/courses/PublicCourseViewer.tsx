@@ -1,22 +1,29 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useTransition } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { ChevronLeft, ChevronRight, Zap } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { cn } from '@/lib/utils'
+import { claimSharedCourse } from '@/lib/supabase/claim-actions'
 import type { Flashcard } from '@/types/database'
 
 interface PublicCourseViewerProps {
   flashcards: Flashcard[]
   courseId: string
+  /** true si un visiteur est connecté (que le cours lui appartienne ou non) */
+  isLoggedIn?: boolean
   /** true si le cours est déjà dans le compte du visiteur connecté */
   isOwnCourse?: boolean
   qcmReady?: boolean
 }
 
-export function PublicCourseViewer({ flashcards, courseId, isOwnCourse = false, qcmReady = false }: PublicCourseViewerProps) {
+export function PublicCourseViewer({ flashcards, courseId, isLoggedIn = false, isOwnCourse = false, qcmReady = false }: PublicCourseViewerProps) {
+  const router = useRouter()
   const [index, setIndex] = useState(0)
+  const [isPending, startTransition] = useTransition()
+  const [error, setError] = useState('')
   const card = flashcards[index]
   const total = flashcards.length
 
@@ -24,11 +31,20 @@ export function PublicCourseViewer({ flashcards, courseId, isOwnCourse = false, 
     ? card.key_points
     : (() => { try { return JSON.parse(String(card.key_points || '[]')) } catch { return [] } })()
 
-  // Lien du bouton QCM : si le cours est déjà dans le compte du visiteur, on
-  // l'envoie directement au QCM. Sinon, créer un compte est l'étape requise.
-  const qcmHref = isOwnCourse
-    ? `/courses/${courseId}/qcm?fiche=${index}`
-    : `/signup?shared=${courseId}`
+  // Connecté mais le cours n'est pas encore dans son compte : on le récupère
+  // d'abord, puis on redirige vers le QCM de la copie.
+  function handleClaimAndOpenQcm() {
+    setError('')
+    startTransition(async () => {
+      const result = await claimSharedCourse(courseId)
+      if (result.error || !result.courseId) {
+        setError(result.error || 'Une erreur est survenue')
+        return
+      }
+      router.push(`/courses/${result.courseId}/qcm?fiche=${index}`)
+      router.refresh()
+    })
+  }
 
   return (
     <div className="flex flex-col gap-6">
@@ -78,18 +94,27 @@ export function PublicCourseViewer({ flashcards, courseId, isOwnCourse = false, 
         </Button>
 
         {qcmReady && (
-          <Link href={qcmHref}>
-            <Button size="sm" className="gap-1.5 animate-fade-in">
+          isLoggedIn && !isOwnCourse ? (
+            <Button size="sm" className="gap-1.5 animate-fade-in" onClick={handleClaimAndOpenQcm} loading={isPending}>
               <Zap className="h-4 w-4" />
               QCM fiche {index + 1}
             </Button>
-          </Link>
+          ) : (
+            <Link href={isOwnCourse ? `/courses/${courseId}/qcm?fiche=${index}` : `/signup?shared=${courseId}`}>
+              <Button size="sm" className="gap-1.5 animate-fade-in">
+                <Zap className="h-4 w-4" />
+                QCM fiche {index + 1}
+              </Button>
+            </Link>
+          )
         )}
 
         <Button variant="secondary" size="sm" onClick={() => setIndex(Math.min(total - 1, index + 1))} disabled={index === total - 1} className="gap-1.5">
           Suivante<ChevronRight className="h-4 w-4" />
         </Button>
       </div>
+
+      {error && <p className="text-center font-body text-[12px] text-error">{error}</p>}
     </div>
   )
 }

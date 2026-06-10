@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/server'
 import { getSharedCourse } from '@/lib/supabase/claim-actions'
 import { PublicCourseViewer } from '@/components/courses/PublicCourseViewer'
 import { ClaimCourseButton } from '@/components/courses/ClaimCourseButton'
+import { SkyBackground } from '@/components/ui/SkyBackground'
 
 interface Props { params: Promise<{ id: string }> }
 
@@ -39,8 +40,10 @@ export default async function SharedCoursePage({ params }: Props) {
 
   return (
     <div className="min-h-screen bg-sky-bg dark:bg-night-bg">
+      <SkyBackground />
+
       {/* Header minimal */}
-      <header className="border-b border-sky-border bg-sky-surface/80 backdrop-blur-lg dark:border-night-border dark:bg-night-surface/80">
+      <header className="relative z-10 border-b border-sky-border bg-sky-surface/80 backdrop-blur-lg dark:border-night-border dark:bg-night-surface/80">
         <div className="mx-auto flex h-14 max-w-2xl items-center justify-between px-4">
           <Link href="/" className="font-display text-[18px] font-bold text-text-main dark:text-text-dark-main">
             Skynote
@@ -56,7 +59,7 @@ export default async function SharedCoursePage({ params }: Props) {
         </div>
       </header>
 
-      <main className="mx-auto max-w-2xl px-4 py-10">
+      <main className="relative z-10 mx-auto max-w-2xl px-4 py-10">
         {/* Fil d'ariane matière */}
         <p className="mb-3 font-body text-[12px] uppercase tracking-wide text-text-tertiary dark:text-text-dark-tertiary">
           {course.subject} · {flashcards.length} fiches
@@ -70,6 +73,7 @@ export default async function SharedCoursePage({ params }: Props) {
         <PublicCourseViewer
           flashcards={flashcards}
           courseId={course.id}
+          isLoggedIn={!!user}
           isOwnCourse={isOwnCourse}
           qcmReady={course.qcm_status === 'ready'}
         />
