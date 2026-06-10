@@ -7,11 +7,11 @@ import type { Metadata } from 'next'
 export const metadata: Metadata = { title: 'Créer un compte' }
 
 interface SignupPageProps {
-  searchParams: Promise<{ shared?: string }>
+  searchParams: Promise<{ shared?: string; fiche?: string }>
 }
 
 export default async function SignupPage({ searchParams }: SignupPageProps) {
-  const { shared } = await searchParams
+  const { shared, fiche } = await searchParams
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-sky-bg px-4 dark:bg-night-bg">
@@ -34,7 +34,7 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
             <span className="font-body text-[12px] text-text-tertiary">ou</span>
             <div className="flex-1 border-t border-sky-border dark:border-night-border" />
           </div>
-          <SignupForm sharedCourseId={shared} />
+          <SignupForm sharedCourseId={shared} ficheIndex={fiche} />
           <p className="mt-5 text-center font-body text-[13px] text-text-secondary dark:text-text-dark-secondary">
             Déjà un compte ?{' '}
             <Link href="/login" className="font-medium text-brand hover:underline dark:text-brand-dark">

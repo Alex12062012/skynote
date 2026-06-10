@@ -7,6 +7,7 @@ import { getSharedCourse } from '@/lib/supabase/claim-actions'
 import { PublicCourseViewer } from '@/components/courses/PublicCourseViewer'
 import { ClaimCourseButton } from '@/components/courses/ClaimCourseButton'
 import { SkyBackground } from '@/components/ui/SkyBackground'
+import { SkyCoin } from '@/components/ui/SkyCoin'
 
 interface Props { params: Promise<{ id: string }> }
 
@@ -39,13 +40,14 @@ export default async function SharedCoursePage({ params }: Props) {
   const isOwnCourse = !!user && user.id === course.user_id
 
   return (
-    <div className="min-h-screen bg-sky-bg dark:bg-night-bg">
+    <div className="min-h-screen">
       <SkyBackground />
 
       {/* Header minimal */}
       <header className="relative z-10 border-b border-sky-border bg-sky-surface/80 backdrop-blur-lg dark:border-night-border dark:bg-night-surface/80">
         <div className="mx-auto flex h-14 max-w-2xl items-center justify-between px-4">
-          <Link href="/" className="font-display text-[18px] font-bold text-text-main dark:text-text-dark-main">
+          <Link href="/" className="flex items-center gap-2 font-display text-[18px] font-bold text-text-main dark:text-text-dark-main">
+            <SkyCoin size={28} />
             Skynote
           </Link>
           {user ? (

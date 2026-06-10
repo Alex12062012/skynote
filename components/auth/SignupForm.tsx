@@ -21,9 +21,11 @@ const GRADES = [
 interface SignupFormProps {
   /** ID du cours partagé à récupérer une fois le compte créé (lien /cours/[id]) */
   sharedCourseId?: string
+  /** Index de la fiche pour laquelle ouvrir le QCM directement après inscription */
+  ficheIndex?: string
 }
 
-export function SignupForm({ sharedCourseId }: SignupFormProps = {}) {
+export function SignupForm({ sharedCourseId, ficheIndex }: SignupFormProps = {}) {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [birthDate, setBirthDate] = useState('')
@@ -97,7 +99,7 @@ export function SignupForm({ sharedCourseId }: SignupFormProps = {}) {
             </p>
           </div>
         )}
-        <OtpForm email={targetEmail} onBack={() => setOtpSent(false)} sharedCourseId={sharedCourseId} />
+        <OtpForm email={targetEmail} onBack={() => setOtpSent(false)} sharedCourseId={sharedCourseId} ficheIndex={ficheIndex} />
       </div>
     )
   }

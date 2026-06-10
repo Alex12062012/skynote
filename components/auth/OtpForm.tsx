@@ -10,9 +10,11 @@ interface OtpFormProps {
   onBack: () => void
   /** ID du cours partagé à récupérer une fois le compte créé (lien /cours/[id]) */
   sharedCourseId?: string
+  /** Index de la fiche pour laquelle ouvrir le QCM directement après récupération du cours */
+  ficheIndex?: string
 }
 
-export function OtpForm({ email, onBack, sharedCourseId }: OtpFormProps) {
+export function OtpForm({ email, onBack, sharedCourseId, ficheIndex }: OtpFormProps) {
   const router = useRouter()
   const [digits, setDigits] = useState(['', '', '', '', '', ''])
   const [error, setError] = useState('')
@@ -55,7 +57,12 @@ export function OtpForm({ email, onBack, sharedCourseId }: OtpFormProps) {
     if (sharedCourseId) {
       const claim = await claimSharedCourse(sharedCourseId)
       if (claim.courseId) {
-        router.push(`/courses/${claim.courseId}`); router.refresh()
+        // Si l'inscription a été déclenchée depuis le bouton QCM d'une fiche,
+        // on ouvre directement le QCM correspondant sur la copie du cours.
+        const target = ficheIndex !== undefined
+          ? `/courses/${claim.courseId}/qcm?fiche=${ficheIndex}`
+          : `/courses/${claim.courseId}`
+        router.push(target); router.refresh()
         return
       }
     }

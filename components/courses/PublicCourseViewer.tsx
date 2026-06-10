@@ -100,7 +100,7 @@ export function PublicCourseViewer({ flashcards, courseId, isLoggedIn = false, i
               QCM fiche {index + 1}
             </Button>
           ) : (
-            <Link href={isOwnCourse ? `/courses/${courseId}/qcm?fiche=${index}` : `/signup?shared=${courseId}`}>
+            <Link href={isOwnCourse ? `/courses/${courseId}/qcm?fiche=${index}` : `/signup?shared=${courseId}&fiche=${index}`}>
               <Button size="sm" className="gap-1.5 animate-fade-in">
                 <Zap className="h-4 w-4" />
                 QCM fiche {index + 1}
