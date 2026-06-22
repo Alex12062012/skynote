@@ -321,6 +321,8 @@ export const STRINGS: Record<string, string> = {
     'newCourse.backToFolder': 'Retour à {folder}',
     'newCourse.courseInFolder': 'Cours dans le dossier {folder}',
     'newCourse.teacherSubtitle': 'Ajoute un cours à l\'un de tes dossiers',
+    'selector.chooseCard': 'Choisis une fiche',
+    'selector.mastered': 'Maîtrisée',
 }
 
 export function translate(key: string): string {
