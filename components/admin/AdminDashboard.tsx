@@ -261,6 +261,7 @@ export function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   const [premiumUsers, setPremiumUsers] = useState<any[]>([])
   const [streakUsers, setStreakUsers] = useState<any[]>([])
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- loadData/loadFeedbacks/loadBeta sont redéfinies à chaque render ; on ne veut relancer qu'au changement de période
   useEffect(() => { loadData(); loadFeedbacks(); loadBeta() }, [period])
 
   async function loadData() {

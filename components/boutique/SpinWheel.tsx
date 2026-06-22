@@ -106,7 +106,7 @@ export function SpinWheel({ coins, onBalanceUpdate }: SpinWheelProps) {
         showReward({ amount: res.netGain, reason: 'Roue de la fortune !' })
       }
     }, 4200)
-  }, [spinning, balance, onBalanceUpdate])
+  }, [spinning, balance, onBalanceUpdate, showReward])
 
   const canSpin = balance >= SPIN_COST && !spinning
 

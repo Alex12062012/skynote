@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { ForcedFeedback } from '@/components/ui/ForcedFeedback'
 
@@ -12,13 +12,9 @@ interface FeedbackTriggerProps {
 
 export function FeedbackTrigger({ userId, initialShown5, initialShown25 }: FeedbackTriggerProps) {
   const [milestone, setMilestone] = useState<5 | 25 | null>(null)
-  const supabase = createClient()
+  const supabase = useMemo(() => createClient(), [])
 
-  useEffect(() => {
-    checkMilestones()
-  }, [])
-
-  async function checkMilestones() {
+  const checkMilestones = useCallback(async () => {
     const { count } = await supabase
       .from('qcm_attempts')
       .select('id', { count: 'exact' })
@@ -31,7 +27,11 @@ export function FeedbackTrigger({ userId, initialShown5, initialShown25 }: Feedb
     } else if (total >= 5 && !initialShown5) {
       setMilestone(5)
     }
-  }
+  }, [supabase, userId, initialShown5, initialShown25])
+
+  useEffect(() => {
+    checkMilestones()
+  }, [checkMilestones])
 
   if (!milestone) return null
 

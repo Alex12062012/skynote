@@ -243,6 +243,8 @@ export function CoinReward({
     }, totalDuration + 340)
 
     return () => { clearTimers() }
+    // isPrestige volontairement exclu : voir commentaire "Anti-double-play" en tête de fichier
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible, amount, onDone])
 
   function playRewardChord() {

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { SkyCoin } from '@/components/ui/SkyCoin'
@@ -25,7 +25,7 @@ export function ProcessingLoader({ courseId, courseTitle }: ProcessingLoaderProp
   const router = useRouter()
   const [messageIndex, setMessageIndex] = useState(0)
   const [barProgress, setBarProgress] = useState(5)
-  const supabase = createClient()
+  const supabase = useMemo(() => createClient(), [])
 
   // Cycler les messages et avancer la barre
   useEffect(() => {
@@ -51,7 +51,7 @@ export function ProcessingLoader({ courseId, courseTitle }: ProcessingLoaderProp
           } else if (updated.status === 'error') {
             router.refresh()
           } else if (updated.progress) {
-            setBarProgress(Math.max(barProgress, updated.progress))
+            setBarProgress((b) => Math.max(b, updated.progress))
           }
         }
       )

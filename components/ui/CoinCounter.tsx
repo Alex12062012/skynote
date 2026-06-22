@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useRef, useCallback } from 'react'
+import { useEffect, useState, useRef, useCallback, useMemo } from 'react'
 import { SkyCoin } from './SkyCoin'
 import { createClient } from '@/lib/supabase/client'
 
@@ -14,7 +14,7 @@ export function CoinCounter({ initialCoins, userId }: CoinCounterProps) {
   const [animating, setAnimating] = useState(false)
   const [delta, setDelta] = useState(0)
   const prevCoins = useRef(initialCoins)
-  const supabase = createClient()
+  const supabase = useMemo(() => createClient(), [])
 
   const fetchCoins = useCallback(async () => {
     const { data } = await supabase
@@ -64,7 +64,7 @@ export function CoinCounter({ initialCoins, userId }: CoinCounterProps) {
       .subscribe()
 
     return () => { supabase.removeChannel(channel) }
-  }, [userId])
+  }, [userId, supabase])
 
   return (
     <div
