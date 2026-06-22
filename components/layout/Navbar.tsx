@@ -101,7 +101,7 @@ function NavbarInner({
           {profile && (
             <Link href="/profile"
               className={cn(
-                'flex flex-shrink-0 items-center justify-center rounded-full transition-all hover:scale-105',
+                'hidden flex-shrink-0 items-center justify-center rounded-full transition-all hover:scale-105 md:flex',
                 pathname.startsWith('/profile') && 'ring-2 ring-brand/30 ring-offset-2 ring-offset-sky-surface dark:ring-offset-night-surface rounded-full',
               )}>
               <PlayerEmblem
@@ -138,10 +138,18 @@ function NavbarInner({
               <l.icon className="h-4 w-4" />{l.label}
             </Link>
           ))}
-          <Link href="/profile" onClick={() => setOpen(false)}
-            className="flex items-center gap-3 rounded-input px-3 py-2.5 font-body text-[14px] text-text-main hover:bg-sky-cloud dark:text-text-dark-main dark:hover:bg-night-border">
-            {t('nav.myAccount')}
-          </Link>
+          {profile && (
+            <Link href="/profile" onClick={() => setOpen(false)}
+              className="flex items-center gap-3 rounded-input px-3 py-2.5 font-body text-[14px] text-text-main hover:bg-sky-cloud dark:text-text-dark-main dark:hover:bg-night-border">
+              <PlayerEmblem
+                prestigeLevel={(profile as any).prestige_level ?? 0}
+                badgeId={(profile as any).active_badge_id ?? 'letter'}
+                letter={(profile.pseudo || profile.full_name || profile.email || 'U').charAt(0)}
+                size="sm"
+              />
+              {t('nav.myAccount')}
+            </Link>
+          )}
         </div>
       )}
     </header>
