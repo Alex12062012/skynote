@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { NOVA_COST_OCR, addNovasForUser } from '@/lib/supabase/nova-actions'
 import { Errors, apiError } from '@/lib/errors'
+import { checkRateLimit, RATE_LIMITS } from '@/lib/rate-limit'
 
 export const dynamic = 'force-dynamic'
 
@@ -17,6 +18,14 @@ export async function POST(request: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) throw Errors.unauthorized()
     userId = user.id
+
+    const rl = await checkRateLimit(user.id, 'extract-photo', RATE_LIMITS.extractPhoto)
+    if (!rl.allowed) {
+      return NextResponse.json(
+        { error: 'Limite atteinte : 10 extractions photo par jour. Réessaie demain.' },
+        { status: 429, headers: { 'X-RateLimit-Reset': String(rl.resetAt) } }
+      )
+    }
 
     const formData = await request.formData()
     const file = formData.get('file') as File

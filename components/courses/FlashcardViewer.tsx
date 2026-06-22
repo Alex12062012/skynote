@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import Link from 'next/link'
-import { ChevronLeft, ChevronRight, CheckCircle, Circle, GraduationCap, Zap } from 'lucide-react'
+import { ChevronLeft, ChevronRight, CheckCircle, Circle, GraduationCap, Zap, Share2 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { ProgressBar } from '@/components/ui/ProgressBar'
 import { ObjectiveBadge } from '@/components/ui/ObjectiveBadge'
@@ -26,6 +26,21 @@ export function FlashcardViewer({ flashcards, courseId, userId, qcmReady = false
   const [localCards, setLocalCards] = useState(flashcards)
   const [isPending, startTransition] = useTransition()
   const [showMasteryBadge, setShowMasteryBadge] = useState(false)
+
+  function handleShare() {
+    const url = `${window.location.origin}/cours/${courseId}`
+
+    // Sur mobile (iOS/Android) : ouvre le menu de partage natif (Messages, WhatsApp, Mail...)
+    if (navigator.share) {
+      navigator.share({ title: 'Mon cours Skynote', url }).catch(() => {
+        // L'utilisateur a annulé le partage, ou l'API a échoué — on ne fait rien
+      })
+      return
+    }
+
+    // Desktop / navigateurs sans support : on copie le lien dans le presse-papiers
+    navigator.clipboard.writeText(url)
+  }
 
   const card = localCards[index]
   const mastered = localCards.filter((f) => f.is_mastered).length
@@ -96,13 +111,20 @@ export function FlashcardViewer({ flashcards, courseId, userId, qcmReady = false
               </span>
               <h2 className="mt-1 font-display text-h3 text-text-main dark:text-text-dark-main">{card.title}</h2>
             </div>
-            <button onClick={handleToggleMastered} disabled={isPending}
-              className="flex-shrink-0 transition-transform hover:scale-110 disabled:opacity-50"
-              title={card.is_mastered ? 'Marquer non maîtrisée' : 'Marquer maîtrisée'}>
-              {card.is_mastered
-                ? <CheckCircle className="h-7 w-7 text-success dark:text-success-dark" />
-                : <Circle className="h-7 w-7 text-sky-border dark:text-night-border" />}
-            </button>
+            <div className="flex flex-shrink-0 items-center gap-2">
+              <button onClick={handleShare}
+                className="flex items-center gap-1.5 rounded-input border border-sky-border px-2.5 py-1.5 font-body text-[12px] text-text-secondary transition-all hover:border-brand hover:text-brand dark:border-night-border dark:text-text-dark-secondary dark:hover:border-brand-dark dark:hover:text-brand-dark"
+                title="Partager le cours">
+                <Share2 className="h-3.5 w-3.5" />Partager
+              </button>
+              <button onClick={handleToggleMastered} disabled={isPending}
+                className="transition-transform hover:scale-110 disabled:opacity-50"
+                title={card.is_mastered ? 'Marquer non maîtrisée' : 'Marquer maîtrisée'}>
+                {card.is_mastered
+                  ? <CheckCircle className="h-7 w-7 text-success dark:text-success-dark" />
+                  : <Circle className="h-7 w-7 text-sky-border dark:text-night-border" />}
+              </button>
+            </div>
           </div>
 
           <p className="mb-5 font-body text-[15px] leading-relaxed text-text-secondary dark:text-text-dark-secondary">

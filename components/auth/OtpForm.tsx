@@ -2,11 +2,19 @@
 import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { claimSharedCourse } from '@/lib/supabase/claim-actions'
 import { Button } from '@/components/ui/Button'
 
-interface OtpFormProps { email: string; onBack: () => void }
+interface OtpFormProps {
+  email: string
+  onBack: () => void
+  /** ID du cours partagé à récupérer une fois le compte créé (lien /cours/[id]) */
+  sharedCourseId?: string
+  /** Index de la fiche pour laquelle ouvrir le QCM directement après récupération du cours */
+  ficheIndex?: string
+}
 
-export function OtpForm({ email, onBack }: OtpFormProps) {
+export function OtpForm({ email, onBack, sharedCourseId, ficheIndex }: OtpFormProps) {
   const router = useRouter()
   const [digits, setDigits] = useState(['', '', '', '', '', ''])
   const [error, setError] = useState('')
@@ -43,6 +51,22 @@ export function OtpForm({ email, onBack }: OtpFormProps) {
     setLoading(true); setError('')
     const { error } = await supabase.auth.verifyOtp({ email, token, type: 'email' })
     if (error) { setError('Code incorrect ou expiré'); setLoading(false); return }
+
+    // Si l'inscription vient d'un lien de cours partagé, on récupère
+    // automatiquement ce cours (+ ses fiches et QCM) dans le nouveau compte.
+    if (sharedCourseId) {
+      const claim = await claimSharedCourse(sharedCourseId)
+      if (claim.courseId) {
+        // Si l'inscription a été déclenchée depuis le bouton QCM d'une fiche,
+        // on ouvre directement le QCM correspondant sur la copie du cours.
+        const target = ficheIndex !== undefined
+          ? `/courses/${claim.courseId}/qcm?fiche=${ficheIndex}`
+          : `/courses/${claim.courseId}`
+        router.push(target); router.refresh()
+        return
+      }
+    }
+
     router.push('/dashboard'); router.refresh()
   }
 

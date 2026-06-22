@@ -30,15 +30,10 @@ export default async function DashboardPage() {
     getActiveEvaluations(),
   ])
 
-  const { count: totalCourses } = await supabase
-    .from('courses')
-    .select('id', { count: 'exact' })
-    .eq('user_id', user.id)
-
-  const { count: totalQcm } = await supabase
-    .from('qcm_attempts')
-    .select('id', { count: 'exact' })
-    .eq('user_id', user.id)
+  const [{ count: totalCourses }, { count: totalQcm }] = await Promise.all([
+    supabase.from('courses').select('id', { count: 'exact' }).eq('user_id', user.id),
+    supabase.from('qcm_attempts').select('id', { count: 'exact' }).eq('user_id', user.id),
+  ])
 
   const firstName = profile?.full_name?.split(' ')[0] ?? 'toi'
   const coins = profile?.sky_coins ?? 0
@@ -55,6 +50,8 @@ export default async function DashboardPage() {
     .limit(100)
   const isInTop100 = (top100Check || []).some((p: any) => p.id === user.id)
   const needsPseudo = isInTop100 && !profile?.pseudo
+
+  const hasNoCourses = stats.recentCourses.length === 0
 
   return (
     <div className="flex flex-col gap-8 animate-fade-in">
@@ -93,7 +90,7 @@ export default async function DashboardPage() {
             action={<Link href="/courses/new"><Button className="gap-2"><Plus className="h-4 w-4" />{t('dash.createFirst')}</Button></Link>} />
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {stats.recentCourses.map((course) => (<CourseCard key={course.id} {...course} />))}
+            {stats.recentCourses.map((course) => <CourseCard key={course.id} {...course} />)}
           </div>
         )}
       </div>

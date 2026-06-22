@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import { Bricolage_Grotesque, DM_Sans } from 'next/font/google'
 import { ThemeProvider } from '@/components/providers/ThemeProvider'
 import { I18nProvider } from '@/lib/i18n/context'
+import { getServerLocale } from '@/lib/i18n/server'
 import './globals.css'
 
 const bricolage = Bricolage_Grotesque({
@@ -51,11 +52,12 @@ export const viewport: Viewport = {
   ],
 }
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const locale = await getServerLocale()
   return (
-    <html lang="fr" className={`${bricolage.variable} ${dmSans.variable}`} suppressHydrationWarning>
+    <html lang={locale} className={`${bricolage.variable} ${dmSans.variable}`} suppressHydrationWarning>
       <body>
-        <ThemeProvider><I18nProvider>{children}</I18nProvider></ThemeProvider>
+        <ThemeProvider><I18nProvider initialLocale={locale}>{children}</I18nProvider></ThemeProvider>
       </body>
     </html>
   )

@@ -15,17 +15,22 @@ const I18nContext = createContext<I18nContextType>({
   t: (key) => key,
 })
 
-export function I18nProvider({ children }: { children: ReactNode }) {
-  const [locale, setLocaleState] = useState<Locale>('fr')
-  const [mounted, setMounted] = useState(false)
+export function I18nProvider({ children, initialLocale = 'fr' }: { children: ReactNode; initialLocale?: Locale }) {
+  const [locale, setLocaleState] = useState<Locale>(initialLocale)
 
   useEffect(() => {
-    const saved = localStorage.getItem('skynote_locale') as Locale | null
-    if (saved && ['fr', 'en', 'ru', 'zh'].includes(saved)) {
-      setLocaleState(saved)
+    // Si aucun cookie n'est encore posé (anciens utilisateurs / 1ère visite)
+    // mais qu'une préférence existe en localStorage, on l'applique et on
+    // synchronise le cookie pour que le rendu serveur soit cohérent ensuite.
+    const hasCookie = document.cookie.split('; ').some((c) => c.startsWith('skynote_locale='))
+    if (!hasCookie) {
+      const saved = localStorage.getItem('skynote_locale') as Locale | null
+      if (saved && ['fr', 'en', 'ru', 'zh'].includes(saved) && saved !== initialLocale) {
+        setLocaleState(saved)
+        document.cookie = `skynote_locale=${saved};path=/;max-age=${365 * 24 * 60 * 60};samesite=lax`
+      }
     }
-    setMounted(true)
-  }, [])
+  }, [initialLocale])
 
   function setLocale(l: Locale) {
     setLocaleState(l)
@@ -37,10 +42,6 @@ export function I18nProvider({ children }: { children: ReactNode }) {
   }
 
   const tFn = (key: string) => translate(locale, key)
-
-  if (!mounted) {
-    return <>{children}</>
-  }
 
   return (
     <I18nContext.Provider value={{ locale, setLocale, t: tFn }}>

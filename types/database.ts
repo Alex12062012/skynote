@@ -67,6 +67,7 @@ export interface Course {
   source_type: 'text' | 'pdf' | 'photo' | 'vocal'; source_content: string | null
   file_url: string | null; status: 'processing' | 'ready' | 'error'; progress: number
   qcm_status: 'pending' | 'processing' | 'ready' | 'error'
+  origin_course_id: string | null
   created_at: string; updated_at: string
 }
 
