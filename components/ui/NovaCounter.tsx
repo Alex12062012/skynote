@@ -9,6 +9,14 @@ interface NovaCounterProps {
   userId: string
 }
 
+// Au-delà de 100k, on compacte (1,2M au lieu de 1 234 567) pour ne pas faire
+// déborder la navbar — un gros solde ne doit jamais casser la mise en page.
+function formatNovaBalance(n: number): string {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toLocaleString('fr-FR', { maximumFractionDigits: 1 })}M`
+  if (n >= 100_000) return `${(n / 1_000).toLocaleString('fr-FR', { maximumFractionDigits: 0 })}K`
+  return n.toLocaleString('fr-FR')
+}
+
 /**
  * Affiche le solde de Novas ✦ de l'utilisateur en temps réel.
  * Se synchronise via polling + Realtime Supabase sur la table wallets.
@@ -78,7 +86,7 @@ export function NovaCounter({ initialBalance, userId }: NovaCounterProps) {
         style={{ minWidth: 28 }}
         title={`${balance.toLocaleString('fr-FR')} Novas disponibles`}
       >
-        {balance.toLocaleString('fr-FR')}
+        {formatNovaBalance(balance)}
       </span>
 
       {/* Delta flottant */}

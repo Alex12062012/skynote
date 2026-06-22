@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 @layer base {
-  body { @apply font-body bg-sky-bg text-text-main antialiased dark:bg-night-bg dark:text-text-dark-main; transition: background-color 0.3s ease, color 0.2s ease; }
+  body { @apply font-body bg-sky-bg text-text-main antialiased dark:bg-night-bg dark:text-text-dark-main; transition: background-color 0.3s ease, color 0.2s ease; overflow-x: hidden; }
   ::selection { @apply bg-brand-soft text-brand dark:bg-brand-dark-soft dark:text-brand-dark; }
   ::-webkit-scrollbar { width: 6px; height: 6px; }
   ::-webkit-scrollbar-track { @apply bg-sky-bg dark:bg-night-bg; }

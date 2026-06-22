@@ -9,6 +9,14 @@ interface CoinCounterProps {
   userId: string
 }
 
+// Même logique que NovaCounter : compacter au-delà de 100k pour ne jamais
+// faire déborder la navbar, même avec un très gros solde accumulé.
+function formatCoins(n: number): string {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toLocaleString('fr-FR', { maximumFractionDigits: 1 })}M`
+  if (n >= 100_000) return `${(n / 1_000).toLocaleString('fr-FR', { maximumFractionDigits: 0 })}K`
+  return n.toLocaleString('fr-FR')
+}
+
 export function CoinCounter({ initialCoins, userId }: CoinCounterProps) {
   const [coins, setCoins] = useState(initialCoins)
   const [animating, setAnimating] = useState(false)
@@ -75,8 +83,9 @@ export function CoinCounter({ initialCoins, userId }: CoinCounterProps) {
       <span
         className="font-display text-[14px] font-bold tabular-nums text-text-main dark:text-text-dark-main transition-all duration-300"
         style={{ minWidth: 24 }}
+        title={`${coins.toLocaleString('fr-FR')} Sky Coins`}
       >
-        {coins.toLocaleString('fr-FR')}
+        {formatCoins(coins)}
       </span>
 
       {/* Delta flottant */}
