@@ -4,7 +4,6 @@ import { useState, useEffect } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { useI18n } from "@/lib/i18n/context"
-import { LanguagePicker } from "@/components/ui/LanguagePicker"
 
 // ---------------------------------------------------------------------------
 // Donnees statiques — pas de generation a la volee
@@ -281,7 +280,6 @@ function NavBar() {
         <span style={{ fontWeight: 700, fontSize: 18, letterSpacing: "-0.02em", color: "#F0F6FF" }}>Skynote</span>
       </Link>
       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-        <LanguagePicker variant="landing" />
         <Link href="/login" className="landing-nav-login" style={{ fontSize: 13, color: "#64748B", textDecoration: "none", padding: "8px 12px" }}>Connexion</Link>
         <Link href="/signup" className="sky-btn-primary landing-nav-cta" style={{ fontSize: 13, padding: "10px 20px" }}>{t('landing.hero.ctaBeta')}</Link>
       </div>
@@ -484,7 +482,7 @@ export function LandingPage({ isBeta = true, testimonials }: { isBeta?: boolean;
 
                 <div style={{ background: "linear-gradient(145deg, rgba(30,58,95,0.6), rgba(13,27,46,0.9))", border: "2px solid rgba(96,165,250,0.5)", borderRadius: 16, padding: 24, position: "relative" }}>
                   <div style={{ position: "absolute", top: -12, left: "50%", transform: "translateX(-50%)", background: "linear-gradient(135deg, #2563EB, #1D4ED8)", padding: "4px 14px", borderRadius: 100, fontSize: 11, fontWeight: 700, color: "#fff", whiteSpace: "nowrap" }}>{t('landing.pricing.popular')}</div>
-                  <p style={{ fontSize: 13, color: "#60A5FA", fontWeight: 500, margin: "0 0 4px" }}>Plus</p>
+                  <p style={{ fontSize: 13, color: "#60A5FA", fontWeight: 500, margin: "0 0 4px" }}>Starter</p>
                   <p style={{ fontSize: 32, fontWeight: 800, color: "#F0F6FF", margin: "0 0 2px" }}>4,99\u20AC<span style={{ fontSize: 14, fontWeight: 400, color: "#64748B" }}>{t('landing.pricing.perMonth')}</span></p>
                   <p style={{ fontSize: 12, color: "#475569", margin: "0 0 20px" }}>ou 3,99\u20AC{t('landing.pricing.perMonth')} {t('landing.pricing.yearly')}</p>
                   <div style={{ fontSize: 13, color: "#94A3B8", display: "flex", flexDirection: "column", gap: 8 }}>
@@ -498,8 +496,8 @@ export function LandingPage({ isBeta = true, testimonials }: { isBeta?: boolean;
 
                 <div style={{ background: "linear-gradient(145deg, rgba(30,58,95,0.5), rgba(13,27,46,0.85))", border: "1px solid rgba(167,139,250,0.2)", borderRadius: 16, padding: 24 }}>
                   <p style={{ fontSize: 13, color: "#C4B5FD", fontWeight: 500, margin: "0 0 4px" }}>{t('landing.pricing.famille')}</p>
-                  <p style={{ fontSize: 32, fontWeight: 800, color: "#F0F6FF", margin: "0 0 2px" }}>11,99\u20AC<span style={{ fontSize: 14, fontWeight: 400, color: "#64748B" }}>{t('landing.pricing.perMonth')}</span></p>
-                  <p style={{ fontSize: 12, color: "#475569", margin: "0 0 20px" }}>ou 10,99\u20AC{t('landing.pricing.perMonth')} {t('landing.pricing.yearly')}</p>
+                  <p style={{ fontSize: 32, fontWeight: 800, color: "#F0F6FF", margin: "0 0 2px" }}>6,99\u20AC<span style={{ fontSize: 14, fontWeight: 400, color: "#64748B" }}>{t('landing.pricing.perMonth')}</span></p>
+                  <p style={{ fontSize: 12, color: "#475569", margin: "0 0 20px" }}>ou 5,99\u20AC{t('landing.pricing.perMonth')} {t('landing.pricing.yearly')}</p>
                   <div style={{ fontSize: 13, color: "#94A3B8", display: "flex", flexDirection: "column", gap: 8 }}>
                     <span>{t('landing.pricing.fam1')}</span>
                     <span>{t('landing.pricing.fam2')}</span>

@@ -7,7 +7,6 @@ import { signOut } from '@/lib/supabase/actions'
 import { Button } from '@/components/ui/Button'
 import { SkyCoin } from '@/components/ui/SkyCoin'
 import { ProgressBar } from '@/components/ui/ProgressBar'
-import { LanguageSection } from '@/components/profile/LanguageSection'
 import { PlayerEmblem } from '@/components/gamification/PlayerEmblem'
 import { getServerLocale, createServerT } from '@/lib/i18n/server'
 import type { Metadata } from 'next'
@@ -35,9 +34,8 @@ export default async function ProfilePage() {
   const coins = profile?.sky_coins ?? 0
   const streak = profile?.streak_days ?? 0
   const plan = profile?.plan ?? 'free'
-  const dateLocale = locale === 'zh' ? 'zh-CN' : locale === 'ru' ? 'ru-RU' : locale === 'en' ? 'en-GB' : 'fr-FR'
   const memberSince = profile?.created_at
-    ? new Date(profile.created_at).toLocaleDateString(dateLocale, { year: 'numeric', month: 'long', day: 'numeric' })
+    ? new Date(profile.created_at).toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric' })
     : ''
 
   const isPremium = ['starter', 'pro'].includes(plan)
@@ -138,7 +136,6 @@ export default async function ProfilePage() {
             <span className="text-sm text-text-tertiary dark:text-text-dark-tertiary">{t('profile.email')}</span>
             <span className="text-sm font-medium text-text-main dark:text-text-dark-main">{email}</span>
           </div>
-          <div className="border-t border-sky-border/50 dark:border-night-border/50 pt-3"><LanguageSection /></div>
         </div>
       </div>
 

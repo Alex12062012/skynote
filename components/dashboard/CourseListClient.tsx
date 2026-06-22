@@ -4,7 +4,6 @@ import { useMemo, useState } from 'react'
 import { CourseCard } from './CourseCard'
 import { SubjectBadge } from '@/components/ui/Badge'
 import { useI18n } from '@/lib/i18n/context'
-import type { Locale } from '@/lib/i18n/translations'
 import type { Course } from '@/types/database'
 
 type SortKey = 'date' | 'alpha' | 'mastery' | 'subject'
@@ -20,22 +19,18 @@ interface CourseListClientProps {
   courses: Course[]
 }
 
-const DATE_LOCALES: Record<Locale, string> = {
-  fr: 'fr-FR', en: 'en-US', ru: 'ru-RU', zh: 'zh-CN',
-}
-
 function isSameDay(a: Date, b: Date) {
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate()
 }
 
-function getDateGroupLabel(dateStr: string, locale: Locale, t: (key: string) => string) {
+function getDateGroupLabel(dateStr: string, t: (key: string) => string) {
   const date = new Date(dateStr)
   const now = new Date()
   if (isSameDay(date, now)) return t('courses.groupToday')
   const yesterday = new Date(now)
   yesterday.setDate(now.getDate() - 1)
   if (isSameDay(date, yesterday)) return t('courses.groupYesterday')
-  return date.toLocaleDateString(DATE_LOCALES[locale] || 'fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
+  return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
 }
 
 function getMasteryGroup(progress: number, t: (key: string) => string): { rank: number; label: string } {
@@ -46,14 +41,14 @@ function getMasteryGroup(progress: number, t: (key: string) => string): { rank: 
 }
 
 export function CourseListClient({ courses }: CourseListClientProps) {
-  const { t, locale } = useI18n()
+  const { t } = useI18n()
   const [sortBy, setSortBy] = useState<SortKey>('date')
 
   const groups = useMemo<Group[]>(() => {
     const arr = [...courses]
 
     if (sortBy === 'alpha') {
-      arr.sort((a, b) => a.title.localeCompare(b.title, locale))
+      arr.sort((a, b) => a.title.localeCompare(b.title, 'fr'))
       const map = new Map<string, Group>()
       for (const c of arr) {
         const letter = c.title.trim().charAt(0).toUpperCase() || '#'
@@ -89,12 +84,12 @@ export function CourseListClient({ courses }: CourseListClientProps) {
     // date
     const map = new Map<string, Group>()
     for (const c of arr) {
-      const label = getDateGroupLabel(c.created_at, locale, t)
+      const label = getDateGroupLabel(c.created_at, t)
       if (!map.has(label)) map.set(label, { key: label, label, courses: [] })
       map.get(label)!.courses.push(c)
     }
     return Array.from(map.values())
-  }, [courses, sortBy, locale, t])
+  }, [courses, sortBy, t])
 
   return (
     <div className="flex flex-col gap-6">
