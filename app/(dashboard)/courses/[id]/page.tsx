@@ -1,18 +1,18 @@
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, AlertCircle } from 'lucide-react'
+import { ArrowLeft } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { getCourse, getCourseFlashcards } from '@/lib/supabase/queries'
 import { EditableTitle } from '@/components/courses/EditableTitle'
 import { ProcessingLoader } from '@/components/courses/ProcessingLoader'
 import { GenerationTrigger } from '@/components/courses/GenerationTrigger'
+import { CourseErrorState } from '@/components/courses/CourseErrorState'
 import { FlashcardViewer } from '@/components/courses/FlashcardViewer'
 import { QcmGenerator } from '@/components/courses/QcmGenerator'
 import { CourseChat } from '@/components/courses/CourseChat'
 import { getUserPlanLimits } from '@/lib/supabase/plan'
 import { DeleteCourseButton } from '@/components/courses/DeleteCourseButton'
 import { SubjectBadge } from '@/components/ui/Badge'
-import { Button } from '@/components/ui/Button'
 import { formatDate } from '@/lib/utils'
 import { getServerLocale, createServerT } from '@/lib/i18n/server'
 import type { Metadata } from 'next'
@@ -75,19 +75,7 @@ export default async function CourseDetailPage({ params }: Props) {
         </>
       )}
 
-      {course.status === 'error' && (
-        <div className="flex flex-col items-center gap-4 rounded-card border border-error/20 bg-error/5 p-8 text-center">
-          <AlertCircle className="h-10 w-10 text-error" />
-          <div>
-            <h2 className="font-display text-h4 text-text-main dark:text-text-dark-main">Erreur de generation</h2>
-            <p className="mt-1 font-body text-[14px] text-text-secondary dark:text-text-dark-secondary">
-              L'IA n'a pas pu generer les fiches. Verifie que le contenu de ton cours est suffisamment long.
-            </p>
-          </div>
-          <GenerationTrigger courseId={id} />
-          <a href=""><Button variant="secondary">Reessayer</Button></a>
-        </div>
-      )}
+      {course.status === 'error' && <CourseErrorState courseId={id} userId={user.id} />}
 
       {course.status === 'ready' && (
         <ReadyCourse

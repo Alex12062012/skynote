@@ -388,7 +388,7 @@ export function QcmEngine({ flashcard, questions, courseId, difficulty = 'medium
       </div>
 
       {/* Bouton Suivant */}
-      <div className="sticky bottom-4 mt-2">
+      <div className="sticky bottom-4 z-50 mt-2">
         <Button
           onClick={handleNext}
           loading={isPending}

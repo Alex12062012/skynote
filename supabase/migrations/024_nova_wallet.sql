@@ -6,7 +6,7 @@
 --   OCR       : 2 ✦
 --   Fiches    : 30 ✦
 --   QCM batch : 88 ✦
---   Chat msg  : 12 ✦
+--   Chat msg  : 36 ✦
 -- Allocation mensuelle selon le plan :
 --   free    : 600 ✦ une fois à l'inscription
 --   starter : 2 000 ✦/mois

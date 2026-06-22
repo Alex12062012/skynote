@@ -2,16 +2,24 @@
  * NOVA ACTIONS — gestion des crédits IA (Novas ✦)
  *
  * Coûts par action :
- *   OCR (1 photo)   :  2 ✦  — NOVA_COST_OCR
- *   Fiches (batch)  : 30 ✦  — NOVA_COST_FICHES
- *   QCM (batch)     : 88 ✦  — NOVA_COST_QCM_BATCH
- *   QCM (1 regen)   :  4 ✦  — NOVA_COST_QCM_SINGLE
- *   Chat (1 msg)    : 12 ✦  — NOVA_COST_CHAT
+ *   OCR (1 photo)        :  2 ✦  — NOVA_COST_OCR
+ *   Fiches (batch)       : 30 ✦  — NOVA_COST_FICHES
+ *   QCM (batch)          : 88 ✦  — NOVA_COST_QCM_BATCH
+ *   QCM (1 regen)        :  4 ✦  — NOVA_COST_QCM_SINGLE
+ *   Chat (1 msg)         : 36 ✦  — NOVA_COST_CHAT (corrigé : envoie le cours complet à chaque message, sous-évalué à 12✦)
+ *   Plan de révision IA  :  5 ✦  — NOVA_COST_EVAL_PLAN
+ *   Épreuve brevet/bac   : 80 ✦  — NOVA_COST_EXAM_SIMULATION
  *
  * Allocation mensuelle :
  *   free    : 600 ✦ une seule fois
  *   starter : 2 000 ✦/mois
  *   pro     : 4 000 ✦/mois
+ *
+ * Quota épreuves brevet/bac (en plus du coût Novas ci-dessus) :
+ *   free    : peut PASSER l'épreuve gratuitement, mais le résultat/score reste verrouillé
+ *             (il faut au moins Starter pour voir sa note/mention)
+ *   starter : 1 session complète débloquée (toutes matières incluses dans cette session unique)
+ *   pro     : illimité (uniquement limité par le solde de Novas)
  */
 
 import { createClient } from './server'
@@ -20,10 +28,18 @@ import { createClient as createServiceClient } from '@supabase/supabase-js'
 // ─── COÛTS ───────────────────────────────────────────────────────────────────
 export const NOVA_COST_OCR         =  2   // par photo
 export const NOVA_COST_QCM_SINGLE  =  4   // régénération d'un QCM seul
-export const NOVA_COST_CHAT        = 12   // par message chat
+export const NOVA_COST_CHAT        = 36   // par message chat — envoie le cours complet à chaque appel (~0,021€ réel)
 export const NOVA_COST_EVAL_PLAN   =  5   // génération plan de révision (tips Haiku)
 // Fiches + QCM générés ensemble → coût unique groupé
 export const NOVA_COST_COURSE      = 118  // 30✦ fiches + 88✦ QCM batch
+// Épreuve brevet/bac simulée (génération + correction IA) — feature à construire (todo #4)
+// Free   : peut passer l'épreuve (génération des questions), mais la correction/résultat reste verrouillé.
+// Starter: 1 session complète (toutes matières) qui débloque le résultat — une seule fois, pas récurrent.
+// Pro    : illimité, uniquement limité par le solde de Novas.
+export const NOVA_COST_EXAM_SIMULATION = 80
+export const EXAM_SIMULATION_FREE_CAN_ATTEMPT = true   // passer l'épreuve : oui, même en gratuit
+export const EXAM_SIMULATION_FREE_CAN_SEE_RESULT = false // voir le score/mention : non, réservé Starter+
+export const EXAM_SIMULATION_STARTER_SESSIONS = 1      // 1 session multi-matières, à vie (pas mensuel)
 
 // ─── ALLOCATIONS PAR PLAN ────────────────────────────────────────────────────
 export const NOVA_ALLOC: Record<'free' | 'starter' | 'pro', number> = {

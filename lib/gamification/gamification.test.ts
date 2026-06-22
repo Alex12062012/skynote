@@ -30,12 +30,12 @@ describe('streakBonus', () => {
 
 // ─── prestigeCost ─────────────────────────────────────────────────────────────
 describe('prestigeCost', () => {
-  it('P0 → P1 coûte 500', () => expect(prestigeCost(0)).toBe(500))
-  it('P1 → P2 coûte 1000', () => expect(prestigeCost(1)).toBe(1000))
-  it('P2 → P3 coûte 1500', () => expect(prestigeCost(2)).toBe(1500))
+  it('P0 → P1 coûte 100', () => expect(prestigeCost(0)).toBe(100))
+  it('P1 → P2 coûte 200', () => expect(prestigeCost(1)).toBe(200))
+  it('P2 → P3 coûte 300', () => expect(prestigeCost(2)).toBe(300))
   it('coût croît linéairement', () => {
-    expect(prestigeCost(3)).toBe(2000)
-    expect(prestigeCost(9)).toBe(5000)
+    expect(prestigeCost(3)).toBe(400)
+    expect(prestigeCost(9)).toBe(1000)
   })
 })
 

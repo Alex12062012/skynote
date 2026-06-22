@@ -39,7 +39,7 @@ export function ActivatePremiumButton({ coins }: { coins: number }) {
       {/* Bouton principal */}
       <Button size="sm" onClick={() => setOpen(true)} className="gap-1.5 text-[13px]">
         <SkyCoin size={16} />
-        Activer Plus ({PLUS_COST} coins)
+        Activer Starter ({PLUS_COST} coins)
       </Button>
 
       {/* Modal */}
@@ -54,9 +54,9 @@ export function ActivatePremiumButton({ coins }: { coins: number }) {
                   <Star className="h-8 w-8 text-amber-500" />
                 </div>
                 <div>
-                  <p className="font-display text-h3 text-success dark:text-success-dark">Plus activé !</p>
+                  <p className="font-display text-h3 text-success dark:text-success-dark">Starter activé !</p>
                   <p className="mt-1 font-body text-[14px] text-text-secondary dark:text-text-dark-secondary">
-                    Tu as 1 mois d'accès au plan Plus. Profites-en !
+                    Tu as 1 mois d'accès au plan Starter. Profites-en !
                   </p>
                 </div>
               </div>
@@ -65,7 +65,7 @@ export function ActivatePremiumButton({ coins }: { coins: number }) {
                 {/* Header */}
                 <div className="mb-5 flex items-center justify-between">
                   <h3 className="font-display text-h4 text-text-main dark:text-text-dark-main">
-                    Activer le plan Plus
+                    Activer le plan Starter
                   </h3>
                   <button onClick={() => setOpen(false)} className="text-text-tertiary hover:text-text-main dark:hover:text-text-dark-main text-xl">×</button>
                 </div>

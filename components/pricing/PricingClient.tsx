@@ -290,7 +290,7 @@ export function PricingClient({ currentPlan, planExpiresAt, hasStripeSubscriptio
         {/* FAQ */}
         <div className="mt-10 grid gap-4 sm:grid-cols-2">
           {[
-            ['C\'est quoi les Novas ✦ ?', 'Les Novas sont la monnaie qui alimente les fonctionnalités IA : OCR (2✦), fiches (30✦), QCM (88✦), chatbot (12✦). Ils ne s\'expirent pas et s\'accumulent.'],
+            ['C\'est quoi les Novas ✦ ?', 'Les Novas sont la monnaie qui alimente les fonctionnalités IA : OCR (2✦), fiches (30✦), QCM (88✦), chatbot (36✦). Ils ne s\'expirent pas et s\'accumulent.'],
             ['Comment annuler mon abonnement ?', 'Clique sur "Gérer mon abonnement" ci-dessus. Tu seras redirigé vers le portail Stripe où tu peux annuler en un clic. Ton plan reste actif jusqu\'à la fin de la période payée.'],
             ['Comment changer de forfait ?', 'Tu peux passer de Starter à Pro (ou l\'inverse) depuis le portail Stripe. Le changement prend effet immédiatement avec un prorata.'],
             ['Je peux gagner des Novas autrement ?', 'Oui ! La roue de la fortune en boutique peut donner des Novas ✦. Tu peux aussi en gagner via les objectifs de fidélité.'],

@@ -99,7 +99,7 @@ export default async function ProfilePage() {
         <Flame className="h-6 w-6 text-orange-500 flex-shrink-0" />
         <div className="flex-1">
           <p className="font-body text-sm font-semibold text-orange-800 dark:text-orange-300">
-            {streak > 0 ? `${streak} ${t('profile.streak')}` : t('profile.streakStart')}
+            {streak > 0 ? `${streak} jour${streak > 1 ? 's' : ''} consécutif${streak > 1 ? 's' : ''}` : t('profile.streakStart')}
           </p>
           <p className="text-xs text-orange-700/80 dark:text-orange-400/80 mt-0.5">{t('profile.streakKeep')}</p>
         </div>

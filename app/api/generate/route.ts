@@ -67,6 +67,9 @@ export async function POST(request: NextRequest) {
       'Génération cours (fiches + QCM) — 118✦'
     )
     if (!deductResult.ok) {
+      // Sans ça, le cours reste bloqué en "processing" pour toujours — l'utilisateur
+      // voit un loader infini sans jamais savoir que c'est un manque de Novas.
+      await supabase.from('courses').update({ status: 'error' }).eq('id', courseId)
       throw new AppError(deductResult.error ?? 'Novas insuffisantes', 402, 'insufficient_novas')
     }
 

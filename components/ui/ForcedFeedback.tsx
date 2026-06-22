@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 
 interface ForcedFeedbackProps {
   userId: string
-  milestone: 5 | 25
+  milestone: 1 | 5
   onDone: () => void
 }
 
@@ -32,7 +32,7 @@ export function ForcedFeedback({ userId, milestone, onDone }: ForcedFeedbackProp
         milestone,
       })
 
-      const field = milestone === 5 ? 'feedback_shown_5' : 'feedback_shown_25'
+      const field = milestone === 1 ? 'feedback_shown_5' : 'feedback_shown_25'
       await supabase.from('profiles').update({ [field]: true }).eq('id', userId)
 
       setSent(true)
@@ -59,13 +59,13 @@ export function ForcedFeedback({ userId, milestone, onDone }: ForcedFeedbackProp
             <div className="mb-5 text-center">
               <div className="mb-3 flex justify-center">
                 <div className="flex h-16 w-16 items-center justify-center rounded-full bg-brand-soft dark:bg-brand-dark-soft">
-                  {milestone === 5
+                  {milestone === 1
                     ? <Rocket className="h-8 w-8 text-brand dark:text-brand-dark" />
                     : <Star className="h-8 w-8 text-amber-500" />}
                 </div>
               </div>
               <h3 className="font-display text-h3 text-text-main dark:text-text-dark-main">
-                {milestone === 5 ? 'Tu as fait 5 QCM !' : 'Tu as fait 20 QCM !'}
+                {milestone === 1 ? 'Tu as créé ton premier cours !' : 'Tu as créé 5 cours !'}
               </h3>
               <p className="mt-1 font-body text-[14px] text-text-secondary dark:text-text-dark-secondary">
                 Aide-nous a ameliorer Skynote avec ton avis — ca prend 30 secondes !

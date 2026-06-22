@@ -440,7 +440,7 @@ export function CreateCourseForm({
           <div className="rounded-input border border-amber-200 bg-amber-50 p-4 dark:border-amber-800/30 dark:bg-amber-950/20">
             <p className="font-body text-[13px] text-amber-800 dark:text-amber-300">{errors.form}</p>
             <a href="/pricing" className="mt-2 inline-block font-body text-[13px] font-semibold text-brand hover:underline dark:text-brand-dark">
-              Passer au plan Plus pour des cours illimites →
+              Passer au plan Starter pour des cours illimités →
             </a>
           </div>
         )}

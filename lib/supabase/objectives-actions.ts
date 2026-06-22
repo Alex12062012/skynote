@@ -228,10 +228,10 @@ export async function activatePremiumWithCoins(): Promise<{ success: boolean; er
 
   const PREMIUM_COST = 750
 
-  const result = await spendCoins(user.id, PREMIUM_COST, 'Activation Plus — 1 mois')
+  const result = await spendCoins(user.id, PREMIUM_COST, 'Activation Starter — 1 mois')
   if (!result.success) return result
 
-  // Si l'utilisateur a déjà un plan Plus actif → prolonger au lieu de reset
+  // Si l'utilisateur a déjà un plan Starter actif → prolonger au lieu de reset
   const { data: profile } = await supabase
     .from('profiles')
     .select('plan, plan_expires_at')

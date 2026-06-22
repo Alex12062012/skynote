@@ -156,7 +156,7 @@ export function CourseChat({ courseId, courseTitle, isPremium }: CourseChatProps
         <div className="flex-1 min-w-0">
           <p className="font-body text-[14px] font-semibold text-main dark:text-dark-main">Chatbot IA du cours</p>
           <p className="font-body text-[12px] text-text-tertiary dark:text-text-dark-tertiary">
-            Pose tes questions sur le cours. Disponible avec le plan Plus ou Famille.
+            Pose tes questions sur le cours. Disponible avec le plan Starter ou Pro.
           </p>
         </div>
         <a href="/pricing" className="flex-shrink-0 rounded-input bg-brand px-3 py-1.5 font-body text-[12px] font-semibold text-white hover:bg-brand-hover dark:bg-brand-dark dark:text-night-bg transition-colors">
@@ -251,13 +251,13 @@ export function CourseChat({ courseId, courseTitle, isPremium }: CourseChatProps
               <button
                 onClick={handleSend}
                 disabled={loading || !input.trim()}
-                title="Envoyer (12 ✦)"
+                title="Envoyer (36 ✦)"
                 className="flex h-10 flex-shrink-0 items-center justify-center gap-1.5 rounded-input bg-brand px-3 text-white hover:bg-brand-hover disabled:opacity-40 dark:bg-brand-dark dark:text-night-bg transition-all active:scale-95"
               >
                 <Send className="h-4 w-4" />
                 <span className="flex items-center gap-0.5 font-body text-[11px] font-semibold opacity-80">
                   <NovaCoin size={11} />
-                  12
+                  36
                 </span>
               </button>
             </div>
