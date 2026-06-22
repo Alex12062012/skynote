@@ -58,8 +58,7 @@ export async function POST(request: NextRequest) {
       .eq('id', user.id)
       .single()
 
-    // Rétrocompat : starter/pro ET anciens plans plus/famille ont accès au chat
-    const isPremium = ['starter', 'pro', 'plus', 'famille'].includes(profile?.plan ?? '')
+    const isPremium = ['starter', 'pro'].includes(profile?.plan ?? '')
 
     const { data: beta } = await supabase
       .from('admin_settings')

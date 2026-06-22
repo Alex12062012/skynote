@@ -2,11 +2,6 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 import type { Database } from '@/types/database'
 
-const DEMO_EMAILS = new Set([
-  'demo-skynote@tutamail.com',
-])
-const DEMO_SESSION_TTL_MS = 2 * 60 * 60 * 1000
-
 // Timeout pour l'appel Supabase - evite que le middleware bloque indefiniment
 // si Supabase est lent ou indisponible (cause principale des intermittences 504).
 const AUTH_TIMEOUT_MS = 4000
@@ -59,30 +54,8 @@ export async function updateSession(request: NextRequest) {
     return supabaseResponse
   }
 
-  // Securite session demo - limite a 2h
-  if (user && DEMO_EMAILS.has(user.email ?? '')) {
-    const demoSessionAt = request.cookies.get('demo_session_at')?.value
-    const sessionStart = demoSessionAt ? parseInt(demoSessionAt, 10) : 0
-    const isExpired =
-      !demoSessionAt || isNaN(sessionStart) || Date.now() - sessionStart > DEMO_SESSION_TTL_MS
-
-    if (isExpired) {
-      try {
-        await withTimeout(supabase.auth.signOut(), AUTH_TIMEOUT_MS)
-      } catch (_e) {
-        // signOut peut echouer si Supabase est lent - on redirige quand meme
-      }
-      const url = request.nextUrl.clone()
-      url.pathname = '/demo-login'
-      url.searchParams.set('expired', '1')
-      const redirectRes = NextResponse.redirect(url)
-      redirectRes.cookies.delete('demo_session_at')
-      return redirectRes
-    }
-  }
-
   const protectedPaths = ['/dashboard', '/courses', '/objectives', '/profile']
-  const authPaths = ['/login', '/signup', '/demo-login']
+  const authPaths = ['/login', '/signup']
   const isProtected = protectedPaths.some((p) => request.nextUrl.pathname.startsWith(p))
   const isAuth = authPaths.some((p) => request.nextUrl.pathname.startsWith(p))
 

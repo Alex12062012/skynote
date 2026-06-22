@@ -40,7 +40,7 @@ export default async function ProfilePage() {
     ? new Date(profile.created_at).toLocaleDateString(dateLocale, { year: 'numeric', month: 'long', day: 'numeric' })
     : ''
 
-  const isPremium = ['plus', 'famille'].includes(plan)
+  const isPremium = ['starter', 'pro'].includes(plan)
   const coinsNeeded = 750 - coins
   const showPremiumBanner = !isPremium && coins >= 450 && coins < 750
 

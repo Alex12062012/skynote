@@ -68,7 +68,7 @@ export async function triggerErrorAnalysis(flashcardId: string): Promise<Trigger
       .eq('id', user.id)
       .single()
 
-    const isPremium = profile?.plan === 'plus' || profile?.plan === 'famille'
+    const isPremium = profile?.plan === 'starter' || profile?.plan === 'pro'
 
     if (!isPremium) {
       const today = new Date().toISOString().split('T')[0]

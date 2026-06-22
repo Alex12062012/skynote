@@ -33,7 +33,7 @@ export default async function ObjectivesPage() {
 
   const userObjMap = new Map(userObjectives.map((uo: any) => [uo.objective_id, uo]))
   const coins = profile?.sky_coins ?? 0
-  const isPremium = profile?.plan === 'plus'
+  const isPremium = profile?.plan === 'starter' || profile?.plan === 'pro'
 
   return (
     <div className="mx-auto max-w-2xl flex flex-col gap-8 animate-fade-in">

@@ -38,17 +38,17 @@ export function BetaBadge() {
 }
 
 export function PlanBadge({ plan }: { plan: string }) {
-  if (plan === 'plus') {
+  if (plan === 'starter') {
     return (
       <a href="/pricing" className="inline-flex items-center gap-1 rounded-pill bg-amber-100 px-3 py-1 font-body text-[12px] font-bold text-amber-700 hover:bg-amber-200 transition-colors dark:bg-amber-950/30 dark:text-amber-400 dark:hover:bg-amber-900/40 cursor-pointer">
-        <Star className="h-3 w-3" /> Plus
+        <Star className="h-3 w-3" /> Starter
       </a>
     )
   }
-  if (plan === 'famille') {
+  if (plan === 'pro') {
     return (
       <a href="/pricing" className="inline-flex items-center gap-1 rounded-pill bg-purple-100 px-3 py-1 font-body text-[12px] font-bold text-purple-700 hover:bg-purple-200 transition-colors dark:bg-purple-950/30 dark:text-purple-400 dark:hover:bg-purple-900/40 cursor-pointer">
-        <Users className="h-3 w-3" /> Famille
+        <Users className="h-3 w-3" /> Pro
       </a>
     )
   }

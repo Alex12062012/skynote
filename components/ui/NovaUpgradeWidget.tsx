@@ -11,13 +11,10 @@ const PLAN_LABELS: Record<string, string> = {
   free:    'Forfait Gratuit',
   starter: 'Forfait Starter',
   pro:     'Forfait Pro',
-  plus:    'Forfait Starter',
-  famille: 'Forfait Pro',
 }
 
 export function NovaUpgradeWidget({ plan }: NovaUpgradeWidgetProps) {
-  const normalizedPlan = plan === 'famille' ? 'pro' : plan === 'plus' ? 'starter' : plan
-  if (normalizedPlan === 'pro') return null
+  if (plan === 'pro') return null
 
   return (
     <div className="fixed bottom-5 left-5 z-30 flex items-center gap-2 rounded-pill bg-sky-surface/90 px-3 py-1.5 shadow-md backdrop-blur-sm border border-sky-border dark:border-night-border dark:bg-night-surface/90">

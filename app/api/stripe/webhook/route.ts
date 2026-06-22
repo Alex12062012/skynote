@@ -111,14 +111,13 @@ export async function POST(request: NextRequest) {
           .eq('id', profile.id)
 
         // Renouveler les Novas mensuelles
-        const plan = profile.plan as 'starter' | 'pro' | 'plus' | 'famille'
-        const normalizedPlan = (plan === 'plus' ? 'starter' : plan === 'famille' ? 'pro' : plan) as 'starter' | 'pro'
-        const novaAmount = PLAN_NOVA_ALLOC[normalizedPlan] ?? 0
+        const plan = profile.plan as 'starter' | 'pro'
+        const novaAmount = PLAN_NOVA_ALLOC[plan] ?? 0
         if (novaAmount > 0) {
           await supabase.rpc('add_novas', {
             p_user_id: profile.id,
             p_amount:  novaAmount,
-            p_reason:  `Renouvellement ${normalizedPlan} — ${novaAmount} ✦`,
+            p_reason:  `Renouvellement ${plan} — ${novaAmount} ✦`,
           })
         }
       }

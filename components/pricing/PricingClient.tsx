@@ -62,13 +62,6 @@ const PLANS = [
   },
 ]
 
-// Rétrocompat : mapper les anciens plans aux nouveaux IDs pour l'affichage
-function normalizePlan(plan: string) {
-  if (plan === 'plus')    return 'starter'
-  if (plan === 'famille') return 'pro'
-  return plan
-}
-
 interface PricingClientProps {
   currentPlan: string
   planExpiresAt: string | null
@@ -82,8 +75,7 @@ export function PricingClient({ currentPlan, planExpiresAt, hasStripeSubscriptio
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null)
   const [portalLoading, setPortalLoading] = useState(false)
 
-  const normalizedPlan = normalizePlan(currentPlan)
-  const isPaid = normalizedPlan === 'starter' || normalizedPlan === 'pro'
+  const isPaid = currentPlan === 'starter' || currentPlan === 'pro'
 
   async function handleStripe(planId: string) {
     if (!isLoggedIn) { router.push('/signup'); return }
@@ -140,13 +132,13 @@ export function PricingClient({ currentPlan, planExpiresAt, hasStripeSubscriptio
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div className="flex items-center gap-4">
                 <div className="flex h-12 w-12 items-center justify-center rounded-full bg-brand dark:bg-brand-dark text-white dark:text-night-bg">
-                  {normalizedPlan === 'pro'
+                  {currentPlan === 'pro'
                     ? <Zap className="h-6 w-6" />
                     : <Star className="h-6 w-6 fill-current" />}
                 </div>
                 <div>
                   <p className="font-display text-[18px] font-bold text-text-main dark:text-text-dark-main">
-                    Plan {normalizedPlan === 'pro' ? 'Pro' : 'Starter'}
+                    Plan {currentPlan === 'pro' ? 'Pro' : 'Starter'}
                   </p>
                   {planExpiresAt && (
                     <p className="font-body text-[13px] text-text-secondary dark:text-text-dark-secondary flex items-center gap-1">
@@ -200,8 +192,8 @@ export function PricingClient({ currentPlan, planExpiresAt, hasStripeSubscriptio
           {PLANS.map((plan) => {
             const price = billing === 'yearly' ? plan.price.yearly : plan.price.monthly
             const isLoading = loadingPlan === plan.id
-            const isCurrentPlan = plan.id === normalizedPlan
-            const isDowngrade = (normalizedPlan === 'pro' && plan.id === 'starter') || (isPaid && plan.id === 'free')
+            const isCurrentPlan = plan.id === currentPlan
+            const isDowngrade = (currentPlan === 'pro' && plan.id === 'starter') || (isPaid && plan.id === 'free')
 
             return (
               <div key={plan.id} className={cn(

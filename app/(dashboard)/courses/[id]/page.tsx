@@ -140,7 +140,7 @@ async function ReadyCourse({ courseId, userId, courseTitle }: { courseId: string
       <CourseChat
         courseId={courseId}
         courseTitle={courseTitle}
-        isPremium={(await getUserPlanLimits(userId)).isPlus}
+        isPremium={(await getUserPlanLimits(userId)).isStarter}
       />
 
       {/* Fiches avec bouton QCM contextuel */}

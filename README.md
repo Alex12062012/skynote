@@ -72,7 +72,6 @@ skynote/
 │   ├── api/                  # API Routes Next.js
 │   ├── auth/callback/        # Callback OAuth Supabase
 │   ├── classroom-login/      # Connexion élève via code classe
-│   ├── demo-login/           # Connexion démo
 │   ├── famille/              # Gestion du compte famille
 │   ├── list-quiz/new/        # Créateur de quiz liste Q/R
 │   ├── metrics/              # Dashboard métriques (admin)
@@ -247,7 +246,6 @@ Timeout Vercel : **60 secondes** sur toutes les routes.
 | /api/classroom/add-teacher | POST | Ajoute un co-enseignant |
 | /api/classroom/create-folder | POST | Crée un dossier de cours |
 | /api/classroom/settings | PATCH | Met à jour les paramètres de classe |
-| /api/demo-login | POST | Connexion démo |
 | /api/teacher-code-login | POST | Connexion enseignant via code |
 | /api/admin/stats | GET | Statistiques admin |
 | /api/admin/feedbacks | GET | Feedbacks utilisateurs |

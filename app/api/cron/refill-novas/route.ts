@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
   const { data: subscribers, error } = await supabase
     .from('profiles')
     .select('id, plan, plan_expires_at')
-    .in('plan', ['starter', 'pro', 'plus', 'famille'])
+    .in('plan', ['starter', 'pro'])
     .or(`plan_expires_at.is.null,plan_expires_at.gt.${now}`)
 
   if (error) {
@@ -41,18 +41,14 @@ export async function GET(request: NextRequest) {
   let failed = 0
 
   for (const profile of subscribers ?? []) {
-    const normalizedPlan =
-      profile.plan === 'plus' ? 'starter' :
-      profile.plan === 'famille' ? 'pro' :
-      profile.plan as 'starter' | 'pro'
-
-    const amount = PLAN_NOVA_ALLOC[normalizedPlan] ?? 0
+    const plan = profile.plan as 'starter' | 'pro'
+    const amount = PLAN_NOVA_ALLOC[plan] ?? 0
     if (amount === 0) continue
 
     const { error: rpcError } = await supabase.rpc('add_novas', {
       p_user_id: profile.id,
       p_amount:  amount,
-      p_reason:  `Recharge mensuelle ${normalizedPlan} — ${amount} ✦`,
+      p_reason:  `Recharge mensuelle ${plan} — ${amount} ✦`,
     })
 
     if (rpcError) {

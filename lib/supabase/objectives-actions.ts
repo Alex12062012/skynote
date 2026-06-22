@@ -242,11 +242,11 @@ export async function activatePremiumWithCoins(): Promise<{ success: boolean; er
   let baseDate = now
 
   if (
-    profile?.plan === 'plus' &&
+    profile?.plan === 'starter' &&
     profile?.plan_expires_at &&
     new Date(profile.plan_expires_at) > now
   ) {
-    // Prolonger la base de calcul pour les utilisateurs Plus
+    // Prolonger la base de calcul pour les utilisateurs Starter actifs
     baseDate = new Date(profile.plan_expires_at!)
   }
 
@@ -255,7 +255,7 @@ export async function activatePremiumWithCoins(): Promise<{ success: boolean; er
 
   const { error: updateError } = await supabase
     .from('profiles')
-    .update({ plan: 'plus', plan_expires_at: expiresAt.toISOString() })
+    .update({ plan: 'starter', plan_expires_at: expiresAt.toISOString() })
     .eq('id', user.id)
 
   if (updateError) return { success: false, error: updateError.message }

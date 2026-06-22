@@ -9,9 +9,6 @@ export interface PlanLimits {
   isPro:          boolean
   /** Novas allouées par mois (ou one-time pour free) */
   novasPerMonth:  number
-  // Rétrocompat — indique si l'utilisateur a accès aux features premium
-  isPlus:         boolean
-  isFamille:      boolean
 }
 
 const FREE_LIMITS: PlanLimits = {
@@ -20,8 +17,6 @@ const FREE_LIMITS: PlanLimits = {
   isStarter:      false,
   isPro:          false,
   novasPerMonth:  600,
-  isPlus:         false,
-  isFamille:      false,
 }
 
 const STARTER_LIMITS: PlanLimits = {
@@ -30,8 +25,6 @@ const STARTER_LIMITS: PlanLimits = {
   isStarter:      true,
   isPro:          false,
   novasPerMonth:  2000,
-  isPlus:         true,   // rétrocompat
-  isFamille:      false,
 }
 
 const PRO_LIMITS: PlanLimits = {
@@ -40,8 +33,6 @@ const PRO_LIMITS: PlanLimits = {
   isStarter:      true,
   isPro:          true,
   novasPerMonth:  4000,
-  isPlus:         true,   // rétrocompat
-  isFamille:      true,   // rétrocompat
 }
 
 export async function isBetaModeActive(): Promise<boolean> {
@@ -77,12 +68,8 @@ export async function getUserPlanLimits(userId: string): Promise<PlanLimits> {
   }
 
   switch (profile.plan) {
-    // Nouveaux noms
     case 'starter': return STARTER_LIMITS
     case 'pro':     return PRO_LIMITS
-    // Rétrocompatibilité anciens plans
-    case 'plus':    return STARTER_LIMITS
-    case 'famille': return PRO_LIMITS
     default:        return FREE_LIMITS
   }
 }
