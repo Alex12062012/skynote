@@ -1,9 +1,10 @@
 'use client'
 
-import { useState, useEffect, use } from 'react'
+import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { GraduationCap, ChevronLeft, ChevronRight, Send, Lock, Loader2, Star, CheckCircle } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Send, Lock, Loader2, Star } from 'lucide-react'
 import Link from 'next/link'
+import { useParams } from 'next/navigation'
 import { BrevetProcessingLoader } from '@/components/brevet/BrevetProcessingLoader'
 
 interface ExamQuestion {
@@ -30,8 +31,9 @@ const MENTION_LABELS: Record<string, { label: string; emoji: string; color: stri
   insuffisant: { label: 'Insuffisant',  emoji: '📚', color: 'text-red-400',    bg: 'bg-red-500/10 border-red-500/20' },
 }
 
-export default function BrevetSessionPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params)
+export default function BrevetSessionPage() {
+  const params = useParams()
+  const id = params.id as string
 
   const [session, setSession] = useState<SessionData | null>(null)
   const [answers, setAnswers] = useState<(number | null)[]>([])
