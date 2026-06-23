@@ -18,7 +18,8 @@ export async function POST(req: NextRequest) {
 
   const { sessionId, answers } = await req.json() as { sessionId: string; answers: (number | null)[] }
 
-  if (!sessionId || !Array.isArray(answers)) {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+  if (!sessionId || !uuidRegex.test(sessionId) || !Array.isArray(answers)) {
     return NextResponse.json({ error: 'Données invalides' }, { status: 400 })
   }
 
@@ -35,6 +36,11 @@ export async function POST(req: NextRequest) {
 
   const questions = session.questions as ExamQuestion[]
 
+  // Guard — questions pas encore generees (generation IA en cours)
+  if (!questions || questions.length === 0) {
+    return NextResponse.json({ error: "L'epreuve n'est pas encore prete. Patiente quelques secondes." }, { status: 409 })
+  }
+
   // Calcul du score côté serveur (les bonnes réponses ne sont jamais envoyées au client)
   let correct = 0
   for (let i = 0; i < questions.length; i++) {
@@ -50,7 +56,7 @@ export async function POST(req: NextRequest) {
     .eq('id', sessionId)
 
   // Les résultats détaillés (par question) ne sont renvoyés qu'aux plans payants
-  const isPaid = session.plan_snapshot === 'starter' || session.plan_snapshot === 'pro'
+  const isPaid = ['starter', 'pro'].includes(session.plan_snapshot ?? '')
 
   return NextResponse.json({
     score: isPaid ? score : null,           // null = bloqué pour Free

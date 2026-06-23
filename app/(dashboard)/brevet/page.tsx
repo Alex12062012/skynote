@@ -39,7 +39,8 @@ export default function BrevetPage() {
   const isPro = plan === 'pro'
   const isStarter = plan === 'starter' || isPro
   const hasUsedStarterSession = !isPro && isStarter && pastSessions.length >= 1
-  const canStart = !hasUsedStarterSession
+  const hasUsedFreeSession = !isStarter && pastSessions.length >= 1
+  const canStart = !hasUsedStarterSession && !hasUsedFreeSession
 
   async function handleStart() {
     setError('')
@@ -47,11 +48,18 @@ export default function BrevetPage() {
     try {
       const res = await fetch('/api/brevet/start', { method: 'POST' })
       const data = await res.json()
-      if (!res.ok) { setError(data.error ?? 'Une erreur est survenue.'); return }
+      if (!res.ok) { setError(data.error ?? 'Une erreur est survenue.'); setLoading(false); return }
+
+      // Declencher la generation IA en background — comme les fiches
+      fetch('/api/brevet/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionId: data.sessionId }),
+      }).catch(console.error)
+
       router.push(`/brevet/${data.sessionId}`)
     } catch {
       setError('Erreur reseau. Reessaie dans quelques instants.')
-    } finally {
       setLoading(false)
     }
   }
@@ -86,6 +94,7 @@ export default function BrevetPage() {
                 ? "Autant d'epreuves que tu veux"
                 : isStarter
                 ? hasUsedStarterSession ? 'Tu as deja utilise ton epreuve' : '1 epreuve incluse dans ton plan'
+                : hasUsedFreeSession ? 'Tu as deja utilise ton epreuve gratuite'
                 : 'Passe en Starter pour voir ta mention'}
             </p>
           </div>
@@ -104,7 +113,7 @@ export default function BrevetPage() {
           {loading ? (
             <>
               <Loader2 className="h-4 w-4 animate-spin" />
-              Generation en cours... (30s)
+              Preparation de l'epreuve...
             </>
           ) : (
             <>

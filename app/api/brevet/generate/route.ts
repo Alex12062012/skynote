@@ -95,12 +95,16 @@ async function generateQuestions(sessionId: string, userId: string): Promise<voi
   )
 
   const mid = Math.ceil(cards.length / 2)
-  const [part1, part2] = await Promise.all([
+  const results = await Promise.allSettled([
     callClaude(cards.slice(0, mid).join('\n'), 10),
     callClaude(cards.slice(mid).join('\n'), 10),
   ])
 
-  const questions = [...part1, ...part2]
+  const questions = results.flatMap(r => r.status === 'fulfilled' ? r.value : [])
+
+  if (questions.length < 5) {
+    throw new Error(`Generation partielle insuffisante : ${questions.length} questions`)
+  }
 
   const { error: updateErr } = await admin
     .from('exam_sessions')
@@ -115,7 +119,10 @@ async function generateQuestions(sessionId: string, userId: string): Promise<voi
 
 export async function POST(req: NextRequest) {
   const { sessionId } = await req.json()
-  if (!sessionId) return NextResponse.json({ error: 'sessionId requis' }, { status: 400 })
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+  if (!sessionId || !uuidRegex.test(sessionId)) {
+    return NextResponse.json({ error: 'sessionId invalide' }, { status: 400 })
+  }
 
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
