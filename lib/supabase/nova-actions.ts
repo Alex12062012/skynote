@@ -25,29 +25,20 @@
 import { createClient } from './server'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
 
-// ─── COÛTS ───────────────────────────────────────────────────────────────────
-export const NOVA_COST_OCR         =  2   // par photo
-export const NOVA_COST_QCM_SINGLE  =  4   // régénération d'un QCM seul
-export const NOVA_COST_CHAT        = 36   // par message chat — envoie le cours complet à chaque appel (~0,021€ réel)
-export const NOVA_COST_EVAL_PLAN   =  5   // génération plan de révision (tips Haiku)
-// Fiches + QCM générés ensemble → coût unique groupé
-export const NOVA_COST_COURSE      = 118  // 30✦ fiches + 88✦ QCM batch
-// Épreuve brevet/bac simulée (génération + correction IA) — feature à construire (todo #4)
-// Free   : peut passer l'épreuve (génération des questions), mais la correction/résultat reste verrouillé.
-// Starter: 1 session complète (toutes matières) qui débloque le résultat — une seule fois, pas récurrent.
-// Pro    : illimité, uniquement limité par le solde de Novas.
-export const NOVA_COST_EXAM_SIMULATION = 200
-export const EXAM_SIMULATION_FREE_MAX          = 1    // 1 tentative à vie (résultat verrouillé)
-export const EXAM_SIMULATION_FREE_CAN_SEE_RESULT = false // résultat visible uniquement Starter+
-export const EXAM_SIMULATION_STARTER_MAX       = 1    // 1 tentative à vie (résultat visible)
-export const EXAM_SIMULATION_PRO_SOFT_CAP      = 10   // cap doux à vie → message "serveurs surchargés"
-
-// ─── ALLOCATIONS PAR PLAN ────────────────────────────────────────────────────
-export const NOVA_ALLOC: Record<'free' | 'starter' | 'pro', number> = {
-  free:    600,    // one-time seulement (géré par le trigger SQL)
-  starter: 2000,
-  pro:     4000,
-}
+// ─── CONSTANTES (re-exportées depuis nova-constants pour compat back-compat) ─
+export {
+  NOVA_COST_OCR,
+  NOVA_COST_QCM_SINGLE,
+  NOVA_COST_CHAT,
+  NOVA_COST_EVAL_PLAN,
+  NOVA_COST_COURSE,
+  NOVA_COST_EXAM_SIMULATION,
+  EXAM_SIMULATION_FREE_MAX,
+  EXAM_SIMULATION_FREE_CAN_SEE_RESULT,
+  EXAM_SIMULATION_STARTER_MAX,
+  EXAM_SIMULATION_PRO_SOFT_CAP,
+  NOVA_ALLOC,
+} from './nova-constants'
 
 // ─── CLIENT SERVICE ROLE (bypass RLS pour le webhook/server actions) ─────────
 function svc() {
