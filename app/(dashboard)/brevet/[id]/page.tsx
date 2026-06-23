@@ -112,9 +112,24 @@ function DocumentPanel({
         <p className="mb-2 font-body text-[11px] font-semibold uppercase tracking-wide text-text-tertiary dark:text-text-dark-tertiary">
           {doc.titre}
         </p>
-        <pre className="whitespace-pre-wrap font-body text-[13px] leading-relaxed text-text-main dark:text-text-dark-main">
-          {doc.contenu}
-        </pre>
+        {doc.type === 'image' ? (
+          // URL externe ou chemin /public
+          <img
+            src={doc.contenu}
+            alt={doc.titre}
+            className="max-w-full rounded-card border border-sky-border dark:border-night-border"
+          />
+        ) : doc.type === 'graphique' && doc.contenu.trim().startsWith('<svg') ? (
+          // SVG inline
+          <div
+            className="w-full overflow-hidden rounded-card border border-sky-border bg-white p-2 dark:border-night-border dark:bg-night-surface"
+            dangerouslySetInnerHTML={{ __html: doc.contenu }}
+          />
+        ) : (
+          <pre className="whitespace-pre-wrap font-body text-[13px] leading-relaxed text-text-main dark:text-text-dark-main">
+            {doc.contenu}
+          </pre>
+        )}
       </div>
     </div>
   )
@@ -623,26 +638,4 @@ export default function BrevetSessionPage() {
             ) : (
               /* ── Panel non-HG : docs de la question courante ── */
               <>
-                <div className="flex-shrink-0 flex items-center justify-between border-b border-sky-border px-5 py-3 dark:border-night-border">
-                  <p className="font-body text-[12px] font-bold uppercase tracking-widest text-text-tertiary dark:text-text-dark-tertiary">
-                    Document
-                  </p>
-                  <button onClick={() => setPanelOpen(false)} className="rounded p-1 text-text-tertiary hover:text-text-secondary">
-                    <X className="h-4 w-4" />
-                  </button>
-                </div>
-                <div className="flex-1 overflow-y-auto p-5">
-                  <DocumentPanel
-                    documents={currentDocs}
-                    activeTab={docActiveTab}
-                    setActiveTab={setDocActiveTab}
-                  />
-                </div>
-              </>
-            )}
-          </div>
-        )}
-      </div>
-    </div>
-  )
-}
+                <div className="flex-shrink-0 flex items-center justify-between border-b border-sky-border px-5 py-3 dark

@@ -121,6 +121,11 @@ const MATHS_QUESTIONS: FullBankQuestion[] = [
         contenu: `Note     |  5 |  8 |  9 | 11 | 12 | 12 | 14 | 15 | 17 | 19
 Effectif |  1 |  1 |  1 |  1 |  1 |  1 |  1 |  1 |  1 |  1`,
       },
+      {
+        titre: 'Boîte à moustaches (à compléter)',
+        type: 'image',
+        contenu: '/brevet/mat_boite_moustaches.svg',
+      },
     ],
     question: `1. Calculer la moyenne de cette série.\n2. Déterminer la médiane.\n3. Déterminer Q₁ et Q₃.\n4. Enzo a eu 9. Est-il dans le quart des élèves les plus en difficulté ? Justifier avec Q₁.`,
     corrige: `1. Somme = 5+8+9+11+12+12+14+15+17+19 = 122 ; moyenne = 12,2.\n2. 10 valeurs ordonnées : médiane = (12+12)/2 = 12.\n3. Première moitié (5 valeurs : 5,8,9,11,12) → Q₁ = 9 ; seconde moitié (12,14,15,17,19) → Q₃ = 15.\n4. Q₁ = 9 : 25 % des élèves ont ≤ 9. Enzo, ayant 9, se situe exactement à la limite : il est dans le quart le plus en difficulté.`,
@@ -135,6 +140,13 @@ Effectif |  1 |  1 |  1 |  1 |  1 |  1 |  1 |  1 |  1 |  1`,
     theme: 'Trigonométrie — sin, cos, tan',
     annee: 2025,
     source: 'DNB — Trigonométrie',
+    documents: [
+      {
+        titre: 'Triangle ABC rectangle en B',
+        type: 'image',
+        contenu: '/brevet/mat_triangle_trig.svg',
+      },
+    ],
     question: `Dans le triangle ABC rectangle en B, AB = 8 cm et l'angle BAC = 35°.\n(Valeurs : sin 35° ≈ 0,574 ; cos 35° ≈ 0,819 ; tan 35° ≈ 0,700)\n1. Calculer BC.\n2. Calculer AC.\n3. Vérifier le résultat par le théorème de Pythagore (arrondir à 0,1 cm).`,
     corrige: `1. tan(BAC) = BC/AB → BC = 8 × 0,700 = 5,6 cm.\n2. cos(BAC) = AB/AC → AC = 8 / 0,819 ≈ 9,8 cm.\n3. AB²+BC² = 64+31,36 = 95,36 ; AC² ≈ 9,8² = 96,04. Cohérent (arrondi).`,
     criteres: [
@@ -148,6 +160,13 @@ Effectif |  1 |  1 |  1 |  1 |  1 |  1 |  1 |  1 |  1 |  1`,
     theme: 'Géométrie — losange et Pythagore',
     annee: 2023,
     source: 'DNB — Géométrie',
+    documents: [
+      {
+        titre: 'Losange ABCD avec diagonales',
+        type: 'image',
+        contenu: '/brevet/mat_losange.svg',
+      },
+    ],
     question: `ABCD est un losange de côté 10 cm dont la grande diagonale AC mesure 16 cm. Les diagonales d'un losange se coupent perpendiculairement en leur milieu.\n1. Calculer la longueur de la petite diagonale BD. Justifier avec le théorème de Pythagore.\n2. Calculer l'aire du losange. (Rappel : Aire = (d₁ × d₂) / 2)`,
     corrige: `1. Les diagonales se coupent en O ; AO = 8. Dans AOB rectangle en O : 8² + BO² = 10² → BO² = 36 → BO = 6. Donc BD = 12 cm.\n2. Aire = (16 × 12) / 2 = 96 cm².`,
     criteres: [
@@ -226,6 +245,13 @@ Effectif |  1 |  1 |  1 |  1 |  1 |  1 |  1 |  1 |  1 |  1`,
     theme: 'Géométrie analytique — repère orthogonal',
     annee: 2024,
     source: 'DNB — Repère et vecteurs',
+    documents: [
+      {
+        titre: 'Repère orthogonal — points A, B, C, D',
+        type: 'image',
+        contenu: '/brevet/mat_repere_abcd.svg',
+      },
+    ],
     question: `Dans un repère orthogonal, on donne A(1 ; 4), B(5 ; 1), C(8 ; 5) et D(4 ; 8).\n1. Calculer les coordonnées des milieux I de [AC] et J de [BD].\n2. Que peut-on conclure sur ABCD ?\n3. Calculer AB et AD. ABCD est-il un carré ? Justifier.`,
     corrige: `1. I = (4,5 ; 4,5) ; J = (4,5 ; 4,5).\n2. I = J : diagonales de même milieu → ABCD est un parallélogramme.\n3. AB = √(16+9) = 5 ; AD = √(9+16) = 5. Côtés égaux → losange. Vecteurs AB=(4;−3) et AD=(3;4) : produit scalaire = 12−12 = 0 → perpendiculaires → rectangle. Losange et rectangle → carré.`,
     criteres: [
@@ -762,6 +788,11 @@ const HG_QUESTIONS: FullBankQuestion[] = [
     source: 'DNB Métropole 2024 — Histoire',
     documents: [
       {
+        titre: "Entrée du camp d'Auschwitz-Birkenau (photo d'archives)",
+        type: 'image',
+        contenu: 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/f5/Birkenau_gate.jpg/640px-Birkenau_gate.jpg',
+      },
+      {
         titre: "Ginette Kolinka, Retour à Birkenau (2020) — extrait",
         type: 'texte',
         contenu: `Ginette Kolinka est née en 1925 dans une famille juive. Arrêtée par la Gestapo en mars 1944, elle est déportée à Auschwitz-Birkenau.
@@ -828,6 +859,11 @@ En quoi consiste votre mission ? Il s'agit d'une mission dans les parcs de la co
     annee: 2023,
     source: 'DNB Métropole 2023 — Histoire',
     documents: [
+      {
+        titre: 'Soldats français dans une tranchée (1916, domaine public)',
+        type: 'image',
+        contenu: 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/47/Cheshire_Regiment_trench_Somme_1916.jpg/640px-Cheshire_Regiment_trench_Somme_1916.jpg',
+      },
       {
         titre: "Lettres de Félix Delaurat — Archives départementales de l'Allier",
         type: 'texte',
