@@ -113,14 +113,12 @@ function DocumentPanel({
           {doc.titre}
         </p>
         {doc.type === 'image' ? (
-          // URL externe ou chemin /public
           <img
             src={doc.contenu}
             alt={doc.titre}
             className="max-w-full rounded-card border border-sky-border dark:border-night-border"
           />
         ) : doc.type === 'graphique' && doc.contenu.trim().startsWith('<svg') ? (
-          // SVG inline
           <div
             className="w-full overflow-hidden rounded-card border border-sky-border bg-white p-2 dark:border-night-border dark:bg-night-surface"
             dangerouslySetInnerHTML={{ __html: doc.contenu }}
@@ -638,4 +636,5 @@ export default function BrevetSessionPage() {
             ) : (
               /* ── Panel non-HG : docs de la question courante ── */
               <>
-                <div className="flex-shrink-0 flex items-center justify-between border-b border-sky-border px-5 py-3 dark
+                <div className="flex-shrink-0 flex items-center justify-between border-b border-sky-border px-5 py-3 dark:border-night-border">
+                  <p className="font-body te
