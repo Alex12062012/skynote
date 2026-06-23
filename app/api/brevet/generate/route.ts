@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { createClient } from '@/lib/supabase/server'
+import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { addNovasForUser, NOVA_COST_EXAM_SIMULATION } from '@/lib/supabase/nova-actions'
 import { waitUntil } from '@vercel/functions'
 
@@ -14,6 +15,14 @@ export interface ExamQuestion {
 }
 
 const anthropic = new Anthropic()
+
+// Client service role — bypass RLS pour les updates dans waitUntil
+function getAdminClient() {
+  return createServiceClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+}
 
 async function callClaude(cardContent: string, target: number): Promise<ExamQuestion[]> {
   const msg = await anthropic.messages.create({
@@ -50,22 +59,23 @@ Reponds UNIQUEMENT avec un tableau JSON valide, sans markdown :
 }
 
 async function generateQuestions(sessionId: string, userId: string): Promise<void> {
-  const supabase = await createClient()
+  // Service role pour toutes les requetes — pas de dependance aux cookies auth
+  const admin = getAdminClient()
 
-  const { data: courses } = await supabase
+  const { data: courses } = await admin
     .from('courses')
     .select('id, subject')
     .eq('user_id', userId)
     .eq('status', 'ready')
 
   if (!courses || courses.length === 0) {
-    await supabase.from('exam_sessions').delete().eq('id', sessionId)
+    await admin.from('exam_sessions').delete().eq('id', sessionId)
     await addNovasForUser(userId, NOVA_COST_EXAM_SIMULATION, 'Remboursement — pas de cours')
     return
   }
 
-  const courseIds = courses.map(c => c.id)
-  const { data: flashcards } = await supabase
+  const courseIds = courses.map((c: any) => c.id)
+  const { data: flashcards } = await admin
     .from('flashcards')
     .select('title, summary, course_id')
     .in('course_id', courseIds)
@@ -74,17 +84,16 @@ async function generateQuestions(sessionId: string, userId: string): Promise<voi
     .limit(120)
 
   if (!flashcards || flashcards.length < 5) {
-    await supabase.from('exam_sessions').delete().eq('id', sessionId)
+    await admin.from('exam_sessions').delete().eq('id', sessionId)
     await addNovasForUser(userId, NOVA_COST_EXAM_SIMULATION, 'Remboursement — pas assez de fiches')
     return
   }
 
-  const subjectMap = Object.fromEntries(courses.map(c => [c.id, c.subject ?? 'General']))
-  const cards = flashcards.slice(0, 80).map(
-    f => `[${subjectMap[f.course_id] ?? 'General'}] ${f.title}: ${f.summary}`
+  const subjectMap = Object.fromEntries(courses.map((c: any) => [c.id, c.subject ?? 'General']))
+  const cards = (flashcards as any[]).slice(0, 80).map(
+    (f: any) => `[${subjectMap[f.course_id] ?? 'General'}] ${f.title}: ${f.summary}`
   )
 
-  // Deux appels de 10 questions chacun — plus fiable qu'un seul appel de 20
   const mid = Math.ceil(cards.length / 2)
   const [part1, part2] = await Promise.all([
     callClaude(cards.slice(0, mid).join('\n'), 10),
@@ -93,10 +102,15 @@ async function generateQuestions(sessionId: string, userId: string): Promise<voi
 
   const questions = [...part1, ...part2]
 
-  await supabase
+  const { error: updateErr } = await admin
     .from('exam_sessions')
     .update({ questions, answers: new Array(questions.length).fill(null) })
     .eq('id', sessionId)
+
+  if (updateErr) {
+    console.error('[brevet/generate] Erreur update session:', updateErr)
+    throw updateErr
+  }
 }
 
 export async function POST(req: NextRequest) {
@@ -119,11 +133,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true })
   }
 
+  const userId = user.id
+  const admin = getAdminClient()
+
   waitUntil(
-    generateQuestions(sessionId, user.id).catch(async (err) => {
-      console.error('[brevet/generate] Erreur:', err)
-      await supabase.from('exam_sessions').delete().eq('id', sessionId)
-      await addNovasForUser(user.id, NOVA_COST_EXAM_SIMULATION, 'Remboursement — erreur generation')
+    generateQuestions(sessionId, userId).catch(async (err) => {
+      console.error('[brevet/generate] Erreur generation:', err)
+      await admin.from('exam_sessions').delete().eq('id', sessionId)
+      await addNovasForUser(userId, NOVA_COST_EXAM_SIMULATION, 'Remboursement — erreur generation')
     })
   )
 
