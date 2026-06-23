@@ -72,14 +72,26 @@ export default async function DashboardPage() {
 
       <StatsBar coursesCount={totalCourses ?? 0} qcmCount={totalQcm ?? 0} streak={streak} coins={coins} />
 
-      {/* Mini-Épreuve Brevet — sous les stats */}
-      <div className="relative self-start">
+      {/* Mini-Épreuve Brevet — bannière pleine largeur */}
+      <div className="relative">
         <Link href="/brevet"
-          className="inline-flex items-center gap-2 h-11 px-5 rounded-card bg-violet-600 hover:bg-violet-700 active:bg-violet-800 text-white font-body font-semibold text-[14px] transition-colors">
-          <GraduationCap className="h-4 w-4" />
-          Mini-Épreuve Brevet
+          className="flex w-full items-center justify-between gap-4 rounded-card border border-violet-500/30 bg-violet-600/10 hover:bg-violet-600/15 px-5 py-4 transition-colors dark:border-violet-500/20 dark:bg-violet-500/10">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-input bg-violet-600 text-white">
+              <GraduationCap className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="font-display text-[15px] font-bold text-violet-700 dark:text-violet-300">
+                Mini-Épreuve Brevet
+              </p>
+              <p className="font-body text-[12px] text-text-secondary dark:text-text-dark-secondary">
+                Simulation basée sur les vraies annales · Gratuit · Résultats dès Starter
+              </p>
+            </div>
+          </div>
+          <ArrowRight className="h-5 w-5 flex-shrink-0 text-violet-500" />
         </Link>
-        <span className="absolute -top-2 -right-2 bg-violet-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none pointer-events-none select-none">
+        <span className="absolute -top-2 left-14 bg-violet-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none pointer-events-none select-none">
           NEW
         </span>
       </div>
