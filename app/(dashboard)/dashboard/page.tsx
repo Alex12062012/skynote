@@ -79,7 +79,7 @@ export default async function DashboardPage() {
           <GraduationCap className="h-4 w-4" />
           Mini-Épreuve Brevet
         </Link>
-        <span className="absolute -top-2 -right-2 bg-amber-400 text-amber-900 text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none pointer-events-none select-none">
+        <span className="absolute -top-2 -right-2 bg-violet-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none pointer-events-none select-none">
           NEW
         </span>
       </div>

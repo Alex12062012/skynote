@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils'
 import { SkyCoin } from '@/components/ui/SkyCoin'
 import { BADGES, CONSUMABLES, TITLES, SKINS, SKIN_ID_ALIASES, prestigeCost } from '@/lib/gamification/config'
 import { buyItem, equip, equipFrame } from '@/lib/supabase/gamification-actions'
-import { SpinWheel, WHEEL_SEGMENTS as WHEEL_LEGACY } from '@/components/boutique/SpinWheel'
+import { SpinWheel, WHEEL_SEGMENTS as WHEEL_LEGACY, formatSegmentLabel } from '@/components/boutique/SpinWheel'
 import { PlayerBadge } from './PlayerBadge'
 import { PlayerEmblem } from './PlayerEmblem'
 import { PrestigeButton } from './PrestigeButton'
@@ -202,7 +202,7 @@ export function BoutiqueClientV2({
                   <div className="space-y-1.5">
                     {recentSpins.map((spin, i) => (
                       <div key={i} className="flex items-center justify-between rounded-input border border-sky-border bg-sky-surface-2 px-3 py-1.5 dark:border-night-border dark:bg-night-surface-2">
-                        <span className="font-body text-[12px]">{spin.segment_id}</span>
+                        <span className="font-body text-[12px]">{formatSegmentLabel(spin.segment_id)}</span>
                         <span className={cn(
                           'font-display text-[13px] font-bold tabular-nums',
                           spin.net_gain > 0 ? 'text-emerald-600' : spin.net_gain < 0 ? 'text-red-600' : 'text-text-tertiary',

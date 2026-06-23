@@ -5,23 +5,33 @@ import { SkyCoin } from '@/components/ui/SkyCoin'
 import { cn } from '@/lib/utils'
 import { useCoinReward } from '@/components/providers/CoinRewardProvider'
 
-// ─── Segments VISIBLES (le segment secret n'est pas affiché) ─────────────────
 export const WHEEL_SEGMENTS = [
-  { id: 'lost',       label: 'Perdu',        type: 'lost',     value: 0,   color: '#EF4444', text: '#fff',    probability: 20 },
-  { id: 'coins_20',   label: '+20',          type: 'coins',    value: 20,  color: '#FB923C', text: '#fff',    probability: 16 },
-  { id: 'coins_40',   label: '+40',          type: 'coins',    value: 40,  color: '#FBBF24', text: '#fff',    probability: 13 },
-  { id: 'coins_60',   label: '+60',          type: 'coins',    value: 60,  color: '#A3E635', text: '#1a2e05', probability: 18 },
-  { id: 'coins_100',  label: '+100',         type: 'coins',    value: 100, color: '#34D399', text: '#022c22', probability: 13 },
-  { id: 'coins_200',  label: '+200',         type: 'coins',    value: 200, color: '#2DD4BF', text: '#042f2e', probability: 7  },
-  { id: 'boost_xp',  label: 'Boost XP ×2', type: 'boost_xp', value: 0,   color: '#A78BFA', text: '#fff',    probability: 4  },
-  { id: 'skin',       label: 'Skin',         type: 'skin',     value: 0,   color: '#F472B6', text: '#fff',    probability: 5  },
+  { id: 'lost',      label: 'Perdu',       type: 'lost',     value: 0,   color: '#EF4444', text: '#fff',    probability: 20 },
+  { id: 'coins_20',  label: '+20',         type: 'coins',    value: 20,  color: '#FB923C', text: '#fff',    probability: 16 },
+  { id: 'coins_40',  label: '+40',         type: 'coins',    value: 40,  color: '#FBBF24', text: '#fff',    probability: 13 },
+  { id: 'coins_60',  label: '+60',         type: 'coins',    value: 60,  color: '#A3E635', text: '#1a2e05', probability: 18 },
+  { id: 'coins_100', label: '+100',        type: 'coins',    value: 100, color: '#34D399', text: '#022c22', probability: 13 },
+  { id: 'coins_200', label: '+200',        type: 'coins',    value: 200, color: '#2DD4BF', text: '#042f2e', probability: 7  },
+  { id: 'boost_xp',  label: 'Boost XP x2',type: 'boost_xp', value: 0,   color: '#A78BFA', text: '#fff',    probability: 4  },
+  { id: 'skin',      label: 'Skin',        type: 'skin',     value: 0,   color: '#F472B6', text: '#fff',    probability: 5  },
 ] as const
+
+const SEGMENT_LABELS: Record<string, string> = {
+  lost:       'Perdu',
+  coins_20:   '+20 coins',
+  coins_40:   '+40 coins',
+  coins_60:   '+60 coins',
+  coins_100:  '+100 coins',
+  coins_200:  '+200 coins',
+  boost_xp:   'Boost XP x2',
+  skin:       'Skin',
+  skin_secret:'Skin Secret',
+}
 
 const NUM_SEGMENTS = WHEEL_SEGMENTS.length
 const SEG_ANGLE = 360 / NUM_SEGMENTS
 const SPIN_COST = 50
 
-// ─── SVG helpers ──────────────────────────────────────────────────────────────
 function polarToXY(cx: number, cy: number, r: number, angleDeg: number) {
   const rad = ((angleDeg - 90) * Math.PI) / 180
   return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) }
@@ -37,7 +47,18 @@ function labelPos(cx: number, cy: number, r: number, i: number) {
   return polarToXY(cx, cy, r, i * SEG_ANGLE + SEG_ANGLE / 2)
 }
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+// Etoile 5 branches centree sur (cx, cy) — outer radius R, inner radius r
+function starPath(cx: number, cy: number, R: number, r: number): string {
+  const pts: string[] = []
+  for (let i = 0; i < 5; i++) {
+    const outerAngle = (i * 72 - 90) * (Math.PI / 180)
+    const innerAngle = (i * 72 - 90 + 36) * (Math.PI / 180)
+    pts.push(`${cx + R * Math.cos(outerAngle)},${cy + R * Math.sin(outerAngle)}`)
+    pts.push(`${cx + r * Math.cos(innerAngle)},${cy + r * Math.sin(innerAngle)}`)
+  }
+  return `M${pts[0]} L${pts.slice(1).join(' L')} Z`
+}
+
 interface SpinResult {
   segmentIndex: number
   segment: typeof WHEEL_SEGMENTS[number]
@@ -50,7 +71,6 @@ interface SpinWheelProps {
   onBalanceUpdate?: (newBalance: number) => void
 }
 
-// ─── Composant ────────────────────────────────────────────────────────────────
 export function SpinWheel({ coins, onBalanceUpdate }: SpinWheelProps) {
   const [rotation, setRotation]     = useState(0)
   const [spinning, setSpinning]     = useState(false)
@@ -80,22 +100,20 @@ export function SpinWheel({ coins, onBalanceUpdate }: SpinWheelProps) {
       }
       res = await resp.json()
     } catch {
-      setError('Erreur réseau')
+      setError('Erreur reseau')
       setSpinning(false)
       return
     }
 
-    // Calculer l'angle final pour atterrir sur le bon segment
     const targetStop = ((360 - res.segmentIndex * SEG_ANGLE - SEG_ANGLE / 2) + 360) % 360
     const currentMod = currentRotation.current % 360
     const delta      = (targetStop - currentMod + 360) % 360
-    const numSpins   = 6 + Math.floor(Math.random() * 3) // 6-8 tours
+    const numSpins   = 6 + Math.floor(Math.random() * 3)
     const newRot     = currentRotation.current + numSpins * 360 + delta
 
     currentRotation.current = newRot
     setRotation(newRot)
 
-    // Attendre la fin de l'animation (4s)
     setTimeout(() => {
       setResult(res)
       setBalance(res.newBalance)
@@ -113,7 +131,6 @@ export function SpinWheel({ coins, onBalanceUpdate }: SpinWheelProps) {
   return (
     <div className="flex flex-col items-center gap-6">
 
-      {/* Solde actuel */}
       <div className="flex items-center gap-2 rounded-pill border border-sky-border bg-sky-surface px-4 py-2 dark:border-night-border dark:bg-night-surface">
         <SkyCoin size={20} />
         <span className="font-display text-[15px] font-bold tabular-nums text-text-main dark:text-text-dark-main">
@@ -124,9 +141,8 @@ export function SpinWheel({ coins, onBalanceUpdate }: SpinWheelProps) {
         </span>
       </div>
 
-      {/* Roue + flèche */}
       <div className="relative select-none">
-        {/* Flèche indicatrice */}
+        {/* Fleche indicatrice */}
         <div className="absolute left-1/2 top-0 z-20 -translate-x-1/2 -translate-y-1">
           <div
             className="h-0 w-0"
@@ -139,7 +155,7 @@ export function SpinWheel({ coins, onBalanceUpdate }: SpinWheelProps) {
           />
         </div>
 
-        {/* Cercle extérieur (glow) */}
+        {/* Cercle exterieur */}
         <div
           className="absolute inset-0 rounded-full"
           style={{
@@ -168,22 +184,13 @@ export function SpinWheel({ coins, onBalanceUpdate }: SpinWheelProps) {
             zIndex: 10,
           }}
         >
-          <svg
-            width={300}
-            height={300}
-            viewBox="0 0 300 300"
-          >
+          <svg width={300} height={300} viewBox="0 0 300 300">
             {WHEEL_SEGMENTS.map((seg, i) => {
               const lp = labelPos(cx, cy, r * 0.68, i)
               const labelAngle = i * SEG_ANGLE + SEG_ANGLE / 2
               return (
                 <g key={seg.id}>
-                  <path
-                    d={segPath(cx, cy, r, i)}
-                    fill={seg.color}
-                    stroke="#fff"
-                    strokeWidth={2}
-                  />
+                  <path d={segPath(cx, cy, r, i)} fill={seg.color} stroke="#fff" strokeWidth={2} />
                   <g transform={`translate(${lp.x}, ${lp.y}) rotate(${labelAngle})`}>
                     <text
                       textAnchor="middle"
@@ -199,7 +206,7 @@ export function SpinWheel({ coins, onBalanceUpdate }: SpinWheelProps) {
                 </g>
               )
             })}
-            {/* Centre */}
+            {/* Centre blanc */}
             <circle
               cx={cx} cy={cy} r={28}
               fill="white"
@@ -207,17 +214,16 @@ export function SpinWheel({ coins, onBalanceUpdate }: SpinWheelProps) {
               strokeWidth={3}
               style={{ filter: 'drop-shadow(0 2px 6px rgba(37,99,235,0.15))' }}
             />
-            {/* Étoile SVG au centre */}
+            {/* Etoile centree mathematiquement */}
             <path
-              d="M150 130 l4.5 9 10 1.5 -7 7 1.5 10 -9 -4.5 -9 4.5 1.5 -10 -7 -7 10 -1.5z"
+              d={starPath(cx, cy, 17, 7)}
               fill="#2563EB"
-              opacity={0.85}
+              opacity={0.9}
             />
           </svg>
         </div>
       </div>
 
-      {/* Bouton tourner */}
       <button
         onClick={spin}
         disabled={!canSpin}
@@ -231,24 +237,22 @@ export function SpinWheel({ coins, onBalanceUpdate }: SpinWheelProps) {
         {spinning ? (
           <>
             <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-            La roue tourne…
+            La roue tourne...
           </>
         ) : (
           <>
             <SkyCoin size={18} />
-            Tourner — {SPIN_COST} coins
+            Tourner - {SPIN_COST} coins
           </>
         )}
       </button>
 
-      {/* Erreur */}
       {error && (
         <p className="rounded-card border border-error/20 bg-red-50 px-4 py-2 font-body text-[13px] text-error dark:bg-red-950/20">
           {error}
         </p>
       )}
 
-      {/* Résultat */}
       {showResult && result && (
         <ResultBanner result={result} onClose={() => setShowResult(false)} />
       )}
@@ -256,50 +260,80 @@ export function SpinWheel({ coins, onBalanceUpdate }: SpinWheelProps) {
   )
 }
 
-// ─── Bannière résultat ────────────────────────────────────────────────────────
+// Labels lisibles pour les derniers tours
+export function formatSegmentLabel(segmentId: string): string {
+  return SEGMENT_LABELS[segmentId] ?? segmentId
+}
+
 function ResultBanner({ result, onClose }: { result: SpinResult; onClose: () => void }) {
   const seg = result.segment
-  const isLoss    = seg.type === 'lost' || result.netGain < 0
+  const isLoss    = seg.type === 'lost'
   const isWin     = result.netGain > 0
-  const isSpecial = seg.type === 'boost_xp' || seg.type === 'skin'
+  const isSkin    = seg.type === 'skin'
+  const isBoost   = seg.type === 'boost_xp'
+  const isSpecial = isSkin || isBoost
+
+  const emoji = isLoss ? '😅' : isSkin ? '🎨' : isBoost ? '⚡' : result.netGain >= 200 ? '🤑' : result.netGain >= 100 ? '🎉' : '✨'
+
+  const titleText = isLoss
+    ? 'Pas de chance...'
+    : isSkin
+    ? 'Nouveau skin !'
+    : isBoost
+    ? 'Boost XP x2 active !'
+    : `+${result.netGain} coins nets`
+
+  const titleColor = isSpecial
+    ? '#7C3AED'
+    : isWin
+    ? '#059669'
+    : '#DC2626'
+
+  const bgColor = isSpecial ? '#F5F3FF' : isWin ? '#F0FDF4' : isLoss ? '#FFF1F2' : '#F8FAFF'
+  const borderColor = isSpecial ? '#A78BFA44' : isWin ? '#34D39944' : '#EF444444'
 
   return (
     <div
-      className="animate-pop-in flex w-full max-w-sm flex-col items-center gap-2 rounded-card border p-5 text-center shadow-card"
-      style={{
-        borderColor: isSpecial ? '#A78BFA44' : isWin ? '#34D39944' : isLoss ? '#EF444444' : '#E2EEFF',
-        background: isSpecial ? '#F5F3FF' : isWin ? '#F0FDF4' : isLoss ? '#FFF1F2' : '#F8FAFF',
-      }}
+      className="animate-pop-in w-full max-w-sm rounded-card border p-5 shadow-card"
+      style={{ borderColor, background: bgColor }}
     >
-      <div
-        className="flex h-12 w-12 items-center justify-center rounded-full"
-        style={{ background: seg.color + '22', border: `2px solid ${seg.color}` }}
-      >
-        <div className="h-3 w-3 rounded-full" style={{ background: seg.color }} />
+      {/* Icone + titre */}
+      <div className="flex items-center gap-3 mb-3">
+        <div
+          className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full text-2xl"
+          style={{ background: seg.color + '22', border: `2px solid ${seg.color}` }}
+        >
+          {emoji}
+        </div>
+        <div>
+          <p className="font-display text-[18px] font-black leading-tight" style={{ color: titleColor }}>
+            {titleText}
+          </p>
+          {seg.type === 'coins' && (
+            <p className="font-body text-[12px] text-text-tertiary">
+              {(seg as any).value} coins recus, {SPIN_COST} coins depenses
+            </p>
+          )}
+        </div>
       </div>
-      <p
-        className="font-display text-[20px] font-bold"
-        style={{ color: isSpecial ? '#7C3AED' : isWin ? '#059669' : isLoss ? '#DC2626' : '#2563EB' }}
-      >
-        {seg.type === 'lost'
-          ? 'Pas de chance…'
-          : seg.type === 'coins'
-          ? result.netGain > 0
-            ? `+${result.netGain} coins nets`
-            : `${result.netGain} coins nets`
-          : seg.type === 'boost_xp'
-          ? 'Boost XP ×2 activé !'
-          : 'Skin débloqué !'}
+
+      {/* Description */}
+      <p className="mb-4 font-body text-[13px] text-text-secondary">
+        {isLoss && 'La roue ne t\'a pas souri cette fois. Retente ta chance !'}
+        {isBoost && 'Tes Sky Coins gagnes sont doubles pendant 1 heure.'}
+        {isSkin && 'Un skin a ete ajoute a ta collection dans la boutique.'}
+        {!isLoss && !isBoost && !isSkin && seg.type === 'coins' && (
+          `Solde apres ce tour : ${result.newBalance.toLocaleString('fr-FR')} coins`
+        )}
       </p>
-      <p className="font-body text-[13px] text-text-secondary dark:text-text-dark-secondary">
-        {seg.type === 'coins' && `Tu as reçu ${(seg as any).value} coins pour un coût de ${SPIN_COST} coins.`}
-        {seg.type === 'lost' && 'Retente ta chance !'}
-        {seg.type === 'boost_xp' && 'Tes XP sont doublés pendant 1 heure.'}
-        {seg.type === 'skin' && 'Un skin a été ajouté à ta collection dans la boutique.'}
-      </p>
+
       <button
         onClick={onClose}
-        className="mt-1 rounded-pill bg-sky-cloud px-4 py-1.5 font-body text-[13px] font-medium text-brand transition hover:bg-sky-border dark:bg-night-border dark:text-brand-dark dark:hover:bg-night-border-strong"
+        className="w-full rounded-pill py-2 font-display text-[13px] font-bold transition"
+        style={{
+          background: isSpecial ? '#7C3AED' : isWin ? '#059669' : '#64748B',
+          color: '#fff',
+        }}
       >
         OK
       </button>
