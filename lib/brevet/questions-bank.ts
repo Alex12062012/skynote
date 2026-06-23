@@ -1432,8 +1432,8 @@ function shuffle<T>(arr: T[]): T[] {
 }
 
 function toStored(q: FullBankQuestion): StoredQuestion {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { corrige, criteres, ...stored } = q
+  const { corrige: _c, criteres: _cr, ...stored } = q
+  void _c; void _cr
   return stored
 }
 
