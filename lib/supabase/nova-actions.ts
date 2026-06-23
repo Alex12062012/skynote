@@ -8,18 +8,18 @@
  *   QCM (1 regen)        :  4 ✦  — NOVA_COST_QCM_SINGLE
  *   Chat (1 msg)         : 36 ✦  — NOVA_COST_CHAT (corrigé : envoie le cours complet à chaque message, sous-évalué à 12✦)
  *   Plan de révision IA  :  5 ✦  — NOVA_COST_EVAL_PLAN
- *   Épreuve brevet/bac   : 80 ✦  — NOVA_COST_EXAM_SIMULATION
+ *   Épreuve brevet/bac   : 200 ✦  — NOVA_COST_EXAM_SIMULATION (génération annales + correction IA, tout inclus)
  *
  * Allocation mensuelle :
  *   free    : 600 ✦ une seule fois
  *   starter : 2 000 ✦/mois
  *   pro     : 4 000 ✦/mois
  *
- * Quota épreuves brevet/bac (en plus du coût Novas ci-dessus) :
- *   free    : peut PASSER l'épreuve gratuitement, mais le résultat/score reste verrouillé
- *             (il faut au moins Starter pour voir sa note/mention)
- *   starter : 1 session complète débloquée (toutes matières incluses dans cette session unique)
- *   pro     : illimité (uniquement limité par le solde de Novas)
+ * Quota épreuves brevet (en plus du coût Novas ci-dessus) :
+ *   free    : 1 tentative à vie — résultat/mention verrouillé (doit passer en Starter pour voir)
+ *   starter : 1 tentative à vie — résultat visible
+ *   pro     : "illimité" affiché, mais cap doux à 10 sessions à vie
+ *             → au-delà : message "serveurs surchargés" (pas de blocage hard, juste UX soft)
  */
 
 import { createClient } from './server'
@@ -36,10 +36,11 @@ export const NOVA_COST_COURSE      = 118  // 30✦ fiches + 88✦ QCM batch
 // Free   : peut passer l'épreuve (génération des questions), mais la correction/résultat reste verrouillé.
 // Starter: 1 session complète (toutes matières) qui débloque le résultat — une seule fois, pas récurrent.
 // Pro    : illimité, uniquement limité par le solde de Novas.
-export const NOVA_COST_EXAM_SIMULATION = 80
-export const EXAM_SIMULATION_FREE_CAN_ATTEMPT = true   // passer l'épreuve : oui, même en gratuit
-export const EXAM_SIMULATION_FREE_CAN_SEE_RESULT = false // voir le score/mention : non, réservé Starter+
-export const EXAM_SIMULATION_STARTER_SESSIONS = 1      // 1 session multi-matières, à vie (pas mensuel)
+export const NOVA_COST_EXAM_SIMULATION = 200
+export const EXAM_SIMULATION_FREE_MAX          = 1    // 1 tentative à vie (résultat verrouillé)
+export const EXAM_SIMULATION_FREE_CAN_SEE_RESULT = false // résultat visible uniquement Starter+
+export const EXAM_SIMULATION_STARTER_MAX       = 1    // 1 tentative à vie (résultat visible)
+export const EXAM_SIMULATION_PRO_SOFT_CAP      = 10   // cap doux à vie → message "serveurs surchargés"
 
 // ─── ALLOCATIONS PAR PLAN ────────────────────────────────────────────────────
 export const NOVA_ALLOC: Record<'free' | 'starter' | 'pro', number> = {
