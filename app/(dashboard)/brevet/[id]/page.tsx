@@ -72,23 +72,21 @@ export default function BrevetSessionPage() {
         setLoading(false)
       })
 
-    // Realtime — ecoute les mises a jour (generation IA terminee)
-    const channel = supabase
-      .channel(`brevet-session-${id}`)
-      .on(
-        'postgres_changes',
-        { event: 'UPDATE', schema: 'public', table: 'exam_sessions', filter: `id=eq.${id}` },
-        (payload) => {
-          const updated = payload.new as SessionData
-          if (Array.isArray(updated.questions) && updated.questions.length > 0) {
-            setSession(updated)
-            setAnswers(new Array(updated.questions.length).fill(null))
-          }
-        }
-      )
-      .subscribe()
+    // Polling toutes les 2s tant que les questions ne sont pas pretes
+    const poll = setInterval(async () => {
+      const { data } = await supabase
+        .from('exam_sessions')
+        .select('id, questions, answers, status, plan_snapshot, score, mention')
+        .eq('id', id)
+        .single()
+      if (data && Array.isArray(data.questions) && data.questions.length > 0) {
+        clearInterval(poll)
+        setSession(data as SessionData)
+        setAnswers(new Array((data.questions as ExamQuestion[]).length).fill(null))
+      }
+    }, 2000)
 
-    return () => { supabase.removeChannel(channel) }
+    return () => { clearInterval(poll) }
   }, [id])
 
   async function handleSubmit() {
