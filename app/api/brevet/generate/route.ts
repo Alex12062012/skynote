@@ -2,14 +2,14 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { pickRandomQuestions } from '@/lib/brevet/questions-bank'
+import type { StoredQuestion, RedactionSubject } from '@/lib/brevet/questions-bank'
 
 export const maxDuration = 30
 
-export interface ExamQuestion {
-  matiere: string
-  question: string
-  options: [string, string, string, string]
-  correct: 0 | 1 | 2 | 3
+// Ce que l'on stocke en DB (pas de corrigé/critères)
+export interface StoredSession {
+  questions: StoredQuestion[]
+  redaction: RedactionSubject
 }
 
 // Client service role — bypass RLS
@@ -46,15 +46,17 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true })
   }
 
-  // Piocher 20 questions dans la banque (instantane, pas de Claude)
-  const questions = pickRandomQuestions(20)
+  // Piocher 17 questions ouvertes + 1 rédaction
+  const { questions, redaction } = pickRandomQuestions()
 
   const admin = getAdminClient()
   const { error: updateErr } = await admin
     .from('exam_sessions')
     .update({
       questions,
-      answers: new Array(questions.length).fill(null),
+      redaction,
+      // 17 réponses texte + 1 réponse rédaction = 18 slots
+      answers: new Array(questions.length + 1).fill(null),
     })
     .eq('id', sessionId)
 

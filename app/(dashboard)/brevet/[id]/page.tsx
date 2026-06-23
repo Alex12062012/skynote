@@ -1,26 +1,61 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { ChevronLeft, ChevronRight, Send, Lock, Loader2, Star } from 'lucide-react'
+import {
+  ChevronLeft, ChevronRight, Send, Lock, Loader2, Star,
+  FileText, X, BookOpen, CheckCircle,
+} from 'lucide-react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
 
-interface ExamQuestion {
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+interface BankDocument {
+  titre: string
+  contenu: string
+  type: 'texte' | 'tableau' | 'graphique' | 'image' | 'donnees'
+}
+
+interface StoredQuestion {
+  id: string
   matiere: string
+  theme: string
+  annee: number
+  source: string
+  documents?: BankDocument[]
   question: string
-  options: [string, string, string, string]
+}
+
+interface RedactionSubject {
+  id: string
+  annee: number
+  type: 'imagination' | 'reflexion'
+  texteSupport?: string
+  contexte?: string
+  consigne: string
+}
+
+interface CorrectionItem {
+  questionId: string
+  matiere: string
+  points: number
+  feedback: string
 }
 
 interface SessionData {
   id: string
-  questions: ExamQuestion[]
-  answers: (number | null)[]
+  questions: StoredQuestion[]
+  redaction: RedactionSubject | null
+  answers: (string | null)[]
   status: 'pending' | 'completed'
   plan_snapshot: string
   score: number | null
   mention: string | null
+  corrections: CorrectionItem[] | null
 }
+
+// ─── Mentions ─────────────────────────────────────────────────────────────────
 
 const MENTION_LABELS: Record<string, { label: string; emoji: string; color: string; bg: string }> = {
   tres_bien:   { label: 'Très Bien',   emoji: '🏆', color: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/20' },
@@ -30,25 +65,102 @@ const MENTION_LABELS: Record<string, { label: string; emoji: string; color: stri
   insuffisant: { label: 'Insuffisant',  emoji: '📚', color: 'text-red-400',    bg: 'bg-red-500/10 border-red-500/20' },
 }
 
+const HG_MATIERES = new Set(['Histoire-Géographie', 'EMC'])
+
+// ─── Composant DocumentPanel ──────────────────────────────────────────────────
+
+function DocumentPanel({
+  documents,
+  activeTab,
+  setActiveTab,
+}: {
+  documents: BankDocument[]
+  activeTab: number
+  setActiveTab: (i: number) => void
+}) {
+  if (documents.length === 0) return (
+    <div className="flex h-full items-center justify-center">
+      <p className="font-body text-[13px] text-text-tertiary dark:text-text-dark-tertiary">Aucun document pour cette question.</p>
+    </div>
+  )
+
+  const doc = documents[activeTab] ?? documents[0]
+
+  return (
+    <div className="flex h-full flex-col">
+      {/* Onglets */}
+      {documents.length > 1 && (
+        <div className="flex gap-1 overflow-x-auto border-b border-sky-border pb-2 dark:border-night-border">
+          {documents.map((d, i) => (
+            <button
+              key={i}
+              onClick={() => setActiveTab(i)}
+              className={`flex-shrink-0 rounded-t px-3 py-1.5 font-body text-[12px] font-semibold transition ${
+                activeTab === i
+                  ? 'bg-brand/10 text-brand dark:bg-brand-dark/10 dark:text-brand-dark'
+                  : 'text-text-tertiary hover:text-text-secondary dark:text-text-dark-tertiary'
+              }`}
+            >
+              Doc {i + 1}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Contenu du document */}
+      <div className="flex-1 overflow-y-auto pt-3">
+        <p className="mb-2 font-body text-[11px] font-semibold uppercase tracking-wide text-text-tertiary dark:text-text-dark-tertiary">
+          {doc.titre}
+        </p>
+        <pre className="whitespace-pre-wrap font-body text-[13px] leading-relaxed text-text-main dark:text-text-dark-main">
+          {doc.contenu}
+        </pre>
+      </div>
+    </div>
+  )
+}
+
+// ─── Page principale ──────────────────────────────────────────────────────────
+
 export default function BrevetSessionPage() {
   const params = useParams()
   const id = params.id as string
 
   const [session, setSession] = useState<SessionData | null>(null)
-  const [answers, setAnswers] = useState<(number | null)[]>([])
+  const [answers, setAnswers] = useState<(string | null)[]>([])
   const [current, setCurrent] = useState(0)
   const [submitting, setSubmitting] = useState(false)
-  const [result, setResult] = useState<{ score: number | null; mention: string | null; correct: number | null; total: number; locked: boolean } | null>(null)
+  const [result, setResult] = useState<{
+    score: number | null
+    mention: string | null
+    totalSur20: number | null
+    corrections: CorrectionItem[] | null
+    total: number
+    locked: boolean
+  } | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+
+  // Panel documents
+  const [docPanelOpen, setDocPanelOpen] = useState(false)
+  const [docActiveTab, setDocActiveTab] = useState(0)
+
+  // HG : panel de tous les docs HG
+  const [hgPanelOpen, setHgPanelOpen] = useState(false)
+  const [hgDocIndex, setHgDocIndex] = useState(0) // index dans hgAllDocs
+  const [hgDocTab, setHgDocTab] = useState(0)
+
+  // Auto-save drafts
+  const autoSaveRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // ── Chargement ──────────────────────────────────────────────────────────────
 
   useEffect(() => {
     const supabase = createClient()
 
-    // Chargement initial
     supabase
       .from('exam_sessions')
-      .select('id, questions, answers, status, plan_snapshot, score, mention')
+      .select('id, questions, redaction, answers, status, plan_snapshot, score, mention, corrections')
       .eq('id', id)
       .single()
       .then(({ data }) => {
@@ -56,65 +168,96 @@ export default function BrevetSessionPage() {
         const s = data as SessionData
         setSession(s)
         if (s.questions?.length > 0) {
-          setAnswers(s.answers ?? new Array(s.questions.length).fill(null))
+          const totalSlots = s.questions.length + 1 // +1 pour rédaction
+          const existing = (s.answers ?? []) as (string | null)[]
+          setAnswers(existing.length >= totalSlots ? existing : new Array(totalSlots).fill(null))
         }
         if (s.status === 'completed') {
           const isPaid = ['starter', 'pro', 'plus', 'famille'].includes(s.plan_snapshot)
           setResult({
             score: isPaid ? s.score : null,
             mention: isPaid ? s.mention : null,
-            correct: null,
-            total: s.questions?.length ?? 0,
+            totalSur20: null,
+            corrections: isPaid ? s.corrections : null,
+            total: (s.questions?.length ?? 0) + 1,
             locked: !isPaid,
           })
         }
         setLoading(false)
       })
 
-    // Polling toutes les 2s tant que les questions ne sont pas pretes
+    // Polling si questions pas encore prêtes
     let attempt = 0
     const poll = setInterval(async () => {
       attempt++
       const { data, error: pollErr } = await supabase
         .from('exam_sessions')
-        .select('id, questions, answers, status, plan_snapshot, score, mention')
+        .select('id, questions, redaction, answers, status, plan_snapshot, score, mention, corrections')
         .eq('id', id)
         .single()
 
       if (pollErr) {
         if (pollErr.code === 'PGRST116') {
-          // Session introuvable = supprimee suite a une erreur de generation
           clearInterval(poll)
-          setError('La generation a echoue. Tes coins ont ete rembourses. Reessaie.')
+          setError('La génération a échoué. Réessaie.')
           setLoading(false)
         }
         return
       }
 
       const qCount = Array.isArray(data?.questions) ? (data.questions as any[]).length : 0
-      const answers = data?.answers as any[]
-      const genError = answers?.[0]?._error as string | undefined
-
-      if (genError) {
-        clearInterval(poll)
-        setError(`Erreur de generation : ${genError}`)
-        setLoading(false)
-        return
-      }
-
       if (data && qCount > 0) {
         clearInterval(poll)
-        setSession(data as SessionData)
-        setAnswers(new Array((data.questions as ExamQuestion[]).length).fill(null))
+        const s = data as SessionData
+        setSession(s)
+        setAnswers(new Array(s.questions.length + 1).fill(null))
+        setLoading(false)
       }
+
+      if (attempt > 30) clearInterval(poll)
     }, 2000)
 
     return () => { clearInterval(poll) }
   }, [id])
 
+  // Réinitialiser le tab document quand on change de question
+  useEffect(() => {
+    setDocActiveTab(0)
+    setDocPanelOpen(false)
+  }, [current])
+
+  // ── Données dérivées ────────────────────────────────────────────────────────
+
+  const questions = session?.questions ?? []
+  const redaction = session?.redaction ?? null
+
+  // Tous les documents HG regroupés par question
+  const hgQuestions = questions.filter(q => HG_MATIERES.has(q.matiere) && q.documents?.length)
+  const hgAllDocs: { questionLabel: string; docs: BankDocument[] }[] = hgQuestions.map((q, _i) => ({
+    questionLabel: `${q.matiere} — ${q.theme}`,
+    docs: q.documents ?? [],
+  }))
+
+  const isRedactionIndex = current === questions.length
+  const q = !isRedactionIndex ? questions[current] : null
+  const currentDocs = q?.documents ?? []
+  const isHG = q ? HG_MATIERES.has(q.matiere) : false
+  const totalAnswered = answers.filter(a => a !== null && a.trim() !== '').length
+  const totalSlots = questions.length + 1
+
+  // ── Handlers ────────────────────────────────────────────────────────────────
+
+  function updateAnswer(value: string) {
+    setAnswers(prev => {
+      const a = [...prev]
+      a[current] = value
+      return a
+    })
+  }
+
   async function handleSubmit() {
     if (!session) return
-    const unanswered = answers.filter(a => a === null).length
+    const unanswered = answers.filter(a => !a || a.trim() === '').length
     if (unanswered > 0) {
       const ok = window.confirm(`Tu n'as pas répondu à ${unanswered} question${unanswered > 1 ? 's' : ''}. Soumettre quand même ?`)
       if (!ok) return
@@ -138,10 +281,15 @@ export default function BrevetSessionPage() {
     }
   }
 
-  if (loading) {
+  // ── États de chargement / erreur ────────────────────────────────────────────
+
+  if (loading || (!loading && !error && questions.length === 0 && !result)) {
     return (
-      <div className="flex min-h-[60vh] items-center justify-center">
+      <div className="flex min-h-[60vh] flex-col items-center justify-center gap-3">
         <Loader2 className="h-8 w-8 animate-spin text-brand dark:text-brand-dark" />
+        <p className="font-body text-[13px] text-text-tertiary dark:text-text-dark-tertiary">
+          Préparation de l'épreuve…
+        </p>
       </div>
     )
   }
@@ -155,22 +303,7 @@ export default function BrevetSessionPage() {
     )
   }
 
-  if (!session) return null
-
-  // Questions pas encore generees (rare — generation quasi-instantanee maintenant)
-  if (!session.questions || session.questions.length === 0) {
-    return (
-      <div className="flex min-h-[60vh] items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-brand dark:text-brand-dark" />
-      </div>
-    )
-  }
-
-  const questions = session.questions
-  const q = questions[current]
-  const totalAnswered = answers.filter(a => a !== null).length
-
-  // ─── Resultats ─────────────────────────────────────────────────────────────
+  // ── Résultats ────────────────────────────────────────────────────────────────
 
   if (result) {
     const m = result.mention ? MENTION_LABELS[result.mention] : null
@@ -183,7 +316,7 @@ export default function BrevetSessionPage() {
           </div>
           <h1 className="font-display text-h2 text-text-main dark:text-text-dark-main">Épreuve soumise !</h1>
           <p className="mt-2 font-body text-[14px] text-text-secondary dark:text-text-dark-secondary">
-            Tu as répondu à {result.total} questions. Passe en Starter ou Pro pour voir ta mention estimée.
+            Tu as répondu à {result.total} questions. Passe en Starter ou Pro pour voir ta mention et les corrections.
           </p>
           <Link href="/pricing"
             className="mt-6 inline-flex items-center gap-2 rounded-input bg-brand px-6 py-2.5 font-body text-[14px] font-semibold text-white hover:bg-brand-hover dark:bg-brand-dark dark:text-night-bg">
@@ -197,24 +330,44 @@ export default function BrevetSessionPage() {
       )
     }
 
+    const totalSur20 = result.totalSur20 ?? (result.score !== null ? Math.round(result.score * 20 / 100 * 10) / 10 : null)
+
     return (
-      <div className="mx-auto max-w-lg animate-fade-in px-4 py-10">
+      <div className="mx-auto max-w-xl animate-fade-in px-4 py-10">
         <div className={`rounded-card border p-6 text-center ${m?.bg ?? 'border-sky-border bg-sky-surface dark:border-night-border dark:bg-night-surface'}`}>
           <p className="mb-2 text-5xl">{m?.emoji ?? '📋'}</p>
-          <h1 className="font-display text-h1 font-bold text-text-main dark:text-text-dark-main">{result.score}%</h1>
+          <h1 className="font-display text-h1 font-bold text-text-main dark:text-text-dark-main">
+            {totalSur20 !== null ? `${totalSur20}/20` : `${result.score}%`}
+          </h1>
           <p className={`mt-1 font-display text-h3 font-bold ${m?.color ?? 'text-text-secondary'}`}>
             Mention {m?.label ?? result.mention}
           </p>
-          <p className="mt-3 font-body text-[14px] text-text-secondary dark:text-text-dark-secondary">
-            {result.correct !== null ? `${result.correct} bonnes réponses sur ${result.total}` : `${result.total} questions`}
-          </p>
         </div>
 
-        <div className="mt-4 rounded-card border border-sky-border bg-sky-surface p-4 dark:border-night-border dark:bg-night-surface">
-          <p className="font-body text-[13px] text-text-secondary dark:text-text-dark-secondary">
-            💡 Cette mention est une estimation basée sur tes fiches actuelles. Pour t'améliorer, continue à créer des cours et à faire des QCM ciblés.
-          </p>
-        </div>
+        {result.corrections && result.corrections.length > 0 && (
+          <div className="mt-6">
+            <h2 className="mb-3 font-display text-[16px] font-semibold text-text-main dark:text-text-dark-main">
+              Corrections détaillées
+            </h2>
+            <div className="flex flex-col gap-2">
+              {result.corrections.map((c, i) => (
+                <div key={i} className="rounded-card border border-sky-border bg-sky-surface p-4 dark:border-night-border dark:bg-night-surface">
+                  <div className="mb-1 flex items-center justify-between">
+                    <span className="font-body text-[12px] font-semibold text-text-tertiary dark:text-text-dark-tertiary">
+                      {c.matiere}
+                    </span>
+                    <span className={`font-body text-[13px] font-bold ${c.points > 0 ? 'text-emerald-500' : 'text-red-400'}`}>
+                      {c.points}/{i === result.corrections!.length - 1 ? '3' : '1'} pt
+                    </span>
+                  </div>
+                  {c.feedback && (
+                    <p className="font-body text-[12px] text-text-secondary dark:text-text-dark-secondary">{c.feedback}</p>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className="mt-6 flex flex-col gap-3">
           <Link href="/courses/new"
@@ -230,123 +383,265 @@ export default function BrevetSessionPage() {
     )
   }
 
-  // ─── Session en cours ───────────────────────────────────────────────────────
+  if (!session) return null
+
+  // ── Session en cours ─────────────────────────────────────────────────────────
 
   const matieresUniques = [...new Set(questions.map(q => q.matiere))]
 
   return (
-    <div className="mx-auto max-w-xl animate-fade-in px-4 py-6">
-      <div className="mb-6 flex items-center justify-between">
-        <Link href="/brevet" className="flex items-center gap-1 font-body text-[13px] text-text-secondary hover:text-text-main dark:text-text-dark-secondary dark:hover:text-text-dark-main">
-          <ChevronLeft className="h-4 w-4" />
-          Quitter
-        </Link>
-        <div className="flex items-center gap-2">
-          <span className="font-body text-[13px] text-text-tertiary dark:text-text-dark-tertiary">
-            {totalAnswered}/{questions.length} répondues
-          </span>
-        </div>
-      </div>
+    <div className="flex h-[calc(100vh-64px)] flex-col">
 
-      <div className="mb-4 h-1.5 w-full overflow-hidden rounded-full bg-sky-cloud dark:bg-night-border">
-        <div className="h-full rounded-full bg-brand transition-all dark:bg-brand-dark"
-          style={{ width: `${(totalAnswered / questions.length) * 100}%` }} />
-      </div>
+      {/* Barre de navigation */}
+      <div className="flex-shrink-0 border-b border-sky-border bg-sky-surface px-4 py-3 dark:border-night-border dark:bg-night-surface">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4">
+          <Link href="/brevet" className="flex items-center gap-1 font-body text-[13px] text-text-secondary hover:text-text-main dark:text-text-dark-secondary dark:hover:text-text-dark-main">
+            <ChevronLeft className="h-4 w-4" />
+            Quitter
+          </Link>
 
-      <div className="mb-5 flex flex-wrap gap-2">
-        {matieresUniques.map(m => {
-          const count = questions.filter(q => q.matiere === m).length
-          const answered = questions
-            .map((q, i) => ({ q, i }))
-            .filter(({ q }) => q.matiere === m)
-            .filter(({ i }) => answers[i] !== null).length
-          return (
-            <button key={m}
-              onClick={() => {
-                const idx = questions.findIndex((q, qi) => q.matiere === m && answers[qi] === null)
-                const first = questions.findIndex(q => q.matiere === m)
-                setCurrent(idx >= 0 ? idx : first)
-              }}
-              className={`rounded-pill px-3 py-1 font-body text-[12px] font-semibold transition ${
-                answered === count
+          <div className="flex flex-wrap justify-center gap-1">
+            {matieresUniques.map(m => {
+              const count = questions.filter(q => q.matiere === m).length
+              const answered = questions
+                .map((q, i) => ({ q, i }))
+                .filter(({ q }) => q.matiere === m)
+                .filter(({ i }) => answers[i] != null && answers[i]!.trim() !== '').length
+              return (
+                <button key={m}
+                  onClick={() => {
+                    const idx = questions.findIndex((q, qi) => q.matiere === m && (!answers[qi] || answers[qi]!.trim() === ''))
+                    const first = questions.findIndex(q => q.matiere === m)
+                    setCurrent(idx >= 0 ? idx : first)
+                  }}
+                  className={`rounded-pill px-2.5 py-1 font-body text-[11px] font-semibold transition ${
+                    answered === count
+                      ? 'bg-emerald-500/10 text-emerald-500 dark:text-emerald-400'
+                      : 'bg-sky-cloud text-text-secondary hover:bg-brand-soft dark:bg-night-border dark:text-text-dark-secondary'
+                  }`}>
+                  {m.split(' ')[0]} ({answered}/{count})
+                </button>
+              )
+            })}
+            <button
+              onClick={() => setCurrent(questions.length)}
+              className={`rounded-pill px-2.5 py-1 font-body text-[11px] font-semibold transition ${
+                answers[questions.length] != null && answers[questions.length]!.trim() !== ''
                   ? 'bg-emerald-500/10 text-emerald-500 dark:text-emerald-400'
+                  : current === questions.length
+                  ? 'bg-brand/10 text-brand dark:bg-brand-dark/10 dark:text-brand-dark'
                   : 'bg-sky-cloud text-text-secondary hover:bg-brand-soft dark:bg-night-border dark:text-text-dark-secondary'
               }`}>
-              {m} ({answered}/{count})
+              Rédaction (3 pts)
             </button>
-          )
-        })}
-      </div>
+          </div>
 
-      <div className="rounded-card border border-sky-border bg-sky-surface p-5 shadow-card dark:border-night-border dark:bg-night-surface dark:shadow-card-dark">
-        <p className="mb-1 font-body text-[11px] font-semibold uppercase tracking-widest text-text-tertiary dark:text-text-dark-tertiary">
-          {current + 1}/{questions.length} · {q.matiere}
-        </p>
-        <p className="font-body text-[15px] font-semibold leading-snug text-text-main dark:text-text-dark-main">
-          {q.question}
-        </p>
+          <div className="flex items-center gap-3">
+            {hgAllDocs.length > 0 && (
+              <button
+                onClick={() => { setHgPanelOpen(true); setDocPanelOpen(false) }}
+                className="flex items-center gap-1.5 rounded-input border border-sky-border bg-white px-3 py-1.5 font-body text-[12px] font-semibold text-text-secondary transition hover:border-brand hover:text-brand dark:border-night-border dark:bg-night-surface dark:text-text-dark-secondary dark:hover:border-brand-dark dark:hover:text-brand-dark"
+              >
+                <BookOpen className="h-3.5 w-3.5" />
+                Documents HG
+              </button>
+            )}
+            <span className="font-body text-[13px] text-text-tertiary dark:text-text-dark-tertiary">
+              {totalAnswered}/{totalSlots}
+            </span>
+          </div>
+        </div>
 
-        <div className="mt-4 flex flex-col gap-2">
-          {q.options.map((opt, i) => (
-            <button key={i} onClick={() => setAnswers(prev => { const a = [...prev]; a[current] = i; return a })}
-              className={`flex items-center gap-3 rounded-input border px-4 py-3 text-left font-body text-[14px] transition ${
-                answers[current] === i
-                  ? 'border-brand/50 bg-brand/10 font-semibold text-text-main dark:border-brand-dark/50 dark:bg-brand-dark/10 dark:text-text-dark-main'
-                  : 'border-sky-border bg-sky-surface-2 text-text-secondary hover:border-brand/30 dark:border-night-border dark:bg-night-surface-2 dark:text-text-dark-secondary'
-              }`}>
-              <span className={`flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full border text-[12px] font-bold ${
-                answers[current] === i
-                  ? 'border-brand bg-brand text-white dark:border-brand-dark dark:bg-brand-dark dark:text-night-bg'
-                  : 'border-sky-border dark:border-night-border'
-              }`}>
-                {['A','B','C','D'][i]}
-              </span>
-              {opt.replace(/^[ABCD]\.\s*/,'').trim()}
-            </button>
-          ))}
+        <div className="mx-auto mt-2 max-w-6xl">
+          <div className="h-1 w-full overflow-hidden rounded-full bg-sky-cloud dark:bg-night-border">
+            <div className="h-full rounded-full bg-brand transition-all dark:bg-brand-dark"
+              style={{ width: `${(totalAnswered / totalSlots) * 100}%` }} />
+          </div>
         </div>
       </div>
 
-      <div className="mt-4 flex items-center justify-between gap-3">
-        <button
-          onClick={() => setCurrent(c => Math.max(0, c - 1))}
-          disabled={current === 0}
-          className="flex items-center gap-1 rounded-input border border-sky-border px-4 py-2 font-body text-[13px] text-text-secondary hover:bg-sky-cloud disabled:opacity-30 dark:border-night-border dark:text-text-dark-secondary dark:hover:bg-night-border">
-          <ChevronLeft className="h-4 w-4" /> Précédente
-        </button>
+      {/* Corps split-screen */}
+      <div className="flex flex-1 overflow-hidden">
 
-        {current < questions.length - 1 ? (
-          <button
-            onClick={() => setCurrent(c => Math.min(questions.length - 1, c + 1))}
-            className="flex items-center gap-1 rounded-input bg-brand px-4 py-2 font-body text-[13px] font-semibold text-white hover:bg-brand-hover dark:bg-brand-dark dark:text-night-bg">
-            Suivante <ChevronRight className="h-4 w-4" />
-          </button>
-        ) : (
-          <button
-            onClick={handleSubmit}
-            disabled={submitting}
-            className="flex items-center gap-2 rounded-input bg-emerald-500 px-5 py-2 font-body text-[13px] font-semibold text-white hover:bg-emerald-600 disabled:opacity-50">
-            {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-            Soumettre l'épreuve
-          </button>
+        {/* Gauche — exercice */}
+        <div className="flex flex-1 flex-col overflow-y-auto px-6 py-6">
+          <div className="mx-auto w-full max-w-2xl">
+
+            {isRedactionIndex ? (
+              <div>
+                <p className="mb-1 font-body text-[11px] font-semibold uppercase tracking-widest text-text-tertiary dark:text-text-dark-tertiary">
+                  RÉDACTION · 3 pts · {redaction?.annee ?? ''}
+                </p>
+                <h2 className="mb-1 font-display text-[18px] font-bold text-text-main dark:text-text-dark-main">
+                  {redaction?.type === 'imagination' ? "Sujet d'imagination" : 'Sujet de réflexion'}
+                </h2>
+                {redaction?.texteSupport && (
+                  <p className="mb-3 font-body text-[13px] italic text-text-secondary dark:text-text-dark-secondary">
+                    En lien avec : {redaction.texteSupport}
+                  </p>
+                )}
+                {redaction?.contexte && (
+                  <div className="mb-4 rounded-card border border-sky-border bg-sky-cloud/50 p-4 dark:border-night-border dark:bg-night-border/30">
+                    <p className="font-body text-[13px] text-text-secondary dark:text-text-dark-secondary">
+                      <span className="font-semibold">Contexte :</span> {redaction.contexte}
+                    </p>
+                  </div>
+                )}
+                <div className="mb-5 rounded-card border border-sky-border bg-sky-surface p-4 dark:border-night-border dark:bg-night-surface">
+                  <p className="font-body text-[14px] leading-relaxed text-text-main dark:text-text-dark-main">
+                    {redaction?.consigne}
+                  </p>
+                </div>
+                <textarea
+                  value={answers[questions.length] ?? ''}
+                  onChange={e => updateAnswer(e.target.value)}
+                  placeholder="Rédigez votre texte ici…"
+                  rows={20}
+                  className="w-full resize-y rounded-card border border-sky-border bg-white p-4 font-body text-[14px] leading-relaxed text-text-main placeholder:text-text-tertiary focus:border-brand focus:outline-none dark:border-night-border dark:bg-night-surface dark:text-text-dark-main dark:placeholder:text-text-dark-tertiary dark:focus:border-brand-dark"
+                />
+              </div>
+            ) : q && (
+              <div>
+                <p className="mb-1 font-body text-[11px] font-semibold uppercase tracking-widest text-text-tertiary dark:text-text-dark-tertiary">
+                  {current + 1}/{questions.length} · {q.matiere} · {q.theme} · {q.annee}
+                </p>
+                <p className="mb-4 font-body text-[15px] font-semibold leading-snug text-text-main dark:text-text-dark-main">
+                  {q.question}
+                </p>
+
+                {currentDocs.length > 0 && !isHG && (
+                  <button
+                    onClick={() => setDocPanelOpen(v => !v)}
+                    className="mb-4 flex items-center gap-1.5 rounded-input border border-sky-border px-3 py-1.5 font-body text-[12px] font-semibold text-text-secondary transition hover:border-brand hover:text-brand dark:border-night-border dark:text-text-dark-secondary dark:hover:border-brand-dark dark:hover:text-brand-dark"
+                  >
+                    <FileText className="h-3.5 w-3.5" />
+                    {docPanelOpen ? 'Masquer le document' : `Voir le document (${currentDocs.length})`}
+                  </button>
+                )}
+
+                <p className="mb-3 font-body text-[11px] text-text-tertiary dark:text-text-dark-tertiary">
+                  Source : {q.source}
+                </p>
+
+                <textarea
+                  value={answers[current] ?? ''}
+                  onChange={e => updateAnswer(e.target.value)}
+                  placeholder="Rédigez votre réponse ici…"
+                  rows={8}
+                  className="w-full resize-y rounded-card border border-sky-border bg-white p-4 font-body text-[14px] leading-relaxed text-text-main placeholder:text-text-tertiary focus:border-brand focus:outline-none dark:border-night-border dark:bg-night-surface dark:text-text-dark-main dark:placeholder:text-text-dark-tertiary dark:focus:border-brand-dark"
+                />
+              </div>
+            )}
+
+            <div className="mt-5 flex items-center justify-between gap-3">
+              <button
+                onClick={() => setCurrent(c => Math.max(0, c - 1))}
+                disabled={current === 0}
+                className="flex items-center gap-1 rounded-input border border-sky-border px-4 py-2 font-body text-[13px] text-text-secondary hover:bg-sky-cloud disabled:opacity-30 dark:border-night-border dark:text-text-dark-secondary dark:hover:bg-night-border">
+                <ChevronLeft className="h-4 w-4" /> Précédente
+              </button>
+
+              {current < questions.length ? (
+                <button
+                  onClick={() => setCurrent(c => c + 1)}
+                  className="flex items-center gap-1 rounded-input bg-brand px-4 py-2 font-body text-[13px] font-semibold text-white hover:bg-brand-hover dark:bg-brand-dark dark:text-night-bg">
+                  Suivante <ChevronRight className="h-4 w-4" />
+                </button>
+              ) : (
+                <button
+                  onClick={handleSubmit}
+                  disabled={submitting}
+                  className="flex items-center gap-2 rounded-input bg-emerald-500 px-5 py-2 font-body text-[13px] font-semibold text-white hover:bg-emerald-600 disabled:opacity-50">
+                  {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                  {submitting ? 'Correction en cours… (~30s)' : "Soumettre l'épreuve"}
+                </button>
+              )}
+            </div>
+
+            <div className="mt-5 flex flex-wrap gap-1">
+              {[...questions, { id: 'redaction' }].map((_, i) => (
+                <button key={i} onClick={() => setCurrent(i)}
+                  className={`h-2 w-2 rounded-full transition ${
+                    i === current ? 'scale-150 bg-brand dark:bg-brand-dark' :
+                    answers[i] != null && answers[i]!.trim() !== '' ? 'bg-brand/40 dark:bg-brand-dark/40' :
+                    'bg-sky-cloud dark:bg-night-border'
+                  }`}
+                />
+              ))}
+            </div>
+
+            {error && (
+              <p className="mt-4 font-body text-[13px] text-error">{error}</p>
+            )}
+          </div>
+        </div>
+
+        {/* Droite — document question courante (non HG) */}
+        {docPanelOpen && currentDocs.length > 0 && !isHG && (
+          <div className="w-[42%] flex-shrink-0 overflow-y-auto border-l border-sky-border bg-sky-cloud/30 p-5 dark:border-night-border dark:bg-night-border/20">
+            <div className="mb-3 flex items-center justify-between">
+              <p className="font-body text-[12px] font-bold uppercase tracking-widest text-text-tertiary dark:text-text-dark-tertiary">
+                Document
+              </p>
+              <button onClick={() => setDocPanelOpen(false)} className="rounded p-1 text-text-tertiary hover:text-text-secondary">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <DocumentPanel
+              documents={currentDocs}
+              activeTab={docActiveTab}
+              setActiveTab={setDocActiveTab}
+            />
+          </div>
+        )}
+
+        {/* Droite — panel HG global */}
+        {hgPanelOpen && hgAllDocs.length > 0 && (
+          <div className="w-[42%] flex-shrink-0 overflow-hidden border-l border-sky-border bg-sky-cloud/30 dark:border-night-border dark:bg-night-border/20 flex flex-col">
+            <div className="flex-shrink-0 flex items-center justify-between border-b border-sky-border px-5 py-3 dark:border-night-border">
+              <p className="font-body text-[13px] font-bold text-text-main dark:text-text-dark-main">
+                Documents Histoire-Géographie
+              </p>
+              <button onClick={() => setHgPanelOpen(false)} className="rounded p-1 text-text-tertiary hover:text-text-secondary">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="flex-shrink-0 overflow-x-auto border-b border-sky-border dark:border-night-border">
+              <div className="flex gap-1 p-2">
+                {hgAllDocs.map((_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => { setHgDocIndex(i); setHgDocTab(0) }}
+                    className={`flex-shrink-0 rounded px-2.5 py-1.5 font-body text-[11px] font-semibold transition ${
+                      hgDocIndex === i
+                        ? 'bg-brand/10 text-brand dark:bg-brand-dark/10 dark:text-brand-dark'
+                        : 'text-text-tertiary hover:text-text-secondary dark:text-text-dark-tertiary'
+                    }`}
+                  >
+                    Q{i + 1}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-5">
+              {hgAllDocs[hgDocIndex] && (
+                <>
+                  <p className="mb-3 font-body text-[11px] font-semibold text-text-tertiary dark:text-text-dark-tertiary">
+                    {hgAllDocs[hgDocIndex].questionLabel}
+                  </p>
+                  <DocumentPanel
+                    documents={hgAllDocs[hgDocIndex].docs}
+                    activeTab={hgDocTab}
+                    setActiveTab={setHgDocTab}
+                  />
+                </>
+              )}
+            </div>
+          </div>
         )}
       </div>
-
-      <div className="mt-5 flex flex-wrap gap-1">
-        {questions.map((_, i) => (
-          <button key={i} onClick={() => setCurrent(i)}
-            className={`h-2 w-2 rounded-full transition ${
-              i === current ? 'scale-150 bg-brand dark:bg-brand-dark' :
-              answers[i] !== null ? 'bg-brand/40 dark:bg-brand-dark/40' :
-              'bg-sky-cloud dark:bg-night-border'
-            }`}
-          />
-        ))}
-      </div>
-
-      {error && (
-        <p className="mt-4 font-body text-[13px] text-error">{error}</p>
-      )}
     </div>
   )
 }
