@@ -150,7 +150,7 @@ export function CoinReward({
     const ty = rect ? rect.top + rect.height / 2 : 28
 
     const cx = window.innerWidth / 2
-    const cy = Math.min(window.innerHeight * 0.42, window.innerHeight - 200)
+    const cy = Math.min(window.innerHeight * 0.28, window.innerHeight - 280)
 
     // ── Particules stables (calculées une seule fois) ────────────────
     // Pas de Math.random() dans le render — tout dans useEffect
