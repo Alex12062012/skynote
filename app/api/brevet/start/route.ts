@@ -76,7 +76,8 @@ export async function POST(_req: NextRequest) {
     .single()
 
   if (insertError || !session) {
-    return NextResponse.json({ error: 'Erreur lors de la création de la session.' }, { status: 500 })
+    console.error('[brevet/start] insert error:', JSON.stringify(insertError))
+    return NextResponse.json({ error: `Erreur lors de la création de la session : ${insertError?.message ?? insertError?.code ?? 'inconnue'}`, detail: insertError }, { status: 500 })
   }
 
   return NextResponse.json({ sessionId: session.id })
