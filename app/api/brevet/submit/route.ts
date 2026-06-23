@@ -53,13 +53,16 @@ Reponds UNIQUEMENT en JSON valide, sans markdown :
       temperature: 0,
       messages: [{ role: 'user', content: prompt }],
     })
-    const text = (response.content[0] as { text: string }).text
+    const raw = (response.content[0] as { text: string }).text
+    // Haiku peut renvoyer du JSON entouré de ```json ... ```
+    const text = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim()
     const json = JSON.parse(text)
     return {
       points: Math.min(1, Math.max(0, Number(json.points) || 0)),
       feedback: json.feedback || '',
     }
-  } catch {
+  } catch (err) {
+    console.error('[correctOpenQuestion]', err)
     return { points: 0, feedback: 'Correction indisponible.' }
   }
 }
@@ -90,13 +93,15 @@ Reponds UNIQUEMENT en JSON valide, sans markdown :
       temperature: 0,
       messages: [{ role: 'user', content: prompt }],
     })
-    const text = (response.content[0] as { text: string }).text
+    const raw = (response.content[0] as { text: string }).text
+    const text = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim()
     const json = JSON.parse(text)
     return {
       points: Math.min(3, Math.max(0, Number(json.points) || 0)),
       feedback: json.feedback || '',
     }
-  } catch {
+  } catch (err) {
+    console.error('[correctRedaction]', err)
     return { points: 0, feedback: 'Correction indisponible.' }
   }
 }

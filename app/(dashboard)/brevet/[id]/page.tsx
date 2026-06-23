@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import {
   ChevronLeft, ChevronRight, Send, Lock, Loader2, Star,
-  FileText, X, BookOpen, CheckCircle,
+  FileText, X, CheckCircle,
 } from 'lucide-react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
@@ -141,13 +141,10 @@ export default function BrevetSessionPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
-  // Panel documents
-  const [docPanelOpen, setDocPanelOpen] = useState(false)
+  // Panel documents (unifié : même panel pour HG et non-HG)
+  const [panelOpen, setPanelOpen] = useState(false)
   const [docActiveTab, setDocActiveTab] = useState(0)
-
-  // HG : panel de tous les docs HG
-  const [hgPanelOpen, setHgPanelOpen] = useState(false)
-  const [hgDocIndex, setHgDocIndex] = useState(0) // index dans hgAllDocs
+  const [hgDocIndex, setHgDocIndex] = useState(0)
   const [hgDocTab, setHgDocTab] = useState(0)
 
   // Auto-save drafts
@@ -220,11 +217,21 @@ export default function BrevetSessionPage() {
     return () => { clearInterval(poll) }
   }, [id])
 
-  // Réinitialiser le tab document quand on change de question
+  // Quand on change de question : reset les tabs, mais garder le panel ouvert
   useEffect(() => {
     setDocActiveTab(0)
-    setDocPanelOpen(false)
-  }, [current])
+    setHgDocTab(0)
+    // Si on navigue vers une question HG, pointer le panel HG sur cette question
+    if (session) {
+      const curQ = session.questions[current]
+      if (curQ && HG_MATIERES.has(curQ.matiere)) {
+        const hgIdx = session.questions
+          .filter(q => HG_MATIERES.has(q.matiere) && q.documents?.length)
+          .findIndex(q => q.id === curQ.id)
+        if (hgIdx >= 0) setHgDocIndex(hgIdx)
+      }
+    }
+  }, [current, session])
 
   // ── Données dérivées ────────────────────────────────────────────────────────
 
@@ -436,20 +443,9 @@ export default function BrevetSessionPage() {
             </button>
           </div>
 
-          <div className="flex items-center gap-3">
-            {hgAllDocs.length > 0 && (
-              <button
-                onClick={() => { setHgPanelOpen(true); setDocPanelOpen(false) }}
-                className="flex items-center gap-1.5 rounded-input border border-sky-border bg-white px-3 py-1.5 font-body text-[12px] font-semibold text-text-secondary transition hover:border-brand hover:text-brand dark:border-night-border dark:bg-night-surface dark:text-text-dark-secondary dark:hover:border-brand-dark dark:hover:text-brand-dark"
-              >
-                <BookOpen className="h-3.5 w-3.5" />
-                Documents HG
-              </button>
-            )}
-            <span className="font-body text-[13px] text-text-tertiary dark:text-text-dark-tertiary">
-              {totalAnswered}/{totalSlots}
-            </span>
-          </div>
+          <span className="font-body text-[13px] text-text-tertiary dark:text-text-dark-tertiary">
+            {totalAnswered}/{totalSlots}
+          </span>
         </div>
 
         <div className="mx-auto mt-2 max-w-6xl">
@@ -509,13 +505,13 @@ export default function BrevetSessionPage() {
                   {q.question}
                 </p>
 
-                {currentDocs.length > 0 && !isHG && (
+                {(isHG ? hgAllDocs.length > 0 : currentDocs.length > 0) && (
                   <button
-                    onClick={() => setDocPanelOpen(v => !v)}
+                    onClick={() => setPanelOpen(v => !v)}
                     className="mb-4 flex items-center gap-1.5 rounded-input border border-sky-border px-3 py-1.5 font-body text-[12px] font-semibold text-text-secondary transition hover:border-brand hover:text-brand dark:border-night-border dark:text-text-dark-secondary dark:hover:border-brand-dark dark:hover:text-brand-dark"
                   >
                     <FileText className="h-3.5 w-3.5" />
-                    {docPanelOpen ? 'Masquer le document' : `Voir le document (${currentDocs.length})`}
+                    {panelOpen ? 'Masquer le document' : isHG ? `Voir les documents (${currentDocs.length || hgAllDocs.flatMap(h => h.docs).length})` : `Voir le document (${currentDocs.length})`}
                   </button>
                 )}
 
@@ -576,69 +572,74 @@ export default function BrevetSessionPage() {
           </div>
         </div>
 
-        {/* Droite — document question courante (non HG) */}
-        {docPanelOpen && currentDocs.length > 0 && !isHG && (
-          <div className="w-[42%] flex-shrink-0 overflow-y-auto border-l border-sky-border bg-sky-cloud/30 p-5 dark:border-night-border dark:bg-night-border/20">
-            <div className="mb-3 flex items-center justify-between">
-              <p className="font-body text-[12px] font-bold uppercase tracking-widest text-text-tertiary dark:text-text-dark-tertiary">
-                Document
-              </p>
-              <button onClick={() => setDocPanelOpen(false)} className="rounded p-1 text-text-tertiary hover:text-text-secondary">
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-            <DocumentPanel
-              documents={currentDocs}
-              activeTab={docActiveTab}
-              setActiveTab={setDocActiveTab}
-            />
-          </div>
-        )}
-
-        {/* Droite — panel HG global */}
-        {hgPanelOpen && hgAllDocs.length > 0 && (
+        {/* Droite — panel unifié (HG ou non-HG selon la question courante) */}
+        {panelOpen && (
           <div className="w-[42%] flex-shrink-0 overflow-hidden border-l border-sky-border bg-sky-cloud/30 dark:border-night-border dark:bg-night-border/20 flex flex-col">
-            <div className="flex-shrink-0 flex items-center justify-between border-b border-sky-border px-5 py-3 dark:border-night-border">
-              <p className="font-body text-[13px] font-bold text-text-main dark:text-text-dark-main">
-                Documents Histoire-Géographie
-              </p>
-              <button onClick={() => setHgPanelOpen(false)} className="rounded p-1 text-text-tertiary hover:text-text-secondary">
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-
-            <div className="flex-shrink-0 overflow-x-auto border-b border-sky-border dark:border-night-border">
-              <div className="flex gap-1 p-2">
-                {hgAllDocs.map((_, i) => (
-                  <button
-                    key={i}
-                    onClick={() => { setHgDocIndex(i); setHgDocTab(0) }}
-                    className={`flex-shrink-0 rounded px-2.5 py-1.5 font-body text-[11px] font-semibold transition ${
-                      hgDocIndex === i
-                        ? 'bg-brand/10 text-brand dark:bg-brand-dark/10 dark:text-brand-dark'
-                        : 'text-text-tertiary hover:text-text-secondary dark:text-text-dark-tertiary'
-                    }`}
-                  >
-                    Q{i + 1}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="flex-1 overflow-y-auto p-5">
-              {hgAllDocs[hgDocIndex] && (
-                <>
-                  <p className="mb-3 font-body text-[11px] font-semibold text-text-tertiary dark:text-text-dark-tertiary">
-                    {hgAllDocs[hgDocIndex].questionLabel}
+            {isHG ? (
+              /* ── Panel HG : onglets par question HG ── */
+              <>
+                <div className="flex-shrink-0 flex items-center justify-between border-b border-sky-border px-5 py-3 dark:border-night-border">
+                  <p className="font-body text-[13px] font-bold text-text-main dark:text-text-dark-main">
+                    Documents Histoire-Géographie
                   </p>
+                  <button onClick={() => setPanelOpen(false)} className="rounded p-1 text-text-tertiary hover:text-text-secondary">
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+                {hgAllDocs.length > 1 && (
+                  <div className="flex-shrink-0 overflow-x-auto border-b border-sky-border dark:border-night-border">
+                    <div className="flex gap-1 p-2">
+                      {hgAllDocs.map((_, i) => (
+                        <button
+                          key={i}
+                          onClick={() => { setHgDocIndex(i); setHgDocTab(0) }}
+                          className={`flex-shrink-0 rounded px-2.5 py-1.5 font-body text-[11px] font-semibold transition ${
+                            hgDocIndex === i
+                              ? 'bg-brand/10 text-brand dark:bg-brand-dark/10 dark:text-brand-dark'
+                              : 'text-text-tertiary hover:text-text-secondary dark:text-text-dark-tertiary'
+                          }`}
+                        >
+                          Q{i + 1}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                <div className="flex-1 overflow-y-auto p-5">
+                  {hgAllDocs[hgDocIndex] && (
+                    <>
+                      <p className="mb-3 font-body text-[11px] font-semibold text-text-tertiary dark:text-text-dark-tertiary">
+                        {hgAllDocs[hgDocIndex].questionLabel}
+                      </p>
+                      <DocumentPanel
+                        documents={hgAllDocs[hgDocIndex].docs}
+                        activeTab={hgDocTab}
+                        setActiveTab={setHgDocTab}
+                      />
+                    </>
+                  )}
+                </div>
+              </>
+            ) : (
+              /* ── Panel non-HG : docs de la question courante ── */
+              <>
+                <div className="flex-shrink-0 flex items-center justify-between border-b border-sky-border px-5 py-3 dark:border-night-border">
+                  <p className="font-body text-[12px] font-bold uppercase tracking-widest text-text-tertiary dark:text-text-dark-tertiary">
+                    Document
+                  </p>
+                  <button onClick={() => setPanelOpen(false)} className="rounded p-1 text-text-tertiary hover:text-text-secondary">
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+                <div className="flex-1 overflow-y-auto p-5">
                   <DocumentPanel
-                    documents={hgAllDocs[hgDocIndex].docs}
-                    activeTab={hgDocTab}
-                    setActiveTab={setHgDocTab}
+                    documents={currentDocs}
+                    activeTab={docActiveTab}
+                    setActiveTab={setDocActiveTab}
                   />
-                </>
-              )}
-            </div>
+                </div>
+              </>
+            )}
           </div>
         )}
       </div>
