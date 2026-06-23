@@ -138,8 +138,12 @@ export async function POST(req: NextRequest) {
 
   waitUntil(
     generateQuestions(sessionId, userId).catch(async (err) => {
-      console.error('[brevet/generate] Erreur generation:', err)
-      await admin.from('exam_sessions').delete().eq('id', sessionId)
+      const errMsg = err?.message ?? String(err)
+      console.error('[brevet/generate] Erreur generation:', errMsg)
+      // Stocker l'erreur exacte dans answers pour que le client puisse l'afficher
+      await admin.from('exam_sessions').update({
+        answers: [{ _error: errMsg }]
+      }).eq('id', sessionId)
       await addNovasForUser(userId, NOVA_COST_EXAM_SIMULATION, 'Remboursement — erreur generation')
     })
   )

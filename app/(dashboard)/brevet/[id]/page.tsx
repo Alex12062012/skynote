@@ -95,6 +95,17 @@ export default function BrevetSessionPage() {
       }
 
       const qCount = Array.isArray(data?.questions) ? (data.questions as any[]).length : 0
+      const answers = data?.answers as any[]
+      const genError = answers?.[0]?._error as string | undefined
+
+      if (genError) {
+        clearInterval(poll)
+        setDebugLine(`ERREUR EXACTE : ${genError}`)
+        setError(`Erreur de generation : ${genError}`)
+        setLoading(false)
+        return
+      }
+
       setDebugLine(`Tentative ${attempt} — session trouvee, questions: ${qCount}`)
 
       if (data && qCount > 0) {
