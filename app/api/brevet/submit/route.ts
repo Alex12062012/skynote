@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import type { ExamQuestion } from '../start/route'
+import type { ExamQuestion } from '../generate/route'
 
 // Calcule la mention à partir du score (%)
 function getMention(score: number): string {
