@@ -309,24 +309,6 @@ function PricingFree() {
   )
 }
 
-function PricingPlus() {
-  const { t } = useI18n()
-  return (
-    <Link href="/signup" className="sky-btn-primary" style={{ display: "block", marginTop: 20, textAlign: "center", fontSize: 13, padding: "11px", borderRadius: 10 }}>
-      {t('landing.pricing.subscribe')}
-    </Link>
-  )
-}
-
-function PricingFamily() {
-  const { t } = useI18n()
-  return (
-    <Link href="/signup" style={{ display: "block", marginTop: 20, textAlign: "center", fontSize: 13, fontWeight: 600, padding: "11px", borderRadius: 10, border: "1px solid rgba(167,139,250,0.3)", color: "#C4B5FD", textDecoration: "none" }}>
-      {t('landing.pricing.subscribe')}
-    </Link>
-  )
-}
-
 // ---------------------------------------------------------------------------
 // Composant principal
 // ---------------------------------------------------------------------------
@@ -486,26 +468,16 @@ export function LandingPage({ isBeta = true, testimonials }: { isBeta?: boolean;
                   <p style={{ fontSize: 32, fontWeight: 800, color: "#F0F6FF", margin: "0 0 2px" }}>4,99{'\u20AC'}<span style={{ fontSize: 14, fontWeight: 400, color: "#64748B" }}>{t('landing.pricing.perMonth')}</span></p>
                   <p style={{ fontSize: 12, color: "#475569", margin: "0 0 20px" }}>ou 3,99{'\u20AC'}{t('landing.pricing.perMonth')} {t('landing.pricing.yearly')}</p>
                   <div style={{ fontSize: 13, color: "#94A3B8", display: "flex", flexDirection: "column", gap: 8 }}>
-                    <span>{t('landing.pricing.plus1')}</span>
-                    <span>{t('landing.pricing.plus2')}</span>
-                    <span>{t('landing.pricing.plus3')}</span>
-                    <span>{t('landing.pricing.plus4')}</span>
+                    <span>{t('landing.pricing.starter1')}</span>
+                    <span>{t('landing.pricing.starter2')}</span>
+                    <span>{t('landing.pricing.starter3')}</span>
+                    <span>{t('landing.pricing.starter4')}</span>
                   </div>
-                  <PricingPlus />
+                  <Link href="/signup" className="sky-btn-primary" style={{ display: "block", marginTop: 20, textAlign: "center", fontSize: 13, padding: "11px", borderRadius: 10 }}>
+                    {t('landing.pricing.subscribe')}
+                  </Link>
                 </div>
 
-                <div style={{ background: "linear-gradient(145deg, rgba(30,58,95,0.5), rgba(13,27,46,0.85))", border: "1px solid rgba(167,139,250,0.2)", borderRadius: 16, padding: 24 }}>
-                  <p style={{ fontSize: 13, color: "#C4B5FD", fontWeight: 500, margin: "0 0 4px" }}>{t('landing.pricing.famille')}</p>
-                  <p style={{ fontSize: 32, fontWeight: 800, color: "#F0F6FF", margin: "0 0 2px" }}>6,99{'\u20AC'}<span style={{ fontSize: 14, fontWeight: 400, color: "#64748B" }}>{t('landing.pricing.perMonth')}</span></p>
-                  <p style={{ fontSize: 12, color: "#475569", margin: "0 0 20px" }}>ou 5,99{'\u20AC'}{t('landing.pricing.perMonth')} {t('landing.pricing.yearly')}</p>
-                  <div style={{ fontSize: 13, color: "#94A3B8", display: "flex", flexDirection: "column", gap: 8 }}>
-                    <span>{t('landing.pricing.fam1')}</span>
-                    <span>{t('landing.pricing.fam2')}</span>
-                    <span>{t('landing.pricing.fam3')}</span>
-                    <span>{t('landing.pricing.fam4')}</span>
-                  </div>
-                  <PricingFamily />
-                </div>
               </div>
             </>
           )}

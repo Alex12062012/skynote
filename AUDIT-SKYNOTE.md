@@ -450,7 +450,7 @@ Remplacer **intégralement** les lignes 15-65 de `lib/i18n/translations.ts` (sec
 'landing.pricing.perMonth': '/mois',
 'landing.pricing.yearly': 'en annuel',
 'landing.pricing.popular': 'Populaire',
-'landing.pricing.famille': 'Famille',
+
 'landing.pricing.free1': '1 cours par semaine',
 'landing.pricing.free2': 'Fiches IA + QCM',
 'landing.pricing.free3': 'Sky Coins & objectifs',

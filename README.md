@@ -53,7 +53,7 @@ skynote/
 │   │   ├── login/
 │   │   ├── signup/
 │   │   ├── signup-teacher/
-│   │   └── famille-login/
+
 │   ├── (dashboard)/          # Espace élève (layout avec Navbar)
 │   │   ├── dashboard/        # Accueil — cours récents, stats, streak
 │   │   ├── courses/          # Liste des cours
@@ -72,7 +72,7 @@ skynote/
 │   ├── api/                  # API Routes Next.js
 │   ├── auth/callback/        # Callback OAuth Supabase
 │   ├── classroom-login/      # Connexion élève via code classe
-│   ├── famille/              # Gestion du compte famille
+
 │   ├── list-quiz/new/        # Créateur de quiz liste Q/R
 │   ├── metrics/              # Dashboard métriques (admin)
 │   ├── pricing/              # Page tarifs
@@ -87,7 +87,7 @@ skynote/
 │   ├── classroom/            # Interface enseignant
 │   ├── courses/              # Création, lecteur de fiches, QCM
 │   ├── dashboard/            # Cards, stats, streak, bannières
-│   ├── famille/              # Gestion compte famille
+
 │   ├── gamification/         # Badges, titres, skins, prestige, likes
 │   ├── layout/               # Navbar
 │   ├── leaderboard/          # Classement + modal pseudo
@@ -114,7 +114,7 @@ skynote/
 │   │   ├── review-actions.ts
 │   │   ├── objectives-actions.ts
 │   │   ├── gamification-actions.ts
-│   │   ├── famille-actions.ts
+
 │   │   ├── referral-actions.ts
 │   │   ├── error-analysis-actions.ts
 │   │   ├── claim-actions.ts
@@ -128,7 +128,7 @@ skynote/
 │   ├── storage/
 │   │   └── upload.ts         # Upload vers Supabase Storage
 │   ├── sm2.ts                # Algorithme SM-2
-│   ├── famille-utils.ts
+
 │   └── utils.ts
 ├── types/
 │   ├── database.ts           # Types générés depuis le schéma Supabase
@@ -186,10 +186,6 @@ L'élève crée ses propres paires question/réponse et les joue en mode flashca
 ### Classe virtuelle (Enseignants)
 
 Un enseignant peut créer une classe (code à 6 caractères), ajouter des élèves avec un `login_code` unique, créer des dossiers de cours partagés, voir le classement de ses élèves et ajouter des co-enseignants. Les élèves se connectent via `/classroom-login` sans email ni mot de passe.
-
-### Compte famille
-
-Portail parent sur `/famille` pour gérer plusieurs comptes enfants.
 
 ---
 
@@ -321,7 +317,7 @@ Coût : 50 coins. Espérance nette : –26 coins.
 |---|---|---|
 | Free | Gratuit | — |
 | Plus | 4,99 €/mois | 3,99 €/mois (47,88 €/an) |
-| Famille | 11,99 €/mois | 10,99 €/mois (131,88 €/an) |
+
 
 Le webhook `/api/stripe/webhook` met à jour `plan` et `plan_expires_at` dans `profiles`. Le portail client Stripe permet la gestion autonome de l'abonnement.
 
@@ -336,7 +332,7 @@ Le webhook `/api/stripe/webhook` met à jour `plan` et `plan_expires_at` dans `p
 | GitHub OAuth | Connexion via compte GitHub |
 | Code enseignant | Via /api/teacher-code-login |
 | Code élève | login_code sans email (classe virtuelle) |
-| Famille | Portail parent |
+
 | Démo | Compte de démonstration pré-rempli |
 
 À la création d'un compte, le trigger SQL `handle_new_user` crée automatiquement le profil dans `public.profiles`. Le middleware Next.js (`middleware.ts`) rafraîchit la session Supabase sur chaque requête.
@@ -414,8 +410,6 @@ NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=
 STRIPE_WEBHOOK_SECRET=
 STRIPE_PRICE_PLUS_MONTHLY=
 STRIPE_PRICE_PLUS_YEARLY=
-STRIPE_PRICE_FAMILLE_MONTHLY=
-STRIPE_PRICE_FAMILLE_YEARLY=
 
 # Email transactionnel (optionnel)
 BREVO_API_KEY=

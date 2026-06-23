@@ -389,7 +389,7 @@ export function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     },
     {
       key: null, icon: <Trophy className="h-5 w-5" />, label: 'Plans payants', value: premiumUsers.length, color: '#FCD34D',
-      modal: { title: 'Utilisateurs Plus / Famille', users: premiumUsers, columns: [{ key: 'plan', render: (u: any) => u.plan }, { key: 'sky_coins', render: (u: any) => `${u.sky_coins} coins` }] }
+      modal: { title: 'Utilisateurs Plus', users: premiumUsers, columns: [{ key: 'plan', render: (u: any) => u.plan }, { key: 'sky_coins', render: (u: any) => `${u.sky_coins} coins` }] }
     },
     {
       key: null, icon: <Flame className="h-5 w-5" />, label: 'Streaks actifs (3j+)', value: streakUsers.length, color: '#FB923C',

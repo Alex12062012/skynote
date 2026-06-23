@@ -20,8 +20,7 @@ export async function POST(request: NextRequest) {
       .select('plan')
       .eq('id', user.id)
       .single()
-    // Rétrocompat : starter/pro ET anciens plans plus/famille ont le quota payant
-    const isPremium = ['starter', 'pro', 'plus', 'famille'].includes(profile?.plan ?? '')
+    const isPremium = ['starter', 'pro'].includes(profile?.plan ?? '')
     const rlConfig = isPremium ? RATE_LIMITS.generatePaid : RATE_LIMITS.generateFree
 
     const rl = await checkRateLimit(user.id, 'generate', rlConfig)

@@ -36,8 +36,8 @@ export default function BrevetPage() {
     })
   }, [])
 
-  const isPro = plan === 'pro'
-  const isStarter = plan === 'starter' || isPro
+  const isPro = plan === 'pro' || plan === 'famille'
+  const isStarter = plan === 'starter' || plan === 'plus' || isPro
   const hasUsedStarterSession = !isPro && isStarter && pastSessions.length >= 1
   const hasUsedFreeSession = !isStarter && pastSessions.length >= 1
   const canStart = !hasUsedStarterSession && !hasUsedFreeSession
@@ -50,12 +50,12 @@ export default function BrevetPage() {
       const data = await res.json()
       if (!res.ok) { setError(data.error ?? 'Une erreur est survenue.'); setLoading(false); return }
 
-      // Declencher la generation IA en background — comme les fiches
-      fetch('/api/brevet/generate', {
+      // Generer les questions (instantane — banque de questions)
+      await fetch('/api/brevet/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ sessionId: data.sessionId }),
-      }).catch(console.error)
+      })
 
       router.push(`/brevet/${data.sessionId}`)
     } catch {
@@ -173,8 +173,7 @@ export default function BrevetPage() {
             })}
           </div>
         </div>
-      )}
-
+           )}
     </div>
   )
 }

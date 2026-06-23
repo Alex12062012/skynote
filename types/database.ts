@@ -111,12 +111,8 @@ export interface Feedback {
   milestone: number | null; created_at: string
 }
 
-export interface FamilleGroup {
-  id: string; parent_id: string; family_code: string; name: string; created_at: string
-}
-
 export interface ChildAccount {
-  id: string; famille_id: string; parent_id: string; pseudo: string
+  id: string; parent_id: string; pseudo: string
   access_code: string; sky_coins: number; streak_days: number; created_at: string
 }
 
@@ -149,7 +145,6 @@ export interface Database {
       feedbacks: { Row: Feedback; Insert: Omit<Feedback,'id'|'created_at'>; Update: never }
       classrooms: { Row: Classroom; Insert: Omit<Classroom,'id'|'created_at'>; Update: Partial<Classroom> }
       classroom_students: { Row: ClassroomStudent; Insert: Omit<ClassroomStudent,'id'|'created_at'>; Update: Partial<ClassroomStudent> }
-      famille_groups: { Row: FamilleGroup; Insert: Omit<FamilleGroup,'id'|'created_at'>; Update: Partial<FamilleGroup> }
       child_accounts: { Row: ChildAccount; Insert: Omit<ChildAccount,'id'|'created_at'>; Update: Partial<ChildAccount> }
       child_stats: { Row: ChildStat; Insert: Omit<ChildStat,'id'>; Update: Partial<ChildStat> }
       list_quizzes: { Row: ListQuiz; Insert: Omit<ListQuiz,'id'|'created_at'>; Update: Partial<ListQuiz> }

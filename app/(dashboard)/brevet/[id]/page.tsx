@@ -5,7 +5,6 @@ import { createClient } from '@/lib/supabase/client'
 import { ChevronLeft, ChevronRight, Send, Lock, Loader2, Star } from 'lucide-react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
-import { BrevetProcessingLoader } from '@/components/brevet/BrevetProcessingLoader'
 
 interface ExamQuestion {
   matiere: string
@@ -42,7 +41,6 @@ export default function BrevetSessionPage() {
   const [result, setResult] = useState<{ score: number | null; mention: string | null; correct: number | null; total: number; locked: boolean } | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [debugLine, setDebugLine] = useState('Connexion au serveur...')
 
   useEffect(() => {
     const supabase = createClient()
@@ -61,7 +59,7 @@ export default function BrevetSessionPage() {
           setAnswers(s.answers ?? new Array(s.questions.length).fill(null))
         }
         if (s.status === 'completed') {
-          const isPaid = s.plan_snapshot === 'starter' || s.plan_snapshot === 'pro'
+          const isPaid = ['starter', 'pro', 'plus', 'famille'].includes(s.plan_snapshot)
           setResult({
             score: isPaid ? s.score : null,
             mention: isPaid ? s.mention : null,
@@ -84,7 +82,6 @@ export default function BrevetSessionPage() {
         .single()
 
       if (pollErr) {
-        setDebugLine(`Tentative ${attempt} — erreur: ${pollErr.message} (code: ${pollErr.code})`)
         if (pollErr.code === 'PGRST116') {
           // Session introuvable = supprimee suite a une erreur de generation
           clearInterval(poll)
@@ -100,13 +97,10 @@ export default function BrevetSessionPage() {
 
       if (genError) {
         clearInterval(poll)
-        setDebugLine(`ERREUR EXACTE : ${genError}`)
         setError(`Erreur de generation : ${genError}`)
         setLoading(false)
         return
       }
-
-      setDebugLine(`Tentative ${attempt} — session trouvee, questions: ${qCount}`)
 
       if (data && qCount > 0) {
         clearInterval(poll)
@@ -163,11 +157,11 @@ export default function BrevetSessionPage() {
 
   if (!session) return null
 
-  // Questions pas encore generees — afficher le loader
+  // Questions pas encore generees (rare — generation quasi-instantanee maintenant)
   if (!session.questions || session.questions.length === 0) {
     return (
-      <div className="mx-auto max-w-xl px-4 py-6">
-        <BrevetProcessingLoader debugLine={debugLine} />
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-brand dark:text-brand-dark" />
       </div>
     )
   }

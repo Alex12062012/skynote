@@ -78,7 +78,6 @@ export default function TermsPage() {
               {[
                 ['Gratuit', 'Accès limité aux fonctionnalités de base. Quotas d\'utilisation appliqués.'],
                 ['Skynote Plus', 'Abonnement mensuel ou annuel donnant accès à toutes les fonctionnalités sans restriction. Renouvellement automatique, résiliable à tout moment.'],
-                ['Famille', 'Accès multi-comptes pour une famille. Mêmes conditions que Skynote Plus.'],
               ].map(([plan, desc]) => (
                 <div key={plan} className="rounded-input border border-sky-border bg-sky-surface dark:border-night-border dark:bg-night-surface p-3 text-[14px]">
                   <p className="font-semibold">{plan}</p>

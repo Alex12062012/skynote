@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
     .eq('id', sessionId)
 
   // Les résultats détaillés (par question) ne sont renvoyés qu'aux plans payants
-  const isPaid = ['starter', 'pro'].includes(session.plan_snapshot ?? '')
+  const isPaid = ['starter', 'pro', 'plus', 'famille'].includes(session.plan_snapshot ?? '')
 
   return NextResponse.json({
     score: isPaid ? score : null,           // null = bloqué pour Free

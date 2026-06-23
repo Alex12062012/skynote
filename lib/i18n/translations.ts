@@ -37,18 +37,15 @@ export const STRINGS: Record<string, string> = {
     'landing.pricing.perMonth': '/mois',
     'landing.pricing.yearly': 'en annuel',
     'landing.pricing.popular': 'Populaire',
-    'landing.pricing.famille': 'Pro',
+
     'landing.pricing.free1': '600 Novas ✦ offerts',
     'landing.pricing.free2': 'Fiches IA + QCM',
     'landing.pricing.free3': 'Sky Coins & objectifs',
-    'landing.pricing.plus1': '2 000 Novas ✦ / mois',
-    'landing.pricing.plus2': 'Dictée vocale',
-    'landing.pricing.plus3': 'Chatbot IA par cours',
-    'landing.pricing.plus4': 'Tout le plan Gratuit',
-    'landing.pricing.fam1': 'Tout le plan Starter',
-    'landing.pricing.fam2': '4 000 Novas ✦ / mois',
-    'landing.pricing.fam3': 'Support prioritaire',
-    'landing.pricing.fam4': 'Toutes les fonctionnalités IA',
+    'landing.pricing.starter1': '2 000 Novas ✦ / mois',
+    'landing.pricing.starter2': 'Dictée vocale',
+    'landing.pricing.starter3': 'Chatbot IA par cours',
+    'landing.pricing.starter4': 'Tout le plan Gratuit',
+
     'landing.footer': 'Tu perds rien à essayer. Tu perds du temps à ne pas le faire.',
     'landing.footer.privacy': 'Confidentialité',
     'landing.footer.terms': 'CGU',
@@ -80,7 +77,7 @@ export const STRINGS: Record<string, string> = {
     'nav.objectives': 'Objectifs',
     'nav.classCode': 'Code de classe',
     'nav.pricing': 'Forfaits',
-    'nav.family': 'Famille',
+
     'nav.myAccount': 'Mon compte',
     // Dashboard
     'dash.goodMorning': 'Bonjour',
