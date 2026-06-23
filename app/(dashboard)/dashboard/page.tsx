@@ -61,29 +61,28 @@ export default async function DashboardPage() {
             {streak > 1 ? t('dash.streakMsg').replace('{n}', String(streak)) : t('dash.readyToStudy')}
           </p>
         </div>
-        <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-          {/* Mini-Épreuve Brevet — bouton violet avec badge NEW */}
-          <div className="relative">
-            <Link href="/brevet"
-              className="flex items-center justify-center gap-2 h-12 px-5 rounded-card bg-violet-600 hover:bg-violet-700 active:bg-violet-800 text-white font-body font-semibold text-[15px] transition-colors w-full sm:w-auto">
-              <GraduationCap className="h-5 w-5" />
-              Mini-Épreuve
-            </Link>
-            <span className="absolute -top-2 -right-2 bg-amber-400 text-amber-900 text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none pointer-events-none select-none">
-              NEW
-            </span>
-          </div>
-          <Link href="/courses/new">
-            <Button size="lg" className="gap-2 w-full sm:w-auto">
-              <Plus className="h-5 w-5" />{t('dash.newCourse')}
-            </Button>
-          </Link>
-        </div>
+        <Link href="/courses/new">
+          <Button size="lg" className="gap-2 w-full sm:w-auto">
+            <Plus className="h-5 w-5" />{t('dash.newCourse')}
+          </Button>
+        </Link>
       </div>
 
       {needsPseudo && <PseudoModal userId={user.id} />}
 
       <StatsBar coursesCount={totalCourses ?? 0} qcmCount={totalQcm ?? 0} streak={streak} coins={coins} />
+
+      {/* Mini-Épreuve Brevet — sous les stats */}
+      <div className="relative self-start">
+        <Link href="/brevet"
+          className="inline-flex items-center gap-2 h-11 px-5 rounded-card bg-violet-600 hover:bg-violet-700 active:bg-violet-800 text-white font-body font-semibold text-[14px] transition-colors">
+          <GraduationCap className="h-4 w-4" />
+          Mini-Épreuve Brevet
+        </Link>
+        <span className="absolute -top-2 -right-2 bg-amber-400 text-amber-900 text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none pointer-events-none select-none">
+          NEW
+        </span>
+      </div>
 
       <div>
         <div className="mb-4 flex items-center justify-between">
