@@ -75,23 +75,23 @@ export default async function DashboardPage() {
       {/* Mini-Épreuve Brevet — bannière pleine largeur */}
       <div className="relative">
         <Link href="/brevet"
-          className="flex w-full items-center justify-between gap-4 rounded-card border border-violet-500/30 bg-violet-600/10 hover:bg-violet-600/15 px-5 py-4 transition-colors dark:border-violet-500/20 dark:bg-violet-500/10">
+          className="flex w-full items-center justify-between gap-4 rounded-card border border-[#2563EB] bg-[#1E3A5F] hover:opacity-90 px-5 py-4 transition-opacity">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-input bg-violet-600 text-white">
+            <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-input bg-[#2563EB] text-white">
               <GraduationCap className="h-5 w-5" />
             </div>
             <div>
-              <p className="font-display text-[15px] font-bold text-violet-700 dark:text-violet-300">
+              <p className="font-display text-[15px] font-bold text-[#93C5FD]">
                 Mini-Épreuve Brevet
               </p>
-              <p className="font-body text-[12px] text-text-secondary dark:text-text-dark-secondary">
+              <p className="font-body text-[12px] text-[#CBD5E1]">
                 Simulation basée sur les vraies annales · Gratuit · Résultats dès Starter
               </p>
             </div>
           </div>
-          <ArrowRight className="h-5 w-5 flex-shrink-0 text-violet-500" />
+          <ArrowRight className="h-5 w-5 flex-shrink-0 text-[#60A5FA]" />
         </Link>
-        <span className="absolute -top-2 left-14 bg-violet-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none pointer-events-none select-none">
+        <span className="absolute -top-2 left-14 bg-[#2563EB] text-[#F0F6FF] text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none pointer-events-none select-none">
           NEW
         </span>
       </div>
