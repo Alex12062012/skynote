@@ -42,6 +42,7 @@ export default function BrevetSessionPage() {
   const [result, setResult] = useState<{ score: number | null; mention: string | null; correct: number | null; total: number; locked: boolean } | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [debugLine, setDebugLine] = useState('Connexion au serveur...')
 
   useEffect(() => {
     const supabase = createClient()
@@ -73,13 +74,30 @@ export default function BrevetSessionPage() {
       })
 
     // Polling toutes les 2s tant que les questions ne sont pas pretes
+    let attempt = 0
     const poll = setInterval(async () => {
-      const { data } = await supabase
+      attempt++
+      const { data, error: pollErr } = await supabase
         .from('exam_sessions')
         .select('id, questions, answers, status, plan_snapshot, score, mention')
         .eq('id', id)
         .single()
-      if (data && Array.isArray(data.questions) && data.questions.length > 0) {
+
+      if (pollErr) {
+        setDebugLine(`Tentative ${attempt} — erreur: ${pollErr.message} (code: ${pollErr.code})`)
+        if (pollErr.code === 'PGRST116') {
+          // Session introuvable = supprimee suite a une erreur de generation
+          clearInterval(poll)
+          setError('La generation a echoue. Tes coins ont ete rembourses. Reessaie.')
+          setLoading(false)
+        }
+        return
+      }
+
+      const qCount = Array.isArray(data?.questions) ? (data.questions as any[]).length : 0
+      setDebugLine(`Tentative ${attempt} — session trouvee, questions: ${qCount}`)
+
+      if (data && qCount > 0) {
         clearInterval(poll)
         setSession(data as SessionData)
         setAnswers(new Array((data.questions as ExamQuestion[]).length).fill(null))
@@ -138,7 +156,7 @@ export default function BrevetSessionPage() {
   if (!session.questions || session.questions.length === 0) {
     return (
       <div className="mx-auto max-w-xl px-4 py-6">
-        <BrevetProcessingLoader />
+        <BrevetProcessingLoader debugLine={debugLine} />
       </div>
     )
   }

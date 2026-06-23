@@ -12,7 +12,7 @@ const MESSAGES = [
   'Finalisation de ton epreuve...',
 ]
 
-export function BrevetProcessingLoader() {
+export function BrevetProcessingLoader({ debugLine }: { debugLine?: string }) {
   const [messageIndex, setMessageIndex] = useState(0)
   const [barProgress, setBarProgress] = useState(5)
 
@@ -63,9 +63,11 @@ export function BrevetProcessingLoader() {
         </p>
       </div>
 
-      <p className="max-w-xs font-body text-[13px] text-text-tertiary dark:text-text-dark-tertiary">
-        Generation des 20 questions en cours — environ 20 secondes.
-      </p>
+      {debugLine && (
+        <p className="max-w-sm rounded-input border border-sky-border bg-sky-surface px-3 py-2 font-mono text-[11px] text-text-tertiary dark:border-night-border dark:bg-night-surface dark:text-text-dark-tertiary">
+          {debugLine}
+        </p>
+      )}
     </div>
   )
 }
