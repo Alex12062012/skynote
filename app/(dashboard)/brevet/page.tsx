@@ -3,8 +3,6 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { NovaCoin } from '@/components/ui/NovaCoin'
-import { NOVA_COST_EXAM_SIMULATION } from '@/lib/supabase/nova-constants'
 import { GraduationCap, Lock, Loader2, Star, CheckCircle, AlertCircle } from 'lucide-react'
 import Link from 'next/link'
 import type { Metadata } from 'next'
@@ -73,8 +71,8 @@ export default function BrevetPage() {
         </div>
         <h1 className="font-display text-h2 text-text-main dark:text-text-dark-main">Mini-épreuve brevet</h1>
         <p className="mt-2 font-body text-[14px] text-text-secondary dark:text-text-dark-secondary">
-          20 questions QCM générées depuis tes cours, toutes matières mélangées — comme le vrai brevet.
-          Tu obtiens une mention estimée.
+          Simulation basée sur les vraies annales du brevet. Questions générées par IA, corrigées par IA.
+          Résultats et mention estimée visibles dès Starter.
         </p>
       </div>
 
@@ -93,12 +91,9 @@ export default function BrevetPage() {
                 : 'Passe en Starter pour voir ta mention'}
             </p>
           </div>
-          <div className="flex items-center gap-1 rounded-pill border border-sky-border bg-sky-surface-2 px-3 py-1.5 dark:border-night-border dark:bg-night-surface-2">
-            <NovaCoin size={14} />
-            <span className="font-body text-[13px] font-bold text-text-main dark:text-text-dark-main">
-              {NOVA_COST_EXAM_SIMULATION} ✦
-            </span>
-          </div>
+          <span className="rounded-pill border border-emerald-200 bg-emerald-50 px-3 py-1.5 font-body text-[12px] font-bold text-emerald-700 dark:border-emerald-800/40 dark:bg-emerald-900/20 dark:text-emerald-400">
+            Gratuit
+          </span>
         </div>
       </div>
 
