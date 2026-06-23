@@ -3,7 +3,8 @@
 import { useState, useEffect, use } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { GraduationCap, ChevronLeft, ChevronRight, Send, Lock, Loader2, Star, CheckCircle, XCircle } from 'lucide-react'
+import { GraduationCap, ChevronLeft, ChevronRight, Send, Lock, Loader2, Star, CheckCircle } from 'lucide-react'
+import { BrevetProcessingLoader } from '@/components/brevet/BrevetProcessingLoader'
 import Link from 'next/link'
 
 interface ExamQuestion {
@@ -99,6 +100,15 @@ export default function BrevetSessionPage({ params }: { params: Promise<{ id: st
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-brand dark:text-brand-dark" />
+      </div>
+    )
+  }
+
+  // questions vide = generation IA encore en cours
+  if (session?.status === 'pending' && (!session.questions || session.questions.length === 0)) {
+    return (
+      <div className="mx-auto max-w-xl px-4 py-6">
+        <BrevetProcessingLoader sessionId={id} />
       </div>
     )
   }
