@@ -15,6 +15,40 @@ export interface ExamQuestion {
 
 const anthropic = new Anthropic()
 
+async function callClaude(cardContent: string, target: number): Promise<ExamQuestion[]> {
+  const msg = await anthropic.messages.create({
+    model: 'claude-sonnet-4-6',
+    max_tokens: 2000,
+    messages: [{
+      role: 'user',
+      content: `Tu es un concepteur d'examens pour le brevet des colleges francais (niveau 3e).
+
+A partir des fiches suivantes, genere exactement ${target} questions QCM a 4 choix, style brevet.
+
+FICHES :
+${cardContent}
+
+CONSIGNES :
+- ${target} questions, reparties entre les matieres presentes
+- 4 options (A, B, C, D), une seule correcte
+- Niveau brevet 3e
+- Champ "matiere" = la matiere de la fiche (ex: "Mathematiques", "Histoire-Geographie", "SVT"...)
+
+Reponds UNIQUEMENT avec un tableau JSON valide, sans markdown :
+[{"matiere":"...","question":"...","options":["A. ...","B. ...","C. ...","D. ..."],"correct":0}]`,
+    }],
+  })
+
+  const raw = (msg.content[0] as any).text.trim()
+  const jsonMatch = raw.match(/\[[\s\S]*\]/)
+  if (!jsonMatch) throw new Error('Format JSON invalide')
+  const parsed = JSON.parse(jsonMatch[0])
+  if (!Array.isArray(parsed) || parsed.length < Math.floor(target * 0.7)) {
+    throw new Error(`Trop peu de questions : ${parsed.length}`)
+  }
+  return parsed.slice(0, target) as ExamQuestion[]
+}
+
 async function generateQuestions(sessionId: string, userId: string): Promise<void> {
   const supabase = await createClient()
 
@@ -46,52 +80,18 @@ async function generateQuestions(sessionId: string, userId: string): Promise<voi
   }
 
   const subjectMap = Object.fromEntries(courses.map(c => [c.id, c.subject ?? 'General']))
-  const cardContent = flashcards
-    .slice(0, 80)
-    .map(f => `[${subjectMap[f.course_id] ?? 'General'}] ${f.title}: ${f.summary}`)
-    .join('\n')
+  const cards = flashcards.slice(0, 80).map(
+    f => `[${subjectMap[f.course_id] ?? 'General'}] ${f.title}: ${f.summary}`
+  )
 
-  const msg = await anthropic.messages.create({
-    model: 'claude-sonnet-4-6',
-    max_tokens: 4000,
-    messages: [{
-      role: 'user',
-      content: `Tu es un concepteur d'examens pour le brevet des colleges francais (niveau 3e).
+  // Deux appels de 10 questions chacun — plus fiable qu'un seul appel de 20
+  const mid = Math.ceil(cards.length / 2)
+  const [part1, part2] = await Promise.all([
+    callClaude(cards.slice(0, mid).join('\n'), 10),
+    callClaude(cards.slice(mid).join('\n'), 10),
+  ])
 
-A partir des fiches de revision suivantes d'un eleve, genere exactement 20 questions QCM a 4 choix, dans le style du brevet (claires, precises, niveau college).
-
-FICHES DE L'ELEVE :
-${cardContent}
-
-CONSIGNES :
-- 20 questions au total, reparties equitablement entre les matieres presentes dans les fiches
-- Chaque question a exactement 4 options (A, B, C, D), une seule correcte
-- Les questions testent la comprehension, pas juste la memorisation de mots
-- Niveau brevet 3e : ni trop simple ni trop difficile
-- Le champ "matiere" doit correspondre a la matiere de la fiche (ex: "Mathematiques", "Histoire-Geographie", "SVT", "Physique-Chimie", "Francais"...)
-
-Reponds UNIQUEMENT avec un tableau JSON valide, sans markdown ni texte autour :
-[
-  {
-    "matiere": "Mathematiques",
-    "question": "...",
-    "options": ["A. ...", "B. ...", "C. ...", "D. ..."],
-    "correct": 0
-  }
-]
-
-"correct" est l'index 0-3 de la bonne reponse dans le tableau "options".`,
-    }],
-  })
-
-  const raw = (msg.content[0] as any).text.trim()
-  const jsonMatch = raw.match(/\[[\s\S]*\]/)
-  if (!jsonMatch) throw new Error('Format JSON invalide')
-
-  const parsed = JSON.parse(jsonMatch[0])
-  if (!Array.isArray(parsed) || parsed.length < 10) throw new Error('Trop peu de questions')
-
-  const questions = parsed.slice(0, 20) as ExamQuestion[]
+  const questions = [...part1, ...part2]
 
   await supabase
     .from('exam_sessions')
@@ -119,10 +119,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true })
   }
 
-  // Lancer la generation en background — pattern identique a /api/generate
   waitUntil(
     generateQuestions(sessionId, user.id).catch(async (err) => {
-      console.error('[brevet/generate] Erreur generation:', err)
+      console.error('[brevet/generate] Erreur:', err)
       await supabase.from('exam_sessions').delete().eq('id', sessionId)
       await addNovasForUser(user.id, NOVA_COST_EXAM_SIMULATION, 'Remboursement — erreur generation')
     })
