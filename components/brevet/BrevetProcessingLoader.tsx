@@ -1,8 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
+import { useEffect, useState } from 'react'
 import { GraduationCap } from 'lucide-react'
 
 const MESSAGES = [
@@ -14,15 +12,9 @@ const MESSAGES = [
   'Finalisation de ton epreuve...',
 ]
 
-interface Props {
-  sessionId: string
-}
-
-export function BrevetProcessingLoader({ sessionId }: Props) {
-  const router = useRouter()
+export function BrevetProcessingLoader() {
   const [messageIndex, setMessageIndex] = useState(0)
   const [barProgress, setBarProgress] = useState(5)
-  const supabase = useMemo(() => createClient(), [])
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -32,29 +24,8 @@ export function BrevetProcessingLoader({ sessionId }: Props) {
     return () => clearInterval(interval)
   }, [])
 
-  useEffect(() => {
-    const channel = supabase
-      .channel(`brevet-session-${sessionId}`)
-      .on(
-        'postgres_changes',
-        { event: 'UPDATE', schema: 'public', table: 'exam_sessions', filter: `id=eq.${sessionId}` },
-        (payload) => {
-          const updated = payload.new as { status: string; questions: unknown[] }
-          // Quand les questions sont remplies, la generation est terminee
-          if (Array.isArray(updated.questions) && updated.questions.length > 0) {
-            setBarProgress(100)
-            setTimeout(() => router.refresh(), 600)
-          }
-        }
-      )
-      .subscribe()
-
-    return () => { supabase.removeChannel(channel) }
-  }, [sessionId, router, supabase])
-
   return (
     <div className="flex min-h-[60vh] flex-col items-center justify-center gap-8 text-center animate-fade-in">
-      {/* Icone animee */}
       <div style={{ perspective: '400px' }}>
         <div style={{ animation: 'brevet-pulse 2s ease-in-out infinite' }}>
           <style>{`
@@ -73,10 +44,7 @@ export function BrevetProcessingLoader({ sessionId }: Props) {
         <h2 className="font-display text-[22px] font-semibold text-text-main dark:text-text-dark-main">
           Preparation de ton epreuve
         </h2>
-        <p
-          key={messageIndex}
-          className="font-body text-[15px] text-text-secondary dark:text-text-dark-secondary animate-fade-in"
-        >
+        <p key={messageIndex} className="font-body text-[15px] text-text-secondary dark:text-text-dark-secondary animate-fade-in">
           {MESSAGES[messageIndex]}
         </p>
       </div>
@@ -85,10 +53,7 @@ export function BrevetProcessingLoader({ sessionId }: Props) {
         <div className="h-2 w-full overflow-hidden rounded-pill bg-sky-cloud dark:bg-night-border">
           <div
             className="relative h-full rounded-pill transition-all duration-700 ease-out overflow-hidden"
-            style={{
-              width: `${barProgress}%`,
-              background: 'linear-gradient(90deg, #2563EB, #60A5FA)',
-            }}
+            style={{ width: `${barProgress}%`, background: 'linear-gradient(90deg, #2563EB, #60A5FA)' }}
           >
             <div className="absolute inset-0 animate-shimmer bg-gradient-to-r from-transparent via-white/30 to-transparent bg-[length:200%_100%]" />
           </div>

@@ -1,17 +1,15 @@
 'use client'
 
 import { useState, useEffect, use } from 'react'
-import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { GraduationCap, ChevronLeft, ChevronRight, Send, Lock, Loader2, Star, CheckCircle } from 'lucide-react'
-import { BrevetProcessingLoader } from '@/components/brevet/BrevetProcessingLoader'
 import Link from 'next/link'
+import { BrevetProcessingLoader } from '@/components/brevet/BrevetProcessingLoader'
 
 interface ExamQuestion {
   matiere: string
   question: string
   options: [string, string, string, string]
-  // NB : "correct" n'est JAMAIS envoyé au client — le score est calculé côté serveur
 }
 
 interface SessionData {
@@ -34,7 +32,6 @@ const MENTION_LABELS: Record<string, { label: string; emoji: string; color: stri
 
 export default function BrevetSessionPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
-  const router = useRouter()
 
   const [session, setSession] = useState<SessionData | null>(null)
   const [answers, setAnswers] = useState<(number | null)[]>([])
@@ -46,6 +43,8 @@ export default function BrevetSessionPage({ params }: { params: Promise<{ id: st
 
   useEffect(() => {
     const supabase = createClient()
+
+    // Chargement initial
     supabase
       .from('exam_sessions')
       .select('id, questions, answers, status, plan_snapshot, score, mention')
@@ -53,21 +52,41 @@ export default function BrevetSessionPage({ params }: { params: Promise<{ id: st
       .single()
       .then(({ data }) => {
         if (!data) { setError('Session introuvable'); setLoading(false); return }
-        setSession(data as SessionData)
-        setAnswers(data.answers ?? new Array((data.questions as ExamQuestion[]).length).fill(null))
-        // Si déjà soumis, reconstruire le résultat
-        if (data.status === 'completed') {
-          const isPaid = data.plan_snapshot === 'starter' || data.plan_snapshot === 'pro'
+        const s = data as SessionData
+        setSession(s)
+        if (s.questions?.length > 0) {
+          setAnswers(s.answers ?? new Array(s.questions.length).fill(null))
+        }
+        if (s.status === 'completed') {
+          const isPaid = s.plan_snapshot === 'starter' || s.plan_snapshot === 'pro'
           setResult({
-            score: isPaid ? data.score : null,
-            mention: isPaid ? data.mention : null,
+            score: isPaid ? s.score : null,
+            mention: isPaid ? s.mention : null,
             correct: null,
-            total: (data.questions as ExamQuestion[]).length,
+            total: s.questions?.length ?? 0,
             locked: !isPaid,
           })
         }
         setLoading(false)
       })
+
+    // Realtime — ecoute les mises a jour (generation IA terminee)
+    const channel = supabase
+      .channel(`brevet-session-${id}`)
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'exam_sessions', filter: `id=eq.${id}` },
+        (payload) => {
+          const updated = payload.new as SessionData
+          if (Array.isArray(updated.questions) && updated.questions.length > 0) {
+            setSession(updated)
+            setAnswers(new Array(updated.questions.length).fill(null))
+          }
+        }
+      )
+      .subscribe()
+
+    return () => { supabase.removeChannel(channel) }
   }, [id])
 
   async function handleSubmit() {
@@ -104,15 +123,6 @@ export default function BrevetSessionPage({ params }: { params: Promise<{ id: st
     )
   }
 
-  // questions vide = generation IA encore en cours
-  if (session?.status === 'pending' && (!session.questions || session.questions.length === 0)) {
-    return (
-      <div className="mx-auto max-w-xl px-4 py-6">
-        <BrevetProcessingLoader sessionId={id} />
-      </div>
-    )
-  }
-
   if (error) {
     return (
       <div className="mx-auto max-w-xl px-4 py-16 text-center">
@@ -124,11 +134,20 @@ export default function BrevetSessionPage({ params }: { params: Promise<{ id: st
 
   if (!session) return null
 
+  // Questions pas encore generees — afficher le loader
+  if (!session.questions || session.questions.length === 0) {
+    return (
+      <div className="mx-auto max-w-xl px-4 py-6">
+        <BrevetProcessingLoader />
+      </div>
+    )
+  }
+
   const questions = session.questions
   const q = questions[current]
   const totalAnswered = answers.filter(a => a !== null).length
 
-  // ─── Résultats ──────────────────────────────────────────────────────────────
+  // ─── Resultats ─────────────────────────────────────────────────────────────
 
   if (result) {
     const m = result.mention ? MENTION_LABELS[result.mention] : null
@@ -168,7 +187,6 @@ export default function BrevetSessionPage({ params }: { params: Promise<{ id: st
           </p>
         </div>
 
-        {/* Note pédagogique */}
         <div className="mt-4 rounded-card border border-sky-border bg-sky-surface p-4 dark:border-night-border dark:bg-night-surface">
           <p className="font-body text-[13px] text-text-secondary dark:text-text-dark-secondary">
             💡 Cette mention est une estimation basée sur tes fiches actuelles. Pour t'améliorer, continue à créer des cours et à faire des QCM ciblés.
@@ -189,13 +207,12 @@ export default function BrevetSessionPage({ params }: { params: Promise<{ id: st
     )
   }
 
-  // ─── Session en cours ────────────────────────────────────────────────────────
+  // ─── Session en cours ───────────────────────────────────────────────────────
 
   const matieresUniques = [...new Set(questions.map(q => q.matiere))]
 
   return (
     <div className="mx-auto max-w-xl animate-fade-in px-4 py-6">
-      {/* Header */}
       <div className="mb-6 flex items-center justify-between">
         <Link href="/brevet" className="flex items-center gap-1 font-body text-[13px] text-text-secondary hover:text-text-main dark:text-text-dark-secondary dark:hover:text-text-dark-main">
           <ChevronLeft className="h-4 w-4" />
@@ -208,13 +225,11 @@ export default function BrevetSessionPage({ params }: { params: Promise<{ id: st
         </div>
       </div>
 
-      {/* Barre de progression globale */}
       <div className="mb-4 h-1.5 w-full overflow-hidden rounded-full bg-sky-cloud dark:bg-night-border">
         <div className="h-full rounded-full bg-brand transition-all dark:bg-brand-dark"
           style={{ width: `${(totalAnswered / questions.length) * 100}%` }} />
       </div>
 
-      {/* Navigation matières (chips) */}
       <div className="mb-5 flex flex-wrap gap-2">
         {matieresUniques.map(m => {
           const count = questions.filter(q => q.matiere === m).length
@@ -225,7 +240,7 @@ export default function BrevetSessionPage({ params }: { params: Promise<{ id: st
           return (
             <button key={m}
               onClick={() => {
-                const idx = questions.findIndex(q => q.matiere === m && answers[questions.indexOf(q)] === null)
+                const idx = questions.findIndex((q, qi) => q.matiere === m && answers[qi] === null)
                 const first = questions.findIndex(q => q.matiere === m)
                 setCurrent(idx >= 0 ? idx : first)
               }}
@@ -240,7 +255,6 @@ export default function BrevetSessionPage({ params }: { params: Promise<{ id: st
         })}
       </div>
 
-      {/* Question courante */}
       <div className="rounded-card border border-sky-border bg-sky-surface p-5 shadow-card dark:border-night-border dark:bg-night-surface dark:shadow-card-dark">
         <p className="mb-1 font-body text-[11px] font-semibold uppercase tracking-widest text-text-tertiary dark:text-text-dark-tertiary">
           {current + 1}/{questions.length} · {q.matiere}
@@ -270,7 +284,6 @@ export default function BrevetSessionPage({ params }: { params: Promise<{ id: st
         </div>
       </div>
 
-      {/* Navigation */}
       <div className="mt-4 flex items-center justify-between gap-3">
         <button
           onClick={() => setCurrent(c => Math.max(0, c - 1))}
@@ -296,7 +309,6 @@ export default function BrevetSessionPage({ params }: { params: Promise<{ id: st
         )}
       </div>
 
-      {/* Indicateur de progression par question */}
       <div className="mt-5 flex flex-wrap gap-1">
         {questions.map((_, i) => (
           <button key={i} onClick={() => setCurrent(i)}
@@ -308,6 +320,10 @@ export default function BrevetSessionPage({ params }: { params: Promise<{ id: st
           />
         ))}
       </div>
+
+      {error && (
+        <p className="mt-4 font-body text-[13px] text-error">{error}</p>
+      )}
     </div>
   )
 }
