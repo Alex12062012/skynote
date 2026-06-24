@@ -524,7 +524,7 @@ export default function BrevetSessionPage() {
                 <p className="mb-1 font-body text-[11px] font-semibold uppercase tracking-widest text-text-tertiary dark:text-text-dark-tertiary">
                   {current + 1}/{questions.length} · {q.matiere} · {q.theme} · {q.annee}
                 </p>
-                <p className="mb-4 font-body text-[15px] font-semibold leading-snug text-text-main dark:text-text-dark-main">
+                <p className="mb-4 whitespace-pre-line font-body text-[15px] font-semibold leading-snug text-text-main dark:text-text-dark-main">
                   {q.question}
                 </p>
 
