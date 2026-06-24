@@ -339,23 +339,57 @@ export default function BrevetSessionPage() {
     const m = result.mention ? MENTION_LABELS[result.mention] : null
 
     if (result.locked) {
+      // Score fictif dérivé de l'id de session — cohérent entre rechargements
+      const FAKE_SCORES = [
+        { note: '14/20', mention: 'Assez Bien', emoji: '👍', color: 'text-blue-400', bg: 'bg-blue-500/10 border-blue-500/20' },
+        { note: '15/20', mention: 'Bien',        emoji: '⭐', color: 'text-sky-400',  bg: 'bg-sky-500/10 border-sky-500/20' },
+        { note: '16/20', mention: 'Bien',        emoji: '⭐', color: 'text-sky-400',  bg: 'bg-sky-500/10 border-sky-500/20' },
+        { note: '17/20', mention: 'Très Bien',   emoji: '🏆', color: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/20' },
+      ]
+      const fakeIdx = id.charCodeAt(id.length - 1) % FAKE_SCORES.length
+      const fake = FAKE_SCORES[fakeIdx]
+
       return (
-        <div className="mx-auto max-w-lg animate-fade-in px-4 py-10 text-center">
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-brand/10 dark:bg-brand-dark/10">
-            <Lock className="h-8 w-8 text-brand dark:text-brand-dark" />
+        <div className="mx-auto max-w-xl animate-fade-in px-4 py-10">
+
+          {/* Résultats + corrections floutés */}
+          <div className="relative mb-8">
+            <div style={{ filter: 'blur(10px)', userSelect: 'none', pointerEvents: 'none' }}>
+
+              {/* Score card — structure identique à la page payante */}
+              <div className={`rounded-card border p-6 text-center ${fake.bg}`}>
+                <p className="mb-2 text-5xl">{fake.emoji}</p>
+                <h1 className="font-display text-h1 font-bold text-text-main dark:text-text-dark-main">
+                  {fake.note}
+                </h1>
+                <p className={`mt-1 font-display text-h3 font-bold ${fake.color}`}>
+                  Mention {fake.mention}
+                </p>
+              </div>
+            </div>
+
+            {/* Cadenas superposé */}
+            <div className="absolute inset-0 flex items-start justify-center pt-14">
+              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-night-bg/80 shadow-lg dark:bg-night-bg/90">
+                <Lock className="h-7 w-7 text-white" />
+              </div>
+            </div>
           </div>
-          <h1 className="font-display text-h2 text-text-main dark:text-text-dark-main">Épreuve soumise !</h1>
-          <p className="mt-2 font-body text-[14px] text-text-secondary dark:text-text-dark-secondary">
-            Tu as répondu à {result.total} questions. Passe en Starter ou Pro pour voir ta mention et les corrections.
+
+          {/* CTA */}
+          <p className="mb-6 text-center font-body text-[15px] text-text-secondary dark:text-text-dark-secondary">
+            Passe en Starter ou Pro pour voir ta mention et les corrections.
           </p>
-          <Link href="/pricing"
-            className="mt-6 inline-flex items-center gap-2 rounded-input bg-brand px-6 py-2.5 font-body text-[14px] font-semibold text-white hover:bg-brand-hover dark:bg-brand-dark dark:text-night-bg">
-            <Star className="h-4 w-4" />
-            Voir les plans
-          </Link>
-          <Link href="/brevet" className="mt-3 block font-body text-[13px] text-text-tertiary hover:underline dark:text-text-dark-tertiary">
-            Retour aux épreuves
-          </Link>
+          <div className="flex flex-col gap-3">
+            <Link href="/pricing"
+              className="flex items-center justify-center rounded-input bg-brand py-3 font-body text-[15px] font-bold text-white shadow-md hover:bg-brand-hover dark:bg-brand-dark dark:text-night-bg">
+              Voir les plans ✦
+            </Link>
+            <Link href="/dashboard"
+              className="flex items-center justify-center rounded-input border border-sky-border py-2.5 font-body text-[13px] text-text-tertiary hover:bg-sky-cloud dark:border-night-border dark:text-text-dark-tertiary dark:hover:bg-night-border">
+              Retour au dashboard
+            </Link>
+          </div>
         </div>
       )
     }
