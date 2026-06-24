@@ -491,6 +491,10 @@ export function LandingPage({ isBeta = true, testimonials }: { isBeta?: boolean;
                     <span>{t('landing.pricing.starter4')}</span>
                     <span>{t('landing.pricing.starter5')}</span>
                   </div>
+                  <Link href="/signup" className="sky-btn-primary" style={{ display: "block", marginTop: 20, textAlign: "center", fontSize: 13, padding: "11px", borderRadius: 10 }}>
+                    {t('landing.pricing.subscribe')}
+                  </Link>
+                </div>
 
                 <div className="sky-card" style={{ padding: 24, position: "relative" }}>
                   <p style={{ fontSize: 13, color: "#A78BFA", fontWeight: 500, margin: "0 0 4px" }}>{t('landing.pricing.pro')}</p>
