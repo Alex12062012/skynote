@@ -101,7 +101,7 @@ function DocumentPanel({
                   : 'text-text-tertiary hover:text-text-secondary dark:text-text-dark-tertiary'
               }`}
             >
-              Doc {i + 1}
+              D{i + 1}
             </button>
           ))}
         </div>
@@ -614,7 +614,7 @@ export default function BrevetSessionPage() {
                               : 'text-text-tertiary hover:text-text-secondary dark:text-text-dark-tertiary'
                           }`}
                         >
-                          Q{i + 1}
+                          Qst {i + 1}
                         </button>
                       ))}
                     </div>
