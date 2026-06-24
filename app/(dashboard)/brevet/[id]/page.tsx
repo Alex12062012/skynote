@@ -653,4 +653,11 @@ export default function BrevetSessionPage() {
                     setActiveTab={setDocActiveTab}
                   />
                 </div>
-              
+              </>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
