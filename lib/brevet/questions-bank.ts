@@ -790,7 +790,7 @@ const HG_QUESTIONS: FullBankQuestion[] = [
       {
         titre: "Entrée du camp d'Auschwitz-Birkenau (photo d'archives)",
         type: 'image',
-        contenu: 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/f5/Birkenau_gate.jpg/640px-Birkenau_gate.jpg',
+        contenu: '/brevet/hg_auschwitz.svg',
       },
       {
         titre: "Ginette Kolinka, Retour à Birkenau (2020) — extrait",
@@ -862,7 +862,7 @@ En quoi consiste votre mission ? Il s'agit d'une mission dans les parcs de la co
       {
         titre: 'Soldats français dans une tranchée (1916, domaine public)',
         type: 'image',
-        contenu: 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/47/Cheshire_Regiment_trench_Somme_1916.jpg/640px-Cheshire_Regiment_trench_Somme_1916.jpg',
+        contenu: '/brevet/hg_tranchee_ww1.svg',
       },
       {
         titre: "Lettres de Félix Delaurat — Archives départementales de l'Allier",

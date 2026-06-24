@@ -116,6 +116,8 @@ function DocumentPanel({
           <img
             src={doc.contenu}
             alt={doc.titre}
+            referrerPolicy="no-referrer"
+            crossOrigin="anonymous"
             className="max-w-full rounded-card border border-sky-border dark:border-night-border"
           />
         ) : doc.type === 'graphique' && doc.contenu.trim().startsWith('<svg') ? (
@@ -651,11 +653,4 @@ export default function BrevetSessionPage() {
                     setActiveTab={setDocActiveTab}
                   />
                 </div>
-              </>
-            )}
-          </div>
-        )}
-      </div>
-    </div>
-  )
-}
+              
