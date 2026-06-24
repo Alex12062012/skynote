@@ -112,12 +112,20 @@ function DocumentPanel({
         <p className="mb-2 font-body text-[11px] font-semibold uppercase tracking-wide text-text-tertiary dark:text-text-dark-tertiary">
           {doc.titre}
         </p>
-        {doc.type === 'image' ? (
+        {doc.type === 'image' && doc.contenu.startsWith('http') ? (
+          <a
+            href={doc.contenu}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 rounded-card border border-sky-border bg-sky-cloud/50 px-4 py-3 font-body text-[13px] text-brand hover:underline dark:border-night-border dark:bg-night-border/30 dark:text-brand-dark"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+            Voir le document (s'ouvre dans un nouvel onglet)
+          </a>
+        ) : doc.type === 'image' ? (
           <img
             src={doc.contenu}
             alt={doc.titre}
-            referrerPolicy="no-referrer"
-            crossOrigin="anonymous"
             className="max-w-full rounded-card border border-sky-border dark:border-night-border"
           />
         ) : doc.type === 'graphique' && doc.contenu.trim().startsWith('<svg') ? (

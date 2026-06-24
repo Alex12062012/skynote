@@ -788,9 +788,9 @@ const HG_QUESTIONS: FullBankQuestion[] = [
     source: 'DNB Métropole 2024 — Histoire',
     documents: [
       {
-        titre: "Entrée du camp d'Auschwitz-Birkenau (photo d'archives)",
+        titre: "Photographie prise par les SS (mai-juin 1944) — arrivée des Juifs de Hongrie à Auschwitz-Birkenau",
         type: 'image',
-        contenu: '/brevet/hg_auschwitz.svg',
+        contenu: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c0/Bundesarchiv_Bild_183-N0827-318%2C_KZ_Auschwitz%2C_Ankunft_ungarischer_Juden.jpg/800px-Bundesarchiv_Bild_183-N0827-318%2C_KZ_Auschwitz%2C_Ankunft_ungarischer_Juden.jpg',
       },
       {
         titre: "Ginette Kolinka, Retour à Birkenau (2020) — extrait",
@@ -860,9 +860,9 @@ En quoi consiste votre mission ? Il s'agit d'une mission dans les parcs de la co
     source: 'DNB Métropole 2023 — Histoire',
     documents: [
       {
-        titre: 'Soldats français dans une tranchée (1916, domaine public)',
+        titre: 'Soldats britanniques dans une tranchée, front de la Somme (1916)',
         type: 'image',
-        contenu: '/brevet/hg_tranchee_ww1.svg',
+        contenu: 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/47/Cheshire_Regiment_trench_Somme_1916.jpg/800px-Cheshire_Regiment_trench_Somme_1916.jpg',
       },
       {
         titre: "Lettres de Félix Delaurat — Archives départementales de l'Allier",
