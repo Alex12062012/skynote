@@ -127,11 +127,11 @@ Effectif |  1 |  1 |  1 |  1 |  1 |  1 |  1 |  1 |  1 |  1`,
         contenu: '/brevet/mat_boite_moustaches.svg',
       },
     ],
-    question: `En vous aidant du document D1 :\n1. Calculer la moyenne de cette série.\n2. Déterminer la médiane.\n3. Déterminer Q₁ et Q₃.\n4. Enzo a eu 9. Est-il dans le quart des élèves les plus en difficulté ? Justifier avec Q₁.\n(Le document D2 montre la boîte à moustaches correspondante.)`,
-    corrige: `1. Somme = 5+8+9+11+12+12+14+15+17+19 = 122 ; moyenne = 12,2.\n2. 10 valeurs ordonnées : médiane = (12+12)/2 = 12.\n3. Première moitié (5 valeurs : 5,8,9,11,12) → Q₁ = 9 ; seconde moitié (12,14,15,17,19) → Q₃ = 15.\n4. Q₁ = 9 : 25 % des élèves ont ≤ 9. Enzo, ayant 9, se situe exactement à la limite : il est dans le quart le plus en difficulté.`,
+    question: `En vous aidant du document D1 :\n1. Calculer la moyenne et déterminer la médiane de cette série.\n2. Enzo a eu 9. En calculant Q₁, dire s'il est dans le quart des élèves les plus en difficulté.\n(Le document D2 montre la boîte à moustaches correspondante.)`,
+    corrige: `1. Somme = 122 ; moyenne = 12,2. 10 valeurs ordonnées : médiane = (12+12)/2 = 12.\n2. Première moitié : 5,8,9,11,12 → Q₁ = 9. Enzo a exactement Q₁ = 9 : il est à la limite du quart le plus en difficulté (25 % des élèves ≤ 9).`,
     criteres: [
-      'La moyenne est 12,2 et la médiane est 12',
-      'Q₁ = 9 et la conclusion sur Enzo est justifiée avec Q₁',
+      'Moyenne = 12,2 et médiane = 12',
+      'Q₁ = 9 et conclusion sur Enzo justifiée',
     ],
   },
   {
@@ -1196,23 +1196,43 @@ const SCIENCES_QUESTIONS: FullBankQuestion[] = [
   },
   // ── PC 2025 — Circuit électrique ────────────────────────────────────────
   {
-    id: 'sci_pc_2025_01',
+    id: 'sci_pc_2025_01a',
     matiere: 'Physique-Chimie',
-    theme: 'Électricité — loi d\'Ohm et puissance',
+    theme: 'Électricité — loi d\'Ohm',
     annee: 2025,
     source: 'DNB — Électricité',
     documents: [
       {
         titre: 'Données du circuit',
         type: 'donnees',
-        contenu: `Générateur : tension U = 12 V\nRésistance R₁ = 30 Ω en série avec R₂ = 10 Ω\nFormule : U = R × I ; P = U × I`,
+        contenu: `Générateur : tension U = 12 V\nRésistance R₁ = 30 Ω en série avec R₂ = 10 Ω\nFormule : U = R × I`,
       },
     ],
-    question: `1. Calculer la résistance totale R du circuit (R₁ et R₂ en série).\n2. Calculer l'intensité du courant I traversant le circuit (loi d'Ohm).\n3. Calculer la puissance électrique dissipée par R₁.\n4. Quelle serait la tension aux bornes de R₂ ?`,
-    corrige: `1. R = R₁ + R₂ = 30 + 10 = 40 Ω.\n2. I = U/R = 12/40 = 0,3 A.\n3. U₁ = R₁ × I = 30 × 0,3 = 9 V ; P₁ = U₁ × I = 9 × 0,3 = 2,7 W.\n4. U₂ = R₂ × I = 10 × 0,3 = 3 V. Vérification : U₁ + U₂ = 9 + 3 = 12 V ✓`,
+    question: `R₁ et R₂ sont en série. Calculer la résistance totale R du circuit, puis l'intensité I du courant (loi d'Ohm).`,
+    corrige: `R = R₁ + R₂ = 30 + 10 = 40 Ω. I = U/R = 12/40 = 0,3 A.`,
     criteres: [
-      'I = 0,3 A calculé correctement',
-      'P₁ = 2,7 W et U₂ = 3 V corrects',
+      'R = 40 Ω',
+      'I = 0,3 A',
+    ],
+  },
+  {
+    id: 'sci_pc_2025_01b',
+    matiere: 'Physique-Chimie',
+    theme: 'Électricité — puissance et tension',
+    annee: 2025,
+    source: 'DNB — Électricité',
+    documents: [
+      {
+        titre: 'Données du circuit (I = 0,3 A)',
+        type: 'donnees',
+        contenu: `R₁ = 30 Ω, R₂ = 10 Ω, I = 0,3 A\nFormule : P = U × I ; U = R × I`,
+      },
+    ],
+    question: `L'intensité dans le circuit est I = 0,3 A. Calculer la puissance dissipée par R₁, puis la tension aux bornes de R₂. Vérifier que U₁ + U₂ = 12 V.`,
+    corrige: `U₁ = R₁ × I = 30 × 0,3 = 9 V ; P₁ = U₁ × I = 9 × 0,3 = 2,7 W. U₂ = R₂ × I = 10 × 0,3 = 3 V. Vérif : 9 + 3 = 12 V ✓`,
+    criteres: [
+      'P₁ = 2,7 W',
+      'U₂ = 3 V et vérification correcte',
     ],
   },
   {
