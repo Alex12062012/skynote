@@ -622,7 +622,7 @@ export default function BrevetSessionPage() {
                               : 'text-text-tertiary hover:text-text-secondary dark:text-text-dark-tertiary'
                           }`}
                         >
-                          Q{i + 1}
+                          D{i + 1}
                         </button>
                       ))}
                     </div>
