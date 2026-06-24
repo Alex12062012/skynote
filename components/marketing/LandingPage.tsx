@@ -27,9 +27,9 @@ const STATS: Stat[] = [
 ]
 
 const FALLBACK_TESTIMONIALS: Testimonial[] = [
-  { text: "J'ai eu 17 en histoire grâce aux fiches Skynote. Ma prof a cru que j'avais révisé 3h.", name: "Inès, 3ème",  grade: "17/20" },
-  { text: "Le QCM m'a fait comprendre des trucs que j'avais pas captés en cours. C'est ouf.",       name: "Yanis, 2nde", grade: "15/20" },
-  { text: "Je prends mon cours en photo et 15 secondes après j'ai mes fiches. C'est magique.",      name: "Léa, 4ème",   grade: "16/20" },
+  { text: "J'avais 20 pages à réviser la veille. Fiches générées en 2 minutes, j'ai tout relu tranquille.", name: "Inès, 3ème",  grade: "17/20" },
+  { text: "Les questions du QCM sont vraiment bien faites. Pas juste réciter — ça te force à vraiment réfléchir.", name: "Yanis, 2nde", grade: "15/20" },
+  { text: "Je prenais pas de notes avant parce que c'est long. Maintenant je prends une photo et c'est réglé.", name: "Léa, 4ème",   grade: "16/20" },
 ]
 
 // Positions fixes des etoiles — generees une seule fois, pas dans le render
@@ -347,7 +347,8 @@ export function LandingPage({ isBeta = true, testimonials }: { isBeta?: boolean;
         </h1>
 
         <p className="fade-up-3" style={{ fontSize: 17, color: "#94A3B8", maxWidth: 480, margin: "0 auto 40px", lineHeight: 1.65 }}>
-          {t('landing.hero.subtitle')}
+          {t('landing.hero.subtitle')}<br />
+          <span style={{ color: "#64748B", fontSize: 15 }}>{t('landing.hero.subtitle2')}</span>
         </p>
 
         <div className="fade-up-4" style={{ animation: "float 4s ease-in-out infinite", marginBottom: 40 }}>
@@ -400,7 +401,6 @@ export function LandingPage({ isBeta = true, testimonials }: { isBeta?: boolean;
             { icon: "\uD83D\uDCF8", titleKey: 'landing.features.photo', descKey: 'landing.features.photoDesc' },
             { icon: "\u26A1", titleKey: 'landing.features.fiches', descKey: 'landing.features.fichesDesc' },
             { icon: "\uD83E\uDDE0", titleKey: 'landing.features.qcm', descKey: 'landing.features.qcmDesc' },
-            { icon: "\uD83D\uDCAC", titleKey: 'landing.features.chatbot', descKey: 'landing.features.chatbotDesc' },
           ].map((f, i) => (
             <div key={i} className="sky-card scroll-reveal" style={{ padding: 24, transitionDelay: `${i * 0.08}s` }}>
               <span style={{ fontSize: 28, display: "block", marginBottom: 12 }}>{f.icon}</span>
@@ -408,6 +408,22 @@ export function LandingPage({ isBeta = true, testimonials }: { isBeta?: boolean;
               <p style={{ fontSize: 13, color: "#94A3B8", lineHeight: 1.55, margin: 0 }}>{t(f.descKey)}</p>
             </div>
           ))}
+        </div>
+      </section>
+
+
+      {/* ── BREVET ── */}
+      <section className="landing-section" style={{ position: "relative", zIndex: 10, maxWidth: 1000, margin: "0 auto", padding: "0 24px 80px" }}>
+        <div className="sky-card scroll-reveal" style={{ padding: "40px 48px", display: "flex", alignItems: "center", gap: 40 }}>
+          <span style={{ fontSize: 64, flexShrink: 0 }}>🎓</span>
+          <div style={{ flex: 1 }}>
+            <p style={{ fontSize: 11, fontWeight: 700, color: "#60A5FA", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 8 }}>{t('landing.brevet.label')}</p>
+            <h2 style={{ fontSize: "clamp(22px, 3.5vw, 32px)", fontWeight: 800, color: "#F0F6FF", margin: "0 0 14px", lineHeight: 1.2 }}>{t('landing.brevet.title')}</h2>
+            <p style={{ fontSize: 15, color: "#94A3B8", lineHeight: 1.65, margin: "0 0 24px", maxWidth: 480 }}>{t('landing.brevet.desc')}</p>
+            <Link href="/signup" className="sky-btn-primary" style={{ fontSize: 14, padding: "12px 28px" }}>
+              {t('landing.hero.ctaBeta')}
+            </Link>
+          </div>
         </div>
       </section>
 
