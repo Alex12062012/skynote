@@ -474,6 +474,7 @@ export function LandingPage({ isBeta = true, testimonials }: { isBeta?: boolean;
                     <span>{t('landing.pricing.free1')}</span>
                     <span>{t('landing.pricing.free2')}</span>
                     <span>{t('landing.pricing.free3')}</span>
+                    <span>{t('landing.pricing.free4')}</span>
                   </div>
                   <PricingFree />
                 </div>
@@ -488,6 +489,19 @@ export function LandingPage({ isBeta = true, testimonials }: { isBeta?: boolean;
                     <span>{t('landing.pricing.starter2')}</span>
                     <span>{t('landing.pricing.starter3')}</span>
                     <span>{t('landing.pricing.starter4')}</span>
+                    <span>{t('landing.pricing.starter5')}</span>
+                  </div>
+
+                <div className="sky-card" style={{ padding: 24, position: "relative" }}>
+                  <p style={{ fontSize: 13, color: "#A78BFA", fontWeight: 500, margin: "0 0 4px" }}>{t('landing.pricing.pro')}</p>
+                  <p style={{ fontSize: 32, fontWeight: 800, color: "#F0F6FF", margin: "0 0 2px" }}>6,90{'\u20AC'}<span style={{ fontSize: 14, fontWeight: 400, color: "#64748B" }}>{t('landing.pricing.perMonth')}</span></p>
+                  <p style={{ fontSize: 12, color: "#475569", margin: "0 0 20px" }}>ou 5,49{'\u20AC'}{t('landing.pricing.perMonth')} {t('landing.pricing.yearly')}</p>
+                  <div style={{ fontSize: 13, color: "#94A3B8", display: "flex", flexDirection: "column", gap: 8 }}>
+                    <span>{t('landing.pricing.pro1')}</span>
+                    <span>{t('landing.pricing.pro2')}</span>
+                    <span>{t('landing.pricing.pro3')}</span>
+                    <span>{t('landing.pricing.pro4')}</span>
+                    <span>{t('landing.pricing.pro5')}</span>
                   </div>
                   <Link href="/signup" className="sky-btn-primary" style={{ display: "block", marginTop: 20, textAlign: "center", fontSize: 13, padding: "11px", borderRadius: 10 }}>
                     {t('landing.pricing.subscribe')}
