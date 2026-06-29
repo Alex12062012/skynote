@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import { Bricolage_Grotesque, DM_Sans } from 'next/font/google'
 import { ThemeProvider } from '@/components/providers/ThemeProvider'
 import { I18nProvider } from '@/lib/i18n/context'
+import { LiquidGlassFilter } from '@/components/ui/LiquidGlassFilter'
 import './globals.css'
 
 const bricolage = Bricolage_Grotesque({
@@ -55,6 +56,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="fr" className={`${bricolage.variable} ${dmSans.variable} dark`} suppressHydrationWarning>
       <body>
+        <LiquidGlassFilter />
         <ThemeProvider><I18nProvider>{children}</I18nProvider></ThemeProvider>
       </body>
     </html>
