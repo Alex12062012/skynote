@@ -8,6 +8,7 @@ import { CourseCard } from '@/components/dashboard/CourseCard'
 import { Button } from '@/components/ui/Button'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { ProgressBar } from '@/components/ui/ProgressBar'
+import { Reveal } from '@/components/ui/Reveal'
 import { PseudoModal } from '@/components/leaderboard/PseudoModal'
 import { getServerLocale, createServerT } from '@/lib/i18n/server'
 import type { Metadata } from 'next'
@@ -51,8 +52,8 @@ export default async function DashboardPage() {
   const hasNoCourses = stats.recentCourses.length === 0
 
   return (
-    <div className="flex flex-col gap-8 animate-fade-in">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+    <div className="flex flex-col gap-8">
+      <Reveal i={0} inView={false} className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h1 className="font-display text-h2 text-text-main dark:text-text-dark-main">
             {greeting}, {firstName}
@@ -66,37 +67,40 @@ export default async function DashboardPage() {
             <Plus className="h-5 w-5" />{t('dash.newCourse')}
           </Button>
         </Link>
-      </div>
+      </Reveal>
 
       {needsPseudo && <PseudoModal userId={user.id} />}
 
-      <StatsBar coursesCount={totalCourses ?? 0} qcmCount={totalQcm ?? 0} streak={streak} coins={coins} />
+      <Reveal i={1} inView={false}>
+        <StatsBar coursesCount={totalCourses ?? 0} qcmCount={totalQcm ?? 0} streak={streak} coins={coins} />
+      </Reveal>
 
-      {/* Mini-Épreuve Brevet — bannière pleine largeur */}
-      <div className="relative">
+      {/* Mini-Épreuve Brevet — bannière pleine largeur, look landing */}
+      <Reveal i={2} inView={false} className="relative">
         <Link href="/brevet"
-          className="flex w-full items-center justify-between gap-4 rounded-card border border-[#2563EB] bg-[#1E3A5F] hover:opacity-90 px-5 py-4 transition-opacity">
+          className="group relative flex w-full items-center justify-between gap-4 overflow-hidden rounded-card border border-brand-dark/30 bg-gradient-to-br from-brand/25 via-night-surface to-night-surface px-5 py-4 transition-all hover:-translate-y-0.5 hover:border-brand-dark/50 hover:shadow-[0_18px_50px_-30px_rgba(37,99,235,0.8)]">
+          <span className="cta-sheen" />
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-input bg-[#2563EB] text-white">
+            <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-input bg-brand text-white shadow-[0_6px_18px_-6px_rgba(37,99,235,0.8)]">
               <GraduationCap className="h-5 w-5" />
             </div>
             <div>
-              <p className="font-display text-[15px] font-bold text-[#93C5FD]">
+              <p className="font-display text-[15px] font-bold text-brand-dark">
                 Mini-Épreuve Brevet
               </p>
-              <p className="font-body text-[12px] text-[#CBD5E1]">
+              <p className="font-body text-[12px] text-text-dark-secondary">
                 Simulation basée sur les vraies annales · Gratuit · Résultats dès Starter
               </p>
             </div>
           </div>
-          <ArrowRight className="h-5 w-5 flex-shrink-0 text-[#60A5FA]" />
+          <ArrowRight className="h-5 w-5 flex-shrink-0 text-brand-dark transition-transform group-hover:translate-x-1" />
         </Link>
-        <span className="absolute -top-2 left-14 bg-[#2563EB] text-[#F0F6FF] text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none pointer-events-none select-none">
+        <span className="absolute -top-2 left-14 bg-brand text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none pointer-events-none select-none">
           NEW
         </span>
-      </div>
+      </Reveal>
 
-      <div>
+      <Reveal i={3} inView={false}>
         <div className="mb-4 flex items-center justify-between">
           <h2 className="font-display text-h3 text-text-main dark:text-text-dark-main">{t('dash.recentCourses')}</h2>
           <Link href="/courses" className="flex items-center gap-1 font-body text-[14px] text-brand hover:underline dark:text-brand-dark">
@@ -112,7 +116,7 @@ export default async function DashboardPage() {
             {stats.recentCourses.map((course) => <CourseCard key={course.id} {...course} />)}
           </div>
         )}
-      </div>
+      </Reveal>
 
       <ObjectivesSummary userId={user.id} />
     </div>

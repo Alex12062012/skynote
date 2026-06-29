@@ -7,7 +7,6 @@ import { Trophy, LayoutDashboard, Menu, X, ShoppingBag } from 'lucide-react'
 import { SkyCoin } from '@/components/ui/SkyCoin'
 import { CoinCounter } from '@/components/ui/CoinCounter'
 import { NovaCounter } from '@/components/ui/NovaCounter'
-import { ThemeToggle } from '@/components/ui/ThemeToggle'
 import { PlayerEmblem } from '@/components/gamification/PlayerEmblem'
 import { cn } from '@/lib/utils'
 import { useI18n } from '@/lib/i18n/context'
@@ -57,7 +56,7 @@ function NavbarInner({
   const effectiveUserId = userId ?? profile?.id ?? ''
 
   return (
-    <header className="sticky top-0 z-40 border-b border-sky-border bg-sky-surface/80 backdrop-blur-lg dark:border-night-border dark:bg-night-surface/80">
+    <header className="sticky top-0 z-40 border-b border-sky-border bg-sky-surface/80 backdrop-blur-lg backdrop-saturate-150 dark:border-white/10 dark:bg-night-bg/55 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
         <div onClick={handleLogoClick} className={isDashboard ? 'cursor-pointer' : ''}>
           <Link href="/dashboard" className="flex items-center gap-2.5">
@@ -97,7 +96,6 @@ function NavbarInner({
           {profile && (
             <CoinCounter initialCoins={profile.sky_coins} userId={profile.id} />
           )}
-          <ThemeToggle />
           {profile && (
             <Link href="/profile"
               className={cn(

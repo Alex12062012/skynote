@@ -2,21 +2,24 @@ import Link from 'next/link'
 import { SkynoteLogo } from '@/components/ui/SkyCoin'
 import { LoginForm } from '@/components/auth/LoginForm'
 import { GithubButton } from '@/components/auth/GithubButton'
+import { Reveal } from '@/components/ui/Reveal'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = { title: 'Connexion' }
 
 export default function LoginPage({ searchParams }: { searchParams: { error?: string } }) {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-sky-bg px-4 dark:bg-night-bg">
-      <div className="w-full max-w-sm">
+    <div className="relative flex min-h-[100dvh] items-center justify-center overflow-hidden bg-sky-bg px-4 dark:bg-night-bg">
+      {/* Halo façon landing */}
+      <div className="pointer-events-none fixed inset-0 -z-0 bg-[radial-gradient(ellipse_70%_50%_at_50%_0%,rgba(37,99,235,0.10),transparent_60%)] dark:bg-[radial-gradient(ellipse_70%_50%_at_50%_0%,rgba(37,99,235,0.18),transparent_60%)]" />
+      <Reveal inView={false} className="relative z-10 w-full max-w-sm">
         <div className="mb-8 flex flex-col items-center gap-3">
           <SkynoteLogo />
           <p className="font-body text-[14px] text-text-secondary dark:text-text-dark-secondary">
             Révise plus vite, réussis mieux
           </p>
         </div>
-        <div className="rounded-card-login bg-sky-surface p-8 shadow-card dark:bg-night-surface dark:shadow-card-dark">
+        <div className="rounded-card-login border border-sky-border bg-sky-surface p-8 shadow-card dark:border-night-border dark:bg-night-surface dark:shadow-[0_30px_80px_-40px_rgba(0,0,0,0.9)]">
           <h1 className="mb-6 font-display text-h3 text-text-main dark:text-text-dark-main">Connexion</h1>
           {searchParams.error && (
             <div className="mb-4 rounded-input bg-error/10 px-4 py-3 font-body text-[13px] text-error border border-error/20">
@@ -37,7 +40,7 @@ export default function LoginPage({ searchParams }: { searchParams: { error?: st
             </Link>
           </p>
         </div>
-      </div>
+      </Reveal>
     </div>
   )
 }

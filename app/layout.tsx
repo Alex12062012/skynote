@@ -53,7 +53,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="fr" className={`${bricolage.variable} ${dmSans.variable}`} suppressHydrationWarning>
+    <html lang="fr" className={`${bricolage.variable} ${dmSans.variable} dark`} suppressHydrationWarning>
       <body>
         <ThemeProvider><I18nProvider>{children}</I18nProvider></ThemeProvider>
       </body>
