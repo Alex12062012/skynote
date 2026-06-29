@@ -1,7 +1,7 @@
 'use client'
 
 import { useTheme } from 'next-themes'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 
 export function SkyBackground() {
   const { resolvedTheme } = useTheme()
@@ -11,61 +11,73 @@ export function SkyBackground() {
   return resolvedTheme === 'dark' ? <NightSky /> : <DaySky />
 }
 
-// ── Étoiles : chacune erre où elle veut (trajectoire aléatoire) et a sa
-//    propre luminosité. Généré côté client uniquement (NightSky ne rend
-//    qu'après le montage), donc Math.random() ne casse pas l'hydratation.
+// ── Étoiles : chaque étoile est STATIQUE quand elle est allumée. Elle s'allume,
+//    reste fixe, s'éteint, puis (pendant qu'elle est invisible) saute à un
+//    endroit aléatoire et se rallume là. En boucle. On ne la voit jamais bouger.
+//    Généré côté client uniquement → Math.random() ne casse pas l'hydratation.
 function NightSky() {
   const stars = useMemo(
     () =>
-      Array.from({ length: 52 }, () => {
-        const dx = (Math.random() * 2 - 1) * (18 + Math.random() * 55)
-        const dy = (Math.random() * 2 - 1) * (18 + Math.random() * 55)
-        return {
-          left: Math.random() * 100,
-          top: Math.random() * 100,
-          size: 1 + Math.random() * 2.2,
-          base: 0.04 + Math.random() * 0.14,   // luminosité basse propre
-          peak: 0.4 + Math.random() * 0.58,    // luminosité haute propre
-          dx, dy,
-          dur: 9 + Math.random() * 17,
-          delay: -Math.random() * 24,
-        }
-      }),
+      Array.from({ length: 56 }, () => ({
+        left: Math.random() * 100,
+        top: Math.random() * 100,
+        size: 1 + Math.random() * 2.2,
+        peak: 0.45 + Math.random() * 0.5, // luminosité propre
+        dur: 4.5 + Math.random() * 7, // durée d'un cycle allumage/extinction
+        delay: -Math.random() * 12, // désynchronisation
+      })),
     [],
   )
 
   return (
     <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden" aria-hidden>
       <style>{`
-        @keyframes star-wander {
-          0%   { transform: translate(0, 0);                                          opacity: var(--base); }
-          20%  { transform: translate(var(--dx), var(--dy));                           opacity: var(--peak); }
-          40%  { transform: translate(calc(var(--dx) * -0.5), calc(var(--dy) * 0.85)); opacity: var(--base); }
-          60%  { transform: translate(calc(var(--dx) * 0.7),  calc(var(--dy) * -0.6)); opacity: var(--peak); }
-          80%  { transform: translate(calc(var(--dx) * -0.3), calc(var(--dy) * -0.9)); opacity: var(--base); }
-          100% { transform: translate(0, 0);                                          opacity: var(--base); }
+        @keyframes star-blink {
+          0%, 100% { opacity: 0; }
+          14%      { opacity: var(--peak); }
+          68%      { opacity: var(--peak); }
+          86%      { opacity: 0; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .star-dot { animation: none !important; opacity: var(--peak) !important; }
         }
       `}</style>
       {stars.map((s, i) => (
-        <div
-          key={i}
-          className="absolute rounded-full bg-white"
-          style={{
-            left: `${s.left}%`,
-            top: `${s.top}%`,
-            width: s.size,
-            height: s.size,
-            opacity: s.base,
-            boxShadow: `0 0 ${Math.max(2, s.size * 2.2)}px rgba(191,219,254,${(s.peak * 0.6).toFixed(2)})`,
-            ['--base' as string]: s.base.toFixed(3),
-            ['--peak' as string]: s.peak.toFixed(3),
-            ['--dx' as string]: `${s.dx.toFixed(1)}px`,
-            ['--dy' as string]: `${s.dy.toFixed(1)}px`,
-            animation: `star-wander ${s.dur.toFixed(1)}s ease-in-out ${s.delay.toFixed(1)}s infinite`,
-          }}
-        />
+        <Star key={i} {...s} />
       ))}
     </div>
+  )
+}
+
+function Star({ left, top, size, peak, dur, delay }: {
+  left: number; top: number; size: number; peak: number; dur: number; delay: number
+}) {
+  const ref = useRef<HTMLDivElement>(null)
+
+  // Repositionne pendant la phase éteinte (opacité 0) → le déplacement est invisible.
+  function jump() {
+    const el = ref.current
+    if (!el) return
+    el.style.left = `${(Math.random() * 100).toFixed(2)}%`
+    el.style.top = `${(Math.random() * 100).toFixed(2)}%`
+  }
+
+  return (
+    <div
+      ref={ref}
+      className="star-dot absolute rounded-full bg-white"
+      onAnimationIteration={jump}
+      style={{
+        left: `${left}%`,
+        top: `${top}%`,
+        width: size,
+        height: size,
+        opacity: 0,
+        boxShadow: `0 0 ${Math.max(2, size * 2.2).toFixed(1)}px rgba(191,219,254,${(peak * 0.6).toFixed(2)})`,
+        ['--peak' as string]: peak.toFixed(3),
+        animation: `star-blink ${dur.toFixed(1)}s ease-in-out ${delay.toFixed(1)}s infinite`,
+      }}
+    />
   )
 }
 
@@ -73,8 +85,6 @@ function NightSky() {
 //
 // Astuce : animationDelay négatif = le nuage est déjà "en cours de route"
 // initialPct = à quel % du trajet le nuage se trouve au chargement
-// Ex: initialPct=40 sur duration=60s → delay = -(40/100)*60 = -24s
-// Le nuage apparaît donc à 40% de la largeur de l'écran dès le départ
 //
 const CLOUDS = [
   { top: '8%',  width: 200, height: 72,  duration: 48, opacity: 0.35, initialPct: 15 },
@@ -102,7 +112,6 @@ function DaySky() {
             left: 0,
             opacity: c.opacity,
             animation: `cloud-slide-right ${c.duration}s linear infinite`,
-            // Delay négatif = nuage déjà en cours de route à son initialPct
             animationDelay: `-${(c.initialPct / 100) * c.duration}s`,
           }}
         >
