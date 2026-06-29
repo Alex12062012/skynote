@@ -82,6 +82,19 @@
   @media (prefers-reduced-transparency: reduce) {
     .lglass-liquid { background: rgba(13,27,46,.92); backdrop-filter: none; -webkit-backdrop-filter: none; }
   }
+  /* Bleu semi-opaque + semi liquid glass (distorsion + on devine le fond) */
+  .lglass-blue-liquid {
+    border: 1px solid rgba(96,165,250,.34);
+    background:
+      radial-gradient(120% 85% at 30% -25%, rgba(255,255,255,.18), transparent 58%),
+      linear-gradient(150deg, rgba(45,104,232,.36), rgba(20,44,82,.52));
+    -webkit-backdrop-filter: blur(8px) saturate(160%);
+    backdrop-filter: url(#lg-distort) blur(2px) saturate(160%);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.30), inset 0 -1px 0 rgba(255,255,255,.06), 0 12px 30px -14px rgba(0,0,0,.55);
+  }
+  @media (prefers-reduced-transparency: reduce) {
+    .lglass-blue-liquid { background: rgba(22,46,86,.95); backdrop-filter: none; -webkit-backdrop-filter: none; }
+  }
   .lglass-interactive { transition: transform .18s cubic-bezier(.33,1,.68,1), box-shadow .25s ease; }
   .lglass-interactive:hover { transform: translateY(-1px); }
   .lglass-interactive:active { transform: scale(.97); }

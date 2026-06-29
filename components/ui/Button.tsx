@@ -17,7 +17,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       secondary: 'border border-sky-border-strong bg-sky-surface text-text-main hover:bg-sky-cloud hover:-translate-y-0.5 dark:border-night-border dark:bg-night-surface dark:text-text-dark-main dark:hover:border-brand-dark/40 dark:hover:bg-night-surface-2',
       ghost: 'text-text-secondary hover:bg-sky-cloud hover:text-text-main dark:text-text-dark-secondary dark:hover:bg-night-surface dark:hover:text-text-dark-main',
       danger: 'bg-error/10 text-error hover:bg-error/20 border border-error/20',
-      glass: 'lglass-liquid lglass-interactive text-white [text-shadow:0_1px_3px_rgba(0,0,0,0.55)]',
+      glass: 'lglass-blue-liquid lglass-interactive text-white [text-shadow:0_1px_3px_rgba(0,0,0,0.5)]',
     }
     const sizes = { sm: 'h-8 px-3 text-[13px]', md: 'h-10 px-4 text-[14px]', lg: 'h-12 px-6 text-[15px]' }
 

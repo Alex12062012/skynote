@@ -1,7 +1,7 @@
 'use client'
 
 import { useTheme } from 'next-themes'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 export function SkyBackground() {
   const { resolvedTheme } = useTheme()
@@ -11,60 +11,57 @@ export function SkyBackground() {
   return resolvedTheme === 'dark' ? <NightSky /> : <DaySky />
 }
 
-// ── Étoiles dispersées naturellement ──────────────────────────
-const STARS = [
-  { x: 8,  y: 5,  size: 2,   delay: 0,   duration: 4.2 },
-  { x: 23, y: 12, size: 1.5, delay: 0.8, duration: 5.1 },
-  { x: 41, y: 3,  size: 2.5, delay: 1.6, duration: 3.8 },
-  { x: 67, y: 8,  size: 1,   delay: 0.3, duration: 6.0 },
-  { x: 84, y: 15, size: 2,   delay: 2.1, duration: 4.5 },
-  { x: 92, y: 4,  size: 1.5, delay: 0.9, duration: 5.3 },
-  { x: 15, y: 22, size: 1,   delay: 3.2, duration: 4.8 },
-  { x: 55, y: 18, size: 2,   delay: 1.1, duration: 5.6 },
-  { x: 76, y: 25, size: 1.5, delay: 2.5, duration: 3.9 },
-  { x: 33, y: 31, size: 1,   delay: 0.6, duration: 6.2 },
-  { x: 48, y: 9,  size: 2.5, delay: 1.8, duration: 4.1 },
-  { x: 89, y: 33, size: 1,   delay: 3.7, duration: 5.4 },
-  { x: 6,  y: 40, size: 1.5, delay: 2.0, duration: 4.7 },
-  { x: 72, y: 42, size: 2,   delay: 0.4, duration: 5.9 },
-  { x: 19, y: 55, size: 1,   delay: 1.3, duration: 3.6 },
-  { x: 38, y: 48, size: 2,   delay: 4.1, duration: 4.3 },
-  { x: 61, y: 52, size: 1.5, delay: 0.7, duration: 5.7 },
-  { x: 94, y: 47, size: 1,   delay: 2.8, duration: 6.1 },
-  { x: 27, y: 67, size: 2,   delay: 1.5, duration: 4.0 },
-  { x: 53, y: 63, size: 1,   delay: 3.3, duration: 5.2 },
-  { x: 79, y: 58, size: 2.5, delay: 0.2, duration: 4.6 },
-  { x: 12, y: 74, size: 1.5, delay: 2.6, duration: 5.8 },
-  { x: 44, y: 71, size: 1,   delay: 1.9, duration: 3.7 },
-  { x: 87, y: 69, size: 2,   delay: 3.5, duration: 4.4 },
-  { x: 31, y: 82, size: 1,   delay: 0.5, duration: 6.3 },
-  { x: 65, y: 78, size: 1.5, delay: 2.3, duration: 5.0 },
-  { x: 96, y: 85, size: 2,   delay: 1.0, duration: 4.9 },
-  { x: 4,  y: 88, size: 1,   delay: 3.9, duration: 5.5 },
-  { x: 58, y: 91, size: 2,   delay: 1.7, duration: 4.2 },
-  { x: 82, y: 93, size: 1.5, delay: 2.9, duration: 3.5 },
-]
-
+// ── Étoiles : chacune erre où elle veut (trajectoire aléatoire) et a sa
+//    propre luminosité. Généré côté client uniquement (NightSky ne rend
+//    qu'après le montage), donc Math.random() ne casse pas l'hydratation.
 function NightSky() {
+  const stars = useMemo(
+    () =>
+      Array.from({ length: 52 }, () => {
+        const dx = (Math.random() * 2 - 1) * (18 + Math.random() * 55)
+        const dy = (Math.random() * 2 - 1) * (18 + Math.random() * 55)
+        return {
+          left: Math.random() * 100,
+          top: Math.random() * 100,
+          size: 1 + Math.random() * 2.2,
+          base: 0.04 + Math.random() * 0.14,   // luminosité basse propre
+          peak: 0.4 + Math.random() * 0.58,    // luminosité haute propre
+          dx, dy,
+          dur: 9 + Math.random() * 17,
+          delay: -Math.random() * 24,
+        }
+      }),
+    [],
+  )
+
   return (
     <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden" aria-hidden>
       <style>{`
-        @keyframes star-twinkle-slow {
-          0%, 100% { opacity: 0.15; transform: scale(1); }
-          50%       { opacity: 0.75; transform: scale(1.3); }
+        @keyframes star-wander {
+          0%   { transform: translate(0, 0);                                          opacity: var(--base); }
+          20%  { transform: translate(var(--dx), var(--dy));                           opacity: var(--peak); }
+          40%  { transform: translate(calc(var(--dx) * -0.5), calc(var(--dy) * 0.85)); opacity: var(--base); }
+          60%  { transform: translate(calc(var(--dx) * 0.7),  calc(var(--dy) * -0.6)); opacity: var(--peak); }
+          80%  { transform: translate(calc(var(--dx) * -0.3), calc(var(--dy) * -0.9)); opacity: var(--base); }
+          100% { transform: translate(0, 0);                                          opacity: var(--base); }
         }
       `}</style>
-      {STARS.map((star, i) => (
+      {stars.map((s, i) => (
         <div
           key={i}
           className="absolute rounded-full bg-white"
           style={{
-            left: `${star.x}%`,
-            top: `${star.y}%`,
-            width: star.size,
-            height: star.size,
-            opacity: 0.15,
-            animation: `star-twinkle-slow ${star.duration}s ease-in-out ${star.delay}s infinite`,
+            left: `${s.left}%`,
+            top: `${s.top}%`,
+            width: s.size,
+            height: s.size,
+            opacity: s.base,
+            boxShadow: `0 0 ${Math.max(2, s.size * 2.2)}px rgba(191,219,254,${(s.peak * 0.6).toFixed(2)})`,
+            ['--base' as string]: s.base.toFixed(3),
+            ['--peak' as string]: s.peak.toFixed(3),
+            ['--dx' as string]: `${s.dx.toFixed(1)}px`,
+            ['--dy' as string]: `${s.dy.toFixed(1)}px`,
+            animation: `star-wander ${s.dur.toFixed(1)}s ease-in-out ${s.delay.toFixed(1)}s infinite`,
           }}
         />
       ))}
