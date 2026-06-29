@@ -79,7 +79,7 @@ export function NovaCounter({ initialBalance, userId }: NovaCounterProps) {
   }, [userId, supabase])
 
   return (
-    <div className="relative flex items-center gap-1.5 rounded-pill border border-sky-border bg-sky-surface px-3 py-1.5 dark:border-night-border dark:bg-night-surface">
+    <div className="lglass-blue relative flex items-center gap-1.5 rounded-pill px-3 py-1.5">
       <NovaCoin size={18} />
       <span
         className="font-display text-[14px] font-bold tabular-nums text-text-main dark:text-text-dark-main transition-all duration-300"

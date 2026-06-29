@@ -33,7 +33,7 @@ export function FeedbackButton({ userId }: { userId: string }) {
       {/* Bouton flottant — contrôle de la couche navigation : Liquid Glass interactif */}
       <button
         onClick={() => setOpen(true)}
-        className="lglass lglass-tint lglass-interactive fixed bottom-6 right-6 z-40 hidden items-center gap-2 rounded-pill px-4 py-2.5 font-body text-[13px] font-semibold text-white [text-shadow:0_1px_2px_rgba(0,0,0,0.45)] sm:flex"
+        className="lglass-blue lglass-interactive fixed bottom-6 right-6 z-40 hidden items-center gap-2 rounded-pill px-4 py-2.5 font-body text-[13px] font-semibold text-white [text-shadow:0_1px_2px_rgba(0,0,0,0.45)] sm:flex"
       >
         <MessageSquare className="h-4 w-4" />
         Feedback

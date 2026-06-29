@@ -53,10 +53,8 @@ export function StatsBar({ coursesCount, qcmCount, streak, coins }: StatsBarProp
         <div
           key={s.label}
           className={cn(
-            'flex items-center gap-3 rounded-card border bg-sky-surface p-4 adow-card dark:bg-night-surface dark:shadow-card-dark animate-card-enter',
-            s.highlight
-              ? 'border-orange-200 ring-1 ring-orange-200/60 dark:border-orange-900/60 dark:ring-orange-900/40'
-              : 'border-sky-border dark:border-night-border',
+            'lglass-blue flex items-center gap-3 rounded-card p-4 animate-card-enter',
+            s.highlight && 'ring-1 ring-orange-400/50',
           )}
           style={{ animationDelay: `${i * 60}ms` }}
         >
@@ -70,7 +68,7 @@ export function StatsBar({ coursesCount, qcmCount, streak, coins }: StatsBarProp
             )}>
               {s.value}
             </p>
-            <p className="font-body text-[12px] text-text-tertiary dark:text-text-dark-tertiary mt-0.5">
+            <p className="font-body text-[12px] text-text-secondary dark:text-text-dark-secondary mt-0.5">
               {s.label}
             </p>
           </div>
