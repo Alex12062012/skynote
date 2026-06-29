@@ -22,7 +22,7 @@ export function CourseCard({ id, title, subject, color, status, progress, create
 
   return (
     <Link href={`/courses/${id}`}
-      className="lglass-blue lglass-interactive group flex flex-col gap-3 rounded-card p-5">
+      className="lglass-liquid lglass-interactive group flex flex-col gap-3 rounded-card p-5">
       <div className="flex items-start justify-between gap-2">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-2">

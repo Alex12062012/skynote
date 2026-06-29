@@ -53,7 +53,7 @@ export function StatsBar({ coursesCount, qcmCount, streak, coins }: StatsBarProp
         <div
           key={s.label}
           className={cn(
-            'lglass-blue flex items-center gap-3 rounded-card p-4 animate-card-enter',
+            'lglass-liquid flex items-center gap-3 rounded-card p-4 animate-card-enter',
             s.highlight && 'ring-1 ring-orange-400/50',
           )}
           style={{ animationDelay: `${i * 60}ms` }}

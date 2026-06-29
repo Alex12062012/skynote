@@ -66,6 +66,22 @@
   @media (prefers-reduced-transparency: reduce) {
     .lglass-blue { background: rgba(20,40,75,.97); backdrop-filter: none; -webkit-backdrop-filter: none; }
   }
+  /* Liquid Glass transparent + distorsion réelle (laisse passer les étoiles, qui ondulent).
+     La distorsion vient du filtre SVG #lg-distort branché sur backdrop-filter. */
+  .lglass-liquid {
+    border: 1px solid rgba(255,255,255,.20);
+    background: linear-gradient(140deg, rgba(255,255,255,.07), rgba(255,255,255,.02));
+    -webkit-backdrop-filter: blur(8px) saturate(150%);
+    backdrop-filter: url(#lg-distort) blur(1px) saturate(150%);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.34),
+      inset 0 -1px 0 rgba(255,255,255,.07),
+      inset 0 0 16px rgba(255,255,255,.05),
+      0 10px 30px -12px rgba(0,0,0,.5);
+  }
+  @media (prefers-reduced-transparency: reduce) {
+    .lglass-liquid { background: rgba(13,27,46,.92); backdrop-filter: none; -webkit-backdrop-filter: none; }
+  }
   .lglass-interactive { transition: transform .18s cubic-bezier(.33,1,.68,1), box-shadow .25s ease; }
   .lglass-interactive:hover { transform: translateY(-1px); }
   .lglass-interactive:active { transform: scale(.97); }
