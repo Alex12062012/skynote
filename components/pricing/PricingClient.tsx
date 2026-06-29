@@ -16,13 +16,14 @@ const PLANS = [
     color: 'border-slate-200 dark:border-slate-700',
     novas: '600 ✦ offerts',
     features: [
-      { text: '600 Novas ✦ offerts',        ok: true  },
-      { text: 'Fiches générées par l\'IA',   ok: true  },
-      { text: 'QCM automatiques',            ok: true  },
-      { text: 'Sky Coins & objectifs',       ok: true  },
-      { text: 'Dictée vocale',               ok: false },
-      { text: 'Chatbot IA par cours',        ok: false },
-      { text: 'Recharge mensuelle de Novas', ok: false },
+      { text: '600 Novas ✦ offerts',              ok: true  },
+      { text: 'Fiches générées par l\'IA',         ok: true  },
+      { text: 'QCM automatiques',                  ok: true  },
+      { text: 'Sky Coins & objectifs',             ok: true  },
+      { text: '1 simulation brevet (sans mention)', ok: true  },
+      { text: 'Dictée vocale',                     ok: false },
+      { text: 'Chatbot IA par cours',              ok: false },
+      { text: 'Recharge mensuelle de Novas',       ok: false },
     ],
   },
   {
@@ -34,30 +35,32 @@ const PLANS = [
     popular: true,
     novas: '2 000 ✦ / mois',
     features: [
-      { text: '2 000 Novas ✦ / mois',       ok: true },
-      { text: 'Fiches générées par l\'IA',   ok: true },
-      { text: 'QCM automatiques',            ok: true },
-      { text: 'Sky Coins & objectifs',       ok: true },
-      { text: 'Dictée vocale',               ok: true },
-      { text: 'Chatbot IA par cours',        ok: true },
-      { text: 'Accès prioritaire nouveautés', ok: true },
+      { text: '2 000 Novas ✦ / mois',             ok: true },
+      { text: 'Fiches générées par l\'IA',         ok: true },
+      { text: 'QCM automatiques',                  ok: true },
+      { text: 'Sky Coins & objectifs',             ok: true },
+      { text: '1 simulation brevet avec mention',  ok: true },
+      { text: 'Dictée vocale',                     ok: true },
+      { text: 'Chatbot IA par cours',              ok: true },
+      { text: 'Accès prioritaire nouveautés',      ok: true },
     ],
   },
   {
     id: 'pro', name: 'Pro',
-    price: { monthly: 6.99, yearly: 5.99 },
-    yearlyTotal: 71.88,
+    price: { monthly: 6.90, yearly: 5.49 },
+    yearlyTotal: 65.88,
     description: 'Pour aller plus loin',
     color: 'border-violet-400 dark:border-violet-500',
     novas: '4 000 ✦ / mois',
     features: [
-      { text: '4 000 Novas ✦ / mois',       ok: true },
-      { text: 'Fiches générées par l\'IA',   ok: true },
-      { text: 'QCM automatiques',            ok: true },
-      { text: 'Sky Coins & objectifs',       ok: true },
-      { text: 'Dictée vocale',               ok: true },
-      { text: 'Chatbot IA par cours',        ok: true },
-      { text: 'Support prioritaire',         ok: true },
+      { text: '4 000 Novas ✦ / mois',             ok: true },
+      { text: 'Fiches générées par l\'IA',         ok: true },
+      { text: 'QCM automatiques',                  ok: true },
+      { text: 'Sky Coins & objectifs',             ok: true },
+      { text: 'Simulations brevet illimitées',     ok: true },
+      { text: 'Dictée vocale',                     ok: true },
+      { text: 'Chatbot IA par cours',              ok: true },
+      { text: 'Support prioritaire',               ok: true },
     ],
   },
 ]
@@ -65,11 +68,11 @@ const PLANS = [
 interface PricingClientProps {
   currentPlan: string
   planExpiresAt: string | null
-  hasStripeSubscription: boolean
+  hasLSSubscription: boolean
   isLoggedIn: boolean
 }
 
-export function PricingClient({ currentPlan, planExpiresAt, hasStripeSubscription, isLoggedIn }: PricingClientProps) {
+export function PricingClient({ currentPlan, planExpiresAt, hasLSSubscription, isLoggedIn }: PricingClientProps) {
   const router = useRouter()
   const [billing, setBilling] = useState<Billing>('monthly')
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null)
@@ -77,18 +80,18 @@ export function PricingClient({ currentPlan, planExpiresAt, hasStripeSubscriptio
 
   const isPaid = currentPlan === 'starter' || currentPlan === 'pro'
 
-  async function handleStripe(planId: string) {
+  async function handleCheckout(planId: string) {
     if (!isLoggedIn) { router.push('/signup'); return }
     setLoadingPlan(planId)
     try {
-      const res = await fetch('/api/stripe/create-checkout', {
+      const res = await fetch('/api/lemonsqueezy/create-checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ plan: planId, billing }),
       })
       const data = await res.json()
       if (data.url) window.location.href = data.url
-      else alert(data.error || 'Erreur Stripe')
+      else alert(data.error || 'Erreur LemonSqueezy')
     } catch { alert('Erreur réseau') }
     setLoadingPlan(null)
   }
@@ -96,7 +99,7 @@ export function PricingClient({ currentPlan, planExpiresAt, hasStripeSubscriptio
   async function handleManageSubscription() {
     setPortalLoading(true)
     try {
-      const res = await fetch('/api/stripe/portal', {
+      const res = await fetch('/api/lemonsqueezy/portal', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
       })
@@ -148,7 +151,7 @@ export function PricingClient({ currentPlan, planExpiresAt, hasStripeSubscriptio
                   )}
                 </div>
               </div>
-              {hasStripeSubscription && (
+              {hasLSSubscription && (
                 <button onClick={handleManageSubscription} disabled={portalLoading}
                   className="flex items-center justify-center gap-2 rounded-input border border-sky-border bg-sky-surface px-5 py-2.5 font-body text-[14px] font-medium text-text-main hover:bg-sky-cloud dark:border-night-border dark:bg-night-surface dark:text-text-dark-main dark:hover:bg-night-border transition-colors disabled:opacity-50">
                   <Settings className="h-4 w-4" />
@@ -156,7 +159,7 @@ export function PricingClient({ currentPlan, planExpiresAt, hasStripeSubscriptio
                 </button>
               )}
             </div>
-            {hasStripeSubscription && (
+            {hasLSSubscription && (
               <p className="mt-3 font-body text-[12px] text-text-tertiary dark:text-text-dark-tertiary">
                 Modifier le moyen de paiement, changer de forfait ou annuler depuis le portail Stripe.
               </p>
@@ -271,7 +274,7 @@ export function PricingClient({ currentPlan, planExpiresAt, hasStripeSubscriptio
                       {portalLoading ? 'Chargement...' : 'Changer de plan'}
                     </button>
                   ) : (
-                    <button onClick={() => handleStripe(plan.id)} disabled={isLoading}
+                    <button onClick={() => handleCheckout(plan.id)} disabled={isLoading}
                       className={cn(
                         'flex items-center justify-center h-11 w-full rounded-input font-body text-[14px] font-semibold transition-all disabled:opacity-60',
                         plan.id === 'starter'
@@ -291,8 +294,8 @@ export function PricingClient({ currentPlan, planExpiresAt, hasStripeSubscriptio
         <div className="mt-10 grid gap-4 sm:grid-cols-2">
           {[
             ['C\'est quoi les Novas ✦ ?', 'Les Novas sont la monnaie qui alimente les fonctionnalités IA : OCR (2✦), fiches (30✦), QCM (88✦), chatbot (36✦). Ils ne s\'expirent pas et s\'accumulent.'],
-            ['Comment annuler mon abonnement ?', 'Clique sur "Gérer mon abonnement" ci-dessus. Tu seras redirigé vers le portail Stripe où tu peux annuler en un clic. Ton plan reste actif jusqu\'à la fin de la période payée.'],
-            ['Comment changer de forfait ?', 'Tu peux passer de Starter à Pro (ou l\'inverse) depuis le portail Stripe. Le changement prend effet immédiatement avec un prorata.'],
+            ['Comment annuler mon abonnement ?', 'Clique sur "Gérer mon abonnement" ci-dessus. Tu seras redirigé vers le portail LemonSqueezy où tu peux annuler en un clic. Ton plan reste actif jusqu\'à la fin de la période payée.'],
+            ['Comment changer de forfait ?', 'Tu peux passer de Starter à Pro (ou l\'inverse) depuis le portail LemonSqueezy. Le changement prend effet immédiatement.'],
             ['Je peux gagner des Novas autrement ?', 'Oui ! La roue de la fortune en boutique peut donner des Novas ✦. Tu peux aussi en gagner via les objectifs de fidélité.'],
           ].map(([q, a]) => (
             <div key={q} className="rounded-card border border-sky-border bg-sky-surface p-4 dark:border-night-border dark:bg-night-surface">
@@ -303,7 +306,7 @@ export function PricingClient({ currentPlan, planExpiresAt, hasStripeSubscriptio
         </div>
 
         <p className="mt-8 text-center font-body text-[12px] text-text-tertiary">
-          Paiement sécurisé par Stripe · Annulation à tout moment ·{' '}
+          Paiement sécurisé par LemonSqueezy · Annulation à tout moment ·{' '}
           <Link href="/privacy" className="hover:underline">Politique de confidentialité</Link>
         </p>
       </div>
