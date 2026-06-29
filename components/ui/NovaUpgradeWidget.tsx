@@ -17,7 +17,7 @@ export function NovaUpgradeWidget({ plan }: NovaUpgradeWidgetProps) {
   if (plan === 'pro') return null
 
   return (
-    <div className="fixed bottom-5 left-5 z-30 hidden items-center gap-2 rounded-pill bg-sky-surface/90 px-3 py-1.5 shadow-md backdrop-blur-sm border border-sky-border dark:border-night-border dark:bg-night-surface/90 sm:flex">
+    <div className="lglass fixed bottom-5 left-5 z-30 hidden items-center gap-2 rounded-pill px-3.5 py-1.5 sm:flex">
       <NovaCoin size={15} />
       <span className="font-body text-[13px] text-text-secondary dark:text-text-dark-secondary">
         {PLAN_LABELS[plan] ?? 'Forfait Gratuit'}

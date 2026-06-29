@@ -27,20 +27,42 @@
   .text-gradient-sky { @apply bg-gradient-to-r from-brand to-brand-dark bg-clip-text text-transparent; }
   .glass { backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
 
-  /* Liquid glass (approx web, comme la landing) — surfaces translucides en dark */
-  .glass-panel {
+  /* ── Liquid Glass — traduction web des principes iOS 26 ──────────────
+     Réservé à la couche navigation / contrôles flottants, jamais au contenu.
+     `regular` (défaut), `clear` (plus transparent), `tint` (proéminence),
+     `interactive` (illumination au pointeur + press). */
+  .lglass {
     position: relative; isolation: isolate;
-    border: 1px solid rgba(255,255,255,.12);
-    background: linear-gradient(135deg, rgba(255,255,255,.10), rgba(255,255,255,.03));
-    backdrop-filter: blur(18px) saturate(170%); -webkit-backdrop-filter: blur(18px) saturate(170%);
-    box-shadow: inset 0 1px 0 rgba(255,255,255,.22), inset 0 -1px 0 rgba(255,255,255,.05), 0 16px 50px rgba(0,0,0,.4);
+    border: 1px solid rgba(255,255,255,.14);
+    background: linear-gradient(140deg, rgba(255,255,255,.11), rgba(255,255,255,.035));
+    backdrop-filter: blur(16px) saturate(180%); -webkit-backdrop-filter: blur(16px) saturate(180%);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.32), inset 0 -1px 0 rgba(255,255,255,.05), 0 10px 30px -12px rgba(0,0,0,.55);
   }
-  .glass-panel::before {
+  /* Reflet spéculaire haut — réfraction du bord */
+  .lglass::before {
     content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
-    background: radial-gradient(130% 70% at 28% 0%, rgba(255,255,255,.26), transparent 55%);
+    background: radial-gradient(120% 80% at 30% -20%, rgba(255,255,255,.28), transparent 60%);
+  }
+  .lglass-clear {
+    backdrop-filter: blur(9px) saturate(150%); -webkit-backdrop-filter: blur(9px) saturate(150%);
+    background: linear-gradient(140deg, rgba(255,255,255,.08), rgba(255,255,255,.02));
+  }
+  .lglass-tint {
+    background:
+      linear-gradient(140deg, rgba(96,165,250,.20), rgba(37,99,235,.10)),
+      linear-gradient(140deg, rgba(255,255,255,.10), rgba(255,255,255,.03));
+    border-color: rgba(96,165,250,.32);
+  }
+  .lglass-interactive { transition: transform .18s cubic-bezier(.33,1,.68,1), box-shadow .25s ease; }
+  .lglass-interactive:hover { transform: translateY(-1px); }
+  .lglass-interactive:active { transform: scale(.97); }
+  @media (prefers-reduced-motion: reduce) {
+    .lglass-interactive { transition: none; }
+    .lglass-interactive:hover, .lglass-interactive:active { transform: none; }
   }
   @media (prefers-reduced-transparency: reduce) {
-    .glass-panel { background: rgba(13,27,46,.94); backdrop-filter: none; -webkit-backdrop-filter: none; }
+    .lglass { background: rgba(13,27,46,.94); backdrop-filter: none; -webkit-backdrop-filter: none; }
+    .lglass-tint { background: rgba(20,40,75,.96); }
   }
 
   /* Balayage lumineux réutilisable sur les CTA */
