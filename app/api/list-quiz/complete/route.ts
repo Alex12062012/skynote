@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server"
+import { createAdminClient } from "@/lib/supabase/admin"
 import { NextResponse } from "next/server"
 
 const COINS_PERFECT = 10
@@ -31,7 +32,7 @@ export async function POST(req: Request) {
   })
 
   if (coinsEarned > 0 && canEarnCoins) {
-    await supabase.rpc("increment_coins", {
+    await createAdminClient().rpc("increment_coins", {
       p_user_id: user.id,
       p_amount: coinsEarned,
     })
