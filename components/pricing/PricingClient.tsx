@@ -28,8 +28,8 @@ const PLANS = [
   },
   {
     id: 'starter', name: 'Starter',
-    price: { monthly: 4.99, yearly: 3.99 },
-    yearlyTotal: 47.88,
+    price: { monthly: 4.90, yearly: 3.90 },
+    yearlyTotal: 46.80,
     description: 'Pour les élèves sérieux',
     color: 'border-brand dark:border-brand-dark ring-2 ring-brand/20',
     popular: true,
@@ -47,8 +47,8 @@ const PLANS = [
   },
   {
     id: 'pro', name: 'Pro',
-    price: { monthly: 6.90, yearly: 5.49 },
-    yearlyTotal: 65.88,
+    price: { monthly: 6.90, yearly: 5.90 },
+    yearlyTotal: 70.80,
     description: 'Pour aller plus loin',
     color: 'border-violet-400 dark:border-violet-500',
     novas: '4 000 ✦ / mois',

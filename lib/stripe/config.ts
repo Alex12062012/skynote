@@ -12,10 +12,10 @@ export const STRIPE_CONFIG = {
 
   // Prix (à créer dans Stripe Dashboard puis coller les IDs)
   prices: {
-    starter_monthly: process.env.STRIPE_PRICE_STARTER_MONTHLY || '', // 4,99€/mois
-    starter_yearly:  process.env.STRIPE_PRICE_STARTER_YEARLY  || '', // 3,99€/mois annuel
-    pro_monthly:     process.env.STRIPE_PRICE_PRO_MONTHLY     || '', // 6,99€/mois
-    pro_yearly:      process.env.STRIPE_PRICE_PRO_YEARLY      || '', // 5,99€/mois annuel
+    starter_monthly: process.env.STRIPE_PRICE_STARTER_MONTHLY || '', // 4,90€/mois
+    starter_yearly:  process.env.STRIPE_PRICE_STARTER_YEARLY  || '', // 3,90€/mois annuel
+    pro_monthly:     process.env.STRIPE_PRICE_PRO_MONTHLY     || '', // 6,90€/mois
+    pro_yearly:      process.env.STRIPE_PRICE_PRO_YEARLY      || '', // 5,90€/mois annuel
   },
 
   // URLs de redirection après paiement
@@ -25,12 +25,12 @@ export const STRIPE_CONFIG = {
 
 export const PLAN_PRICES = {
   starter: {
-    monthly: { amount: 4.99,  label: '4,99€/mois'  },
-    yearly:  { amount: 3.99,  label: '3,99€/mois', totalLabel: '47,88€/an'  },
+    monthly: { amount: 4.90,  label: '4,90€/mois'  },
+    yearly:  { amount: 3.90,  label: '3,90€/mois', totalLabel: '46,80€/an'  },
   },
   pro: {
-    monthly: { amount: 6.99,  label: '6,99€/mois'  },
-    yearly:  { amount: 5.99,  label: '5,99€/mois', totalLabel: '71,88€/an'  },
+    monthly: { amount: 6.90,  label: '6,90€/mois'  },
+    yearly:  { amount: 5.90,  label: '5,90€/mois', totalLabel: '70,80€/an'  },
   },
 }
 

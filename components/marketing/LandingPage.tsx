@@ -625,8 +625,8 @@ function Pricing({ t, isBeta }: { t: (k: string) => string; isBeta: boolean }) {
 
   const plans = [
     { name: t("landing.pricing.free"), price: "0€", note: null, featured: false, feats: ["landing.pricing.free1", "landing.pricing.free2", "landing.pricing.free3", "landing.pricing.free4"], cta: t("landing.pricing.start") },
-    { name: "Starter", price: "4,99€", per: t("landing.pricing.perMonth"), note: `ou 3,99€${t("landing.pricing.perMonth")} ${t("landing.pricing.yearly")}`, featured: true, feats: ["landing.pricing.starter1", "landing.pricing.starter2", "landing.pricing.starter3", "landing.pricing.starter4", "landing.pricing.starter5"], cta: t("landing.pricing.subscribe") },
-    { name: t("landing.pricing.pro"), price: "6,90€", per: t("landing.pricing.perMonth"), note: `ou 5,49€${t("landing.pricing.perMonth")} ${t("landing.pricing.yearly")}`, featured: false, feats: ["landing.pricing.pro1", "landing.pricing.pro2", "landing.pricing.pro3", "landing.pricing.pro4", "landing.pricing.pro5"], cta: t("landing.pricing.subscribe") },
+    { name: "Starter", price: "4,90€", per: t("landing.pricing.perMonth"), note: `ou 3,90€${t("landing.pricing.perMonth")} ${t("landing.pricing.yearly")}`, featured: true, feats: ["landing.pricing.starter1", "landing.pricing.starter2", "landing.pricing.starter3", "landing.pricing.starter4", "landing.pricing.starter5"], cta: t("landing.pricing.subscribe") },
+    { name: t("landing.pricing.pro"), price: "6,90€", per: t("landing.pricing.perMonth"), note: `ou 5,90€${t("landing.pricing.perMonth")} ${t("landing.pricing.yearly")}`, featured: false, feats: ["landing.pricing.pro1", "landing.pricing.pro2", "landing.pricing.pro3", "landing.pricing.pro4", "landing.pricing.pro5"], cta: t("landing.pricing.subscribe") },
   ]
 
   return (

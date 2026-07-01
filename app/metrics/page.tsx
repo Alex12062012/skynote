@@ -266,13 +266,13 @@ export default function MetricsPage() {
                 <label className="text-[11px] text-slate-400 mb-1 block">Comptes Starter offerts</label>
                 <input type="number" min={0} value={manualStarter} onChange={e => setManualStarter(parseInt(e.target.value) || 0)}
                   className="h-9 w-full rounded-lg border border-slate-700 bg-slate-800 px-3 text-[14px] text-white focus:border-amber-500 focus:outline-none" />
-                <p className="text-[10px] text-slate-500 mt-1">= -{(manualStarter * 4.99).toFixed(2)}€/mois</p>
+                <p className="text-[10px] text-slate-500 mt-1">= -{(manualStarter * 4.90).toFixed(2)}€/mois</p>
               </div>
             </div>
           </div>
 
           {(() => {
-            const deductStarter = manualStarter * 4.99
+            const deductStarter = manualStarter * 4.90
             const realMrr = Math.max(0, parseFloat(k.mrr) - deductStarter)
             const realArr = (realMrr * 12).toFixed(2)
             return (

@@ -117,9 +117,9 @@ export async function GET() {
   })
   const paidTotal = paidCounts.starter + paidCounts.pro
   const conversionRate = totalU > 0 ? ((paidTotal / totalU) * 100).toFixed(1) : '0'
-  const mrr = (paidCounts.starter * 4.99 + paidCounts.pro * 11.99).toFixed(2)
+  const mrr = (paidCounts.starter * 4.90 + paidCounts.pro * 6.90).toFixed(2)
   const arr = (parseFloat(mrr) * 12).toFixed(2)
-  const ltv = ((paidCounts.starter * 4.99 * 12) + (paidCounts.pro * 11.99 * 12)).toFixed(2)
+  const ltv = ((paidCounts.starter * 4.90 * 12) + (paidCounts.pro * 6.90 * 12)).toFixed(2)
 
   // ── Feedbacks ──
   const scores = (feedbacks || []).map((f: any) => f.score)

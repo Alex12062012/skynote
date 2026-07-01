@@ -316,10 +316,11 @@ Coût : 50 coins. Espérance nette : –26 coins.
 | Plan | Mensuel | Annuel |
 |---|---|---|
 | Free | Gratuit | — |
-| Plus | 4,99 €/mois | 3,99 €/mois (47,88 €/an) |
+| Starter | 4,90 €/mois | 3,90 €/mois (46,80 €/an) |
+| Pro | 6,90 €/mois | 5,90 €/mois (70,80 €/an) |
 
 
-Le webhook `/api/stripe/webhook` met à jour `plan` et `plan_expires_at` dans `profiles`. Le portail client Stripe permet la gestion autonome de l'abonnement.
+Le webhook `/api/lemonsqueezy/webhook` met à jour `plan` et `plan_expires_at` dans `profiles`. Le portail client LemonSqueezy permet la gestion autonome de l'abonnement.
 
 ---
 
