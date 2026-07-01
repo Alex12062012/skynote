@@ -1,5 +1,6 @@
 import { generateFlashcards, generateQcmQuestions } from './generate'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import type { QcmDifficulty } from './prompts'
 
 const ALL_DIFFICULTIES: QcmDifficulty[] = ['peaceful', 'easy', 'medium', 'hard']
@@ -248,7 +249,7 @@ async function checkAndAwardObjectives(courseId: string, userId: string): Promis
     }
 
     if (isCompleted) {
-      await supabase.rpc('increment_coins', { p_user_id: userId, p_amount: obj.reward_coins })
+      await createAdminClient().rpc('increment_coins', { p_user_id: userId, p_amount: obj.reward_coins })
       await supabase.from('coin_transactions').insert({
         user_id: userId,
         amount: obj.reward_coins,

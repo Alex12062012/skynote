@@ -91,7 +91,7 @@ export async function deductNovas(
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return { ok: false, balance: 0, error: 'Non connecté' }
 
-    const { data, error } = await supabase.rpc('deduct_novas', {
+    const { data, error } = await svc().rpc('deduct_novas', {
       p_user_id: user.id,
       p_amount:  amount,
       p_reason:  reason,

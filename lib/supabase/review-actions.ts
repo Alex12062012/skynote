@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from './server'
+import { createAdminClient } from './admin'
 import { applySM2, GRADE_COINS } from '@/lib/sm2'
 import type { SM2Grade } from '@/lib/sm2'
 
@@ -103,7 +104,7 @@ export async function submitReview(
     // Coins en fire & forget
     const coins = GRADE_COINS[grade]
     if (coins > 0) {
-      supabase.rpc('increment_coins', {
+      createAdminClient().rpc('increment_coins', {
         p_user_id: user.id,
         p_amount: coins,
       }).then(() =>

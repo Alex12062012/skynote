@@ -1,4 +1,5 @@
 import { createClient } from './server'
+import { createAdminClient } from './admin'
 
 export type PlanType = 'free' | 'starter' | 'pro'
 
@@ -125,7 +126,7 @@ export async function incrementWeeklyCourseCount(userId: string): Promise<void> 
       .eq('id', userId)
 
     if (loyaltyWeeks % 8 === 0) {
-      await supabase.rpc('increment_coins', { p_user_id: userId, p_amount: 750 })
+      await createAdminClient().rpc('increment_coins', { p_user_id: userId, p_amount: 750 })
 
       await supabase.from('coin_transactions').insert({
         user_id: userId,
