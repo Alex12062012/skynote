@@ -78,12 +78,23 @@ export async function POST(request: NextRequest) {
         ? new Date(attrs.renews_at)
         : (() => { const d = new Date(); d.setMonth(d.getMonth() + 1); return d })()
 
-      await supabase.from('profiles').update({
+      const { error: updateErr } = await supabase.from('profiles').update({
         plan,
         plan_expires_at:    expiresAt.toISOString(),
         ls_customer_id:     String(attrs.customer_id ?? ''),
         ls_subscription_id: subId,
       }).eq('id', userId)
+
+      // CRITIQUE : ne jamais avaler cette erreur en silence. Un échec ici
+      // (contrainte CHECK, RLS, colonne manquante...) veut dire que le client
+      // a payé mais que son plan n'a pas été activé — c'est le pire état
+      // possible et il doit être visible dans les logs immédiatement.
+      if (updateErr) {
+        console.error('[LS webhook] ECHEC update profiles (paiement encaisse, plan NON active):', {
+          userId, plan, error: updateErr.message,
+        })
+        break
+      }
 
       const novaAmount = PLAN_NOVA_ALLOC[plan as 'starter' | 'pro'] ?? 0
       if (novaAmount > 0) {
