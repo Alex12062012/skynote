@@ -39,6 +39,32 @@ export async function POST(request: NextRequest) {
 
   const supabase = getAdmin()
 
+  // ─── Idempotence ────────────────────────────────────────────────────────
+  // LemonSqueezy peut renvoyer le même événement plusieurs fois (timeout,
+  // cold start Vercel, erreur réseau côté LS qui déclenche un retry).
+  // Sans ce garde-fou, un replay de "subscription_created" recrédite les
+  // Novas une deuxième fois pour le même paiement.
+  // Le corps du webhook est strictement identique entre l'original et les
+  // retries → un hash du body brut sert de clé de dédup fiable, sans avoir
+  // besoin d'un ID d'événement dédié que LemonSqueezy ne fournit pas.
+  const bodyHash = crypto.createHash('sha256').update(body).digest('hex')
+  const eventKey = `lemonsqueezy:${bodyHash}`
+
+  const { error: dedupError } = await supabase
+    .from('webhook_events')
+    .insert({ id: eventKey, provider: 'lemonsqueezy', event_name: eventName })
+
+  if (dedupError) {
+    // Code 23505 = violation de contrainte unique → déjà traité, on sort en 200
+    // sans reprocesser (sinon LS considère l'échec et continue de retry en boucle).
+    if (dedupError.code === '23505') {
+      return NextResponse.json({ received: true, deduped: true })
+    }
+    // Table absente (migration 028 pas encore appliquée) → on ne bloque pas
+    // le paiement pour autant, mais on log fort pour ne pas rater le fix.
+    console.error('[LS webhook] Idempotency check failed (table manquante ?):', dedupError.message)
+  }
+
   switch (eventName) {
 
     // ─── Abonnement créé (premier paiement) ───────────────────────────────
