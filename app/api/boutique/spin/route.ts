@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { REGULAR_SKIN_IDS, SECRET_SKIN_IDS, SKINS } from '@/lib/gamification/config'
 
 // Segments visibles + 1 secret non affiche dans l'UI
@@ -52,7 +53,7 @@ export async function POST() {
   const netGain = coinValue - SPIN_COST
 
   // Deduire le cout
-  const { error: deductErr } = await supabase.rpc('increment_coins', {
+  const { error: deductErr } = await createAdminClient().rpc('increment_coins', {
     p_user_id: user.id,
     p_amount: -SPIN_COST,
   })
@@ -60,7 +61,7 @@ export async function POST() {
 
   // Appliquer la recompense selon le type
   if (segment.type === 'coins' && coinValue > 0) {
-    const { error } = await supabase.rpc('increment_coins', { p_user_id: user.id, p_amount: coinValue })
+    const { error } = await createAdminClient().rpc('increment_coins', { p_user_id: user.id, p_amount: coinValue })
     if (error) console.error('[spin] increment_coins error:', error)
   }
 

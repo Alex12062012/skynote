@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from './server'
+import { createAdminClient } from './admin'
 import { revalidatePath } from 'next/cache'
 
 // ============================================================
@@ -54,7 +55,7 @@ export async function updateLoginStreak(userId: string): Promise<void> {
 
   // Bonus 3 coins pour 3 jours consécutifs
   if (newStreak === 3) {
-    await supabase.rpc('award_coins', {
+    await createAdminClient().rpc('award_coins', {
       p_user_id: userId,
       p_amount: 3,
       p_reason: '3 jours de suite !',
@@ -174,7 +175,7 @@ export async function awardCoins(userId: string, amount: number, reason: string)
   const supabase = await createClient()
 
   // Increment atomique pour eviter les race conditions
-  await supabase.rpc('increment_coins', { p_user_id: userId, p_amount: amount })
+  await createAdminClient().rpc('increment_coins', { p_user_id: userId, p_amount: amount })
 
   await supabase.from('coin_transactions').insert({
     user_id: userId,
@@ -204,7 +205,7 @@ export async function spendCoins(
   if (profile.sky_coins < amount) return { success: false, error: 'Coins insuffisants' }
 
   // Decrement atomique
-  await supabase.rpc('increment_coins', { p_user_id: userId, p_amount: -amount })
+  await createAdminClient().rpc('increment_coins', { p_user_id: userId, p_amount: -amount })
 
   await supabase.from('coin_transactions').insert({
     user_id: userId,

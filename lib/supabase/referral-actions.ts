@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from './server'
+import { createAdminClient } from './admin'
 import { revalidatePath } from 'next/cache'
 
 // ============================================================
@@ -76,7 +77,7 @@ export async function applyReferralCode(
   const REWARD = 15
 
   // Attribuer les coins au parrain (increment atomique)
-  await supabase.rpc('increment_coins', { p_user_id: referrer.id, p_amount: REWARD })
+  await createAdminClient().rpc('increment_coins', { p_user_id: referrer.id, p_amount: REWARD })
 
   await supabase.from('coin_transactions').insert({
     user_id: referrer.id,
@@ -85,7 +86,7 @@ export async function applyReferralCode(
   })
 
   // Attribuer les coins au filleul + noter le parrain (increment atomique)
-  await supabase.rpc('increment_coins', { p_user_id: newUserId, p_amount: REWARD })
+  await createAdminClient().rpc('increment_coins', { p_user_id: newUserId, p_amount: REWARD })
   await supabase
     .from('profiles')
     .update({ referred_by: referrer.id })

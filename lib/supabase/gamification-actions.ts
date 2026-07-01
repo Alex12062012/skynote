@@ -96,7 +96,7 @@ export async function saveQcmAttemptV2(input: SaveAttemptV2Input): Promise<SaveA
 
   // 6. Award coins via RPC (atomique + transaction + weekly/monthly reset)
   if (reward.total > 0) {
-    await supabase.rpc('award_coins', {
+    await svc().rpc('award_coins', {
       p_user_id: user.id,
       p_amount: reward.total,
       p_reason: `QCM ${input.score}/${input.total}`,
@@ -127,7 +127,7 @@ export async function doPrestige(): Promise<{ error: string | null; newPrestige?
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Non connecté' }
 
-  const { data, error } = await supabase.rpc('perform_prestige', { p_user_id: user.id })
+  const { data, error } = await svc().rpc('perform_prestige', { p_user_id: user.id })
   if (error) {
     if (error.message.includes('insufficient')) return { error: 'Pas assez de coins pour prestige' }
     return { error: error.message }
@@ -424,7 +424,7 @@ export async function buyItem(
 
   // ─── Débit : tente RPC atomique, fallback manuel si migration 016 non appliquée
   let newBalance: number | undefined
-  const { data: spent, error: errSpend } = await supabase.rpc('spend_coins', {
+  const { data: spent, error: errSpend } = await svc().rpc('spend_coins', {
     p_user_id: user.id, p_amount: price,
     p_reason: `Boutique: ${category} ${itemId}`,
   })
@@ -582,7 +582,7 @@ export async function spinWheel(): Promise<{ error: string | null; result: Wheel
   if (!user) return { error: 'Non connecté', result: null }
 
   // Débiter le ticket
-  const { data: afterDebit, error: errDebit } = await supabase.rpc('spend_coins', {
+  const { data: afterDebit, error: errDebit } = await svc().rpc('spend_coins', {
     p_user_id: user.id, p_amount: WHEEL_COST, p_reason: 'Tour de roue',
   })
   if (errDebit) {
@@ -598,14 +598,14 @@ export async function spinWheel(): Promise<{ error: string | null; result: Wheel
 
   if (seg.type === 'coins' && seg.value > 0) {
     reward = seg.value
-    const { data: awarded } = await supabase.rpc('award_coins', {
+    const { data: awarded } = await svc().rpc('award_coins', {
       p_user_id: user.id, p_amount: seg.value, p_reason: `Roue ${seg.label}`,
     })
     if (typeof awarded === 'number') newBalance = awarded
   } else if (seg.type === 'nova' && seg.value > 0) {
     // Créditer des Novas ✦ via le wallet
     reward = seg.value
-    await supabase.rpc('add_novas', {
+    await svc().rpc('add_novas', {
       p_user_id: user.id,
       p_amount:  seg.value,
       p_reason:  `Roue de la fortune — ${seg.label}`,

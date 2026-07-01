@@ -41,8 +41,10 @@ export async function claimObjectiveReward(
     .update({ claimed: true, claimed_at: new Date().toISOString() })
     .eq('id', userObj.id)
 
-  // Créditer via RPC atomique (jamais de update direct sur sky_coins)
-  await supabase.rpc('increment_coins', {
+  // Créditer via RPC atomique (jamais de update direct sur sky_coins).
+  // increment_coins est réservée à service_role (migration 025) — l'identité
+  // de l'utilisateur vient d'être vérifiée ci-dessus.
+  await getPublicClient().rpc('increment_coins', {
     p_user_id: user.id,
     p_amount: obj.reward_coins,
   })
