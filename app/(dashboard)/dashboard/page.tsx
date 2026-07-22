@@ -63,7 +63,7 @@ export default async function DashboardPage() {
           </p>
         </div>
         <Link href="/courses/new">
-          <Button size="lg" variant="primary" className="gap-2 w-full sm:w-auto">
+          <Button size="lg" variant="primary" className="gap-2 w-full sm:w-auto shadow-none hover:shadow-none hover:translate-y-0">
             <Plus className="h-5 w-5" />{t('dash.newCourse')}
           </Button>
         </Link>
