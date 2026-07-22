@@ -1,14 +1,11 @@
 'use client'
 
-import { useTheme } from 'next-themes'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useMemo, useRef } from 'react'
 
+// Thème unique : Skynote est dark-only (pas de toggle, pas de mode clair).
+// On rend toujours le ciel nocturne, plus besoin de détecter le thème.
 export function SkyBackground() {
-  const { resolvedTheme } = useTheme()
-  const [mounted, setMounted] = useState(false)
-  useEffect(() => setMounted(true), [])
-  if (!mounted) return null
-  return resolvedTheme === 'dark' ? <NightSky /> : <DaySky />
+  return <NightSky />
 }
 
 // ── Étoiles : chaque étoile est STATIQUE quand elle est allumée. Elle s'allume,
@@ -78,57 +75,5 @@ function Star({ left, top, size, peak, dur, delay }: {
         animation: `star-blink ${dur.toFixed(1)}s ease-in-out ${delay.toFixed(1)}s infinite`,
       }}
     />
-  )
-}
-
-// ── Nuages gauche → droite avec spawn réparti sur l'écran ─────
-//
-// Astuce : animationDelay négatif = le nuage est déjà "en cours de route"
-// initialPct = à quel % du trajet le nuage se trouve au chargement
-//
-const CLOUDS = [
-  { top: '8%',  width: 200, height: 72,  duration: 48, opacity: 0.35, initialPct: 15 },
-  { top: '20%', width: 280, height: 95,  duration: 68, opacity: 0.28, initialPct: 52 },
-  { top: '37%', width: 155, height: 58,  duration: 56, opacity: 0.22, initialPct: 78 },
-  { top: '54%', width: 245, height: 85,  duration: 72, opacity: 0.18, initialPct: 33 },
-  { top: '13%', width: 180, height: 65,  duration: 52, opacity: 0.30, initialPct: 65 },
-]
-
-function DaySky() {
-  return (
-    <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden" aria-hidden>
-      <style>{`
-        @keyframes cloud-slide-right {
-          0%   { transform: translateX(-320px); }
-          100% { transform: translateX(110vw); }
-        }
-      `}</style>
-      {CLOUDS.map((c, i) => (
-        <div
-          key={i}
-          className="absolute"
-          style={{
-            top: c.top,
-            left: 0,
-            opacity: c.opacity,
-            animation: `cloud-slide-right ${c.duration}s linear infinite`,
-            animationDelay: `-${(c.initialPct / 100) * c.duration}s`,
-          }}
-        >
-          <CloudSVG width={c.width} height={c.height} />
-        </div>
-      ))}
-    </div>
-  )
-}
-
-function CloudSVG({ width, height }: { width: number; height: number }) {
-  return (
-    <svg width={width} height={height} viewBox="0 0 280 95" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <ellipse cx="140" cy="75" rx="130" ry="20" fill="#BFDBFE" />
-      <ellipse cx="100" cy="55" rx="55"  ry="40" fill="#DBEAFE" />
-      <ellipse cx="165" cy="50" rx="65"  ry="45" fill="#DBEAFE" />
-      <ellipse cx="140" cy="45" rx="48"  ry="36" fill="#EFF6FF" />
-    </svg>
   )
 }
