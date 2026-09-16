@@ -23,7 +23,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   // Une seule vague de requetes : chaque `await` sequentiel coute un
   // aller-retour Vercel → Supabase. getNovaBalance(user.id) evite en plus un
   // second auth.getUser() interne.
-  const [{ data: profile }, novaBalance, boostRes, unseenRes] = await Promise.all([
+  const [{ data: profile }, novaBalance, unseenRes, boostRes] = await Promise.all([
     supabase.from('profiles').select('*').eq('id', user.id).single(),
     getNovaBalance(user.id),
     // Message du jour actif non vu (RPC, 1 requete) — dans la meme vague,
