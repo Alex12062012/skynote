@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useTransition } from 'react'
-import { AnimatePresence, motion } from 'framer-motion'
+import { useEffect, useState, useTransition } from 'react'
+import { AnimatePresence, motion, type PanInfo } from 'framer-motion'
 import Link from 'next/link'
 import { ChevronLeft, ChevronRight, CheckCircle, Circle, GraduationCap, Zap, Share2 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
@@ -40,6 +40,31 @@ export function FlashcardViewer({ flashcards, courseId, userId, qcmReady = false
   const [localCards, setLocalCards] = useState(flashcards)
   const [isPending, startTransition] = useTransition()
   const [showMasteryBadge, setShowMasteryBadge] = useState(false)
+
+  // Desktop : fleches gauche/droite. Ignore quand l'eleve tape dans un champ
+  // (chat du cours, titre editable, dictee) : les fleches y deplacent le curseur.
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return
+      if (e.altKey || e.ctrlKey || e.metaKey) return
+      const el = e.target as HTMLElement | null
+      const tag = el?.tagName
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || el?.isContentEditable) return
+      e.preventDefault()
+      allerA(index + (e.key === 'ArrowRight' ? 1 : -1))
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [index, localCards.length])
+
+  // Mobile : swipe horizontal via le drag de framer-motion (deja dans le
+  // bundle). Seuil en distance OU en vitesse : un petit geste vif compte aussi.
+  function onDragEnd(_: unknown, info: PanInfo) {
+    const { offset, velocity } = info
+    if (offset.x < -60 || velocity.x < -400) allerA(index + 1)
+    else if (offset.x > 60 || velocity.x > 400) allerA(index - 1)
+  }
 
   function handleShare() {
     const url = `${window.location.origin}/cours/${courseId}`
@@ -132,7 +157,11 @@ export function FlashcardViewer({ flashcards, courseId, userId, qcmReady = false
           animate="center"
           exit="exit"
           transition={{ duration: DUR.base, ease: EASE.out }}
-          className="rounded-card border border-sky-border bg-sky-surface p-6 shadow-card dark:border-night-border dark:bg-night-surface dark:shadow-card-dark">
+          drag="x"
+          dragConstraints={{ left: 0, right: 0 }}
+          dragElastic={0.15}
+          onDragEnd={onDragEnd}
+          className="touch-pan-y rounded-card border border-sky-border bg-sky-surface p-6 shadow-card dark:border-night-border dark:bg-night-surface dark:shadow-card-dark">
           <div className="mb-5 flex items-start justify-between gap-3">
             <div>
               <span className="font-body text-label-caps text-text-tertiary dark:text-text-dark-tertiary">
