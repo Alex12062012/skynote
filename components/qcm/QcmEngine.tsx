@@ -52,7 +52,7 @@ function explanationFor(q: QcmQuestion, options: string[]): string {
 
 const DIFFICULTY_LABELS: Record<QcmDifficulty, { label: string; Icon: React.ElementType; color: string }> = {
   peaceful: { label: 'Paisible',          Icon: Leaf,         color: 'text-emerald-600 dark:text-emerald-400' },
-  easy:     { label: 'Normal',            Icon: Target,       color: 'text-brand dark:text-brand-dark' },
+  easy:     { label: 'Normal',            Icon: Target,       color: 'text-sky-600 dark:text-sky-400' },
   medium:   { label: 'Hardcore',          Icon: Flame,        color: 'text-orange-600 dark:text-orange-400' },
 }
 

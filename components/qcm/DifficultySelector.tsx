@@ -42,11 +42,13 @@ const DIFFICULTIES: {
     Icon: Target,
     description: 'Questions de cours avec quelques pieges simples.',
     coins: DIFFICULTY_COINS.easy,
-    color: 'text-brand dark:text-brand-dark',
-    bgLight: 'bg-brand-soft',
-    bgDark: 'dark:bg-brand-dark-soft',
-    borderLight: 'border-brand/30',
-    borderDark: 'dark:border-brand-dark/30',
+    // Teinte sky (pas le bleu de marque) : bg-brand-soft est la couleur des
+    // etats selectionnes/actifs partout ailleurs, la carte paraissait deja cochee.
+    color: 'text-sky-600 dark:text-sky-400',
+    bgLight: 'bg-sky-50',
+    bgDark: 'dark:bg-sky-950/30',
+    borderLight: 'border-sky-200',
+    borderDark: 'dark:border-sky-800/40',
   },
   {
     key: 'medium',

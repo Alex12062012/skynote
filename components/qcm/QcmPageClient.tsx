@@ -24,6 +24,9 @@ export function QcmPageClient({ flashcards, allQuestions, courseId }: QcmPageCli
   // Lire le param ?fiche=N pour pré-sélectionner la bonne fiche
   // (transmis par le bouton "QCM fiche N" dans FlashcardViewer)
   const ficheParam = searchParams.get('fiche')
+  // Arrivee depuis une fiche precise : le bloc « Choisis une fiche » est
+  // redondant, l'eleve a deja choisi. Il ne s'affiche qu'en acces direct a la page.
+  const cameFromSpecificFlashcard = ficheParam !== null
   const initialIndex = ficheParam !== null ? parseInt(ficheParam, 10) : 0
   const safeInitialIndex = Number.isFinite(initialIndex)
     ? Math.max(0, Math.min(initialIndex, flashcards.length - 1))
@@ -97,7 +100,7 @@ export function QcmPageClient({ flashcards, allQuestions, courseId }: QcmPageCli
 
   return (
     <div className="flex flex-col gap-6">
-      {flashcards.length > 1 && (
+      {flashcards.length > 1 && !cameFromSpecificFlashcard && (
         <FlashcardQcmSelector
           flashcards={flashcards}
           selectedId={selectedFlashcardId}
