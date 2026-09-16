@@ -100,6 +100,7 @@ const QCM_DIFFICULTY_INSTRUCTIONS: Record<QcmDifficulty, string> = {
 - Les mauvaises reponses sont plausibles mais clairement identifiables avec un peu de reflexion.
 - Quelques pièges simples (formulations proches, inversions de details).
 - Formulations claires, niveau college.
+- Reste STRICTEMENT dans le perimetre de la fiche : aucune notion hors-programme, aucune connaissance que la fiche ne contient pas.
 - L'eleve qui a bien lu sa fiche doit obtenir un bon score.
 ${QCM_LENGTH_BALANCE_RULE}`,
 
@@ -107,8 +108,9 @@ ${QCM_LENGTH_BALANCE_RULE}`,
 - Questions de comprehension avancee : l'eleve doit avoir vraiment compris, pas juste memorise.
 - Les mauvaises reponses sont tres plausibles et proches de la bonne reponse.
 - Inclure des questions d'application, de comparaison, et quelques pièges subtils.
-- Ajouter 1 ou 2 questions avec des connaissances complementaires liees au sujet (pas hors-sujet).
+- Ajouter 1 ou 2 questions de culture generale directement liees au sujet de la fiche (pas hors-sujet).
 - Formulations qui demandent de reflechir et de croiser les informations.
+- La difficulte doit venir de la subtilite sur le contenu REELLEMENT enseigne dans CETTE fiche, jamais d'un saut vers des notions techniques plus avancees non couvertes par le cours. Exemple a ne PAS faire : une fiche de base sur les entrees/sorties d'un ordinateur ne doit pas amener une question sur l'ALU ou le codage binaire. Une question hors-programme n'est pas "difficile", elle est injuste.
 ${QCM_LENGTH_BALANCE_RULE}`,
 }
 
