@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
+import { creditMessageContent, type CreditKind } from '@/lib/admin-credit-message'
 
 const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || '').split(',').map(e => e.trim().toLowerCase()).filter(Boolean)
 
@@ -22,14 +23,16 @@ export async function POST(request: NextRequest) {
     )
 
     /**
-     * Message cible optionnel, joint a un credit Novas / coins : visible
+     * Message cible joint a un credit / retrait Novas ou coins : visible
      * uniquement par cet utilisateur, a sa prochaine connexion (meme popup
-     * que le message du jour). Le credit est deja applique, le message ne
-     * porte donc aucune recompense. Une erreur ici ne doit pas annuler le
-     * credit : on la renvoie a l'admin sans echouer l'action.
+     * que le message du jour). Le contenu = texte libre de l'admin (optionnel)
+     * + ligne generee a partir du montant REELLEMENT applique — un credit
+     * envoie donc toujours un message, meme sans texte. Le credit est deja
+     * applique, le message ne porte aucune recompense. Une erreur ici ne doit
+     * pas annuler le credit : on la renvoie a l'admin sans echouer l'action.
      */
-    async function sendTargetedMessage(): Promise<string | null> {
-      const content = typeof message === 'string' ? message.trim().slice(0, 2000) : ''
+    async function sendTargetedMessage(kind: CreditKind, delta: number): Promise<string | null> {
+      const content = creditMessageContent(kind, delta, message)
       if (!content) return null
       const { error } = await supabase.from('admin_messages').insert({
         content,
@@ -50,7 +53,7 @@ export async function POST(request: NextRequest) {
           user_id: userId, amount: Number(value),
           reason: `Ajustement admin ${Number(value) > 0 ? '+' : ''}${value} coins`,
         })
-        const warning = await sendTargetedMessage()
+        const warning = await sendTargetedMessage('sky_coins', newCoins - profile.sky_coins)
         return NextResponse.json({ ok: true, newCoins, warning })
       }
 
@@ -114,7 +117,7 @@ export async function POST(request: NextRequest) {
         const { data: wallet } = await supabase.from('wallets').select('novas_balance').eq('user_id', userId).single()
         const newBalance = Math.max(0, (wallet?.novas_balance ?? 0) + amount)
         await supabase.from('wallets').upsert({ user_id: userId, novas_balance: newBalance }, { onConflict: 'user_id' })
-        const warning = await sendTargetedMessage()
+        const warning = await sendTargetedMessage('nova', newBalance - (wallet?.novas_balance ?? 0))
         return NextResponse.json({ ok: true, newBalance, warning })
       }
 

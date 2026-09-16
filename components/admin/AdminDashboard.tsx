@@ -318,7 +318,7 @@ export function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   const creditMessageField = (
     <div className="mt-2 rounded-xl border border-dashed border-slate-700 p-3">
       <p className="text-[12px] font-medium text-slate-300 mb-1.5">
-        Message pour cet utilisateur (optionnel) — popup à sa prochaine connexion
+        Un mot pour cet utilisateur (optionnel) — la popup indiquera de toute façon le montant crédité / retiré
       </p>
       <textarea aria-label="Message pour cet utilisateur" rows={2} maxLength={2000} value={creditMessage} onChange={(e) => setCreditMessage(e.target.value)}
         placeholder="Ex : Voici 100 Novas suite au bug de génération du 16/09. Bonne révision !"
@@ -329,12 +329,12 @@ export function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   async function doAction(userId: string, action: string, value?: any) {
     setActionLoading(true); setFeedback('')
     try {
-      const withMessage = (action === 'add_coins' || action === 'add_novas') && creditMessage.trim()
-      const res = await fetch('/api/admin/update-user', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId, action, value, message: withMessage ? creditMessage.trim() : undefined }) })
+      const isCredit = action === 'add_coins' || action === 'add_novas'
+      const res = await fetch('/api/admin/update-user', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId, action, value, message: isCredit ? creditMessage.trim() : undefined }) })
       const data = await res.json()
       if (data.ok) {
-        setFeedback(data.warning ? `ERREUR: ${data.warning}` : withMessage ? 'OK: Crédit effectué, message envoyé (visible à sa prochaine connexion)' : 'OK: Action effectuée')
-        if (withMessage && !data.warning) setCreditMessage('')
+        setFeedback(data.warning ? `ERREUR: ${data.warning}` : isCredit ? 'OK: Crédit effectué, message envoyé (montant + ton texte, visible à sa prochaine connexion)' : 'OK: Action effectuée')
+        if (isCredit && !data.warning) setCreditMessage('')
         loadData()
         if (action === 'delete_user') setSelectedUser(null)
         if (action === 'add_novas' || action === 'set_novas') {
