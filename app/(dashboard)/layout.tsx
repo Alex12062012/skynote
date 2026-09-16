@@ -6,6 +6,7 @@ import { createClient, getCachedUser } from '@/lib/supabase/server'
 import { Navbar } from '@/components/layout/Navbar'
 import { SkyBackground } from '@/components/ui/SkyBackground'
 import { StreakTracker } from '@/components/dashboard/StreakTracker'
+import { AdminMessageModal, type AdminMessage } from '@/components/dashboard/AdminMessageModal'
 import { CoinRewardProvider } from '@/components/providers/CoinRewardProvider'
 import { FeedbackButton } from '@/components/ui/FeedbackButton'
 import { FeedbackTrigger } from '@/components/providers/FeedbackTrigger'
@@ -22,9 +23,13 @@ export default async function DashboardLayout({ children }: { children: React.Re
   // Une seule vague de requetes : chaque `await` sequentiel coute un
   // aller-retour Vercel → Supabase. getNovaBalance(user.id) evite en plus un
   // second auth.getUser() interne.
-  const [{ data: profile }, novaBalance, boostRes] = await Promise.all([
+  const [{ data: profile }, novaBalance, boostRes, unseenRes] = await Promise.all([
     supabase.from('profiles').select('*').eq('id', user.id).single(),
     getNovaBalance(user.id),
+    // Message du jour actif non vu (RPC, 1 requete) — dans la meme vague,
+    // aucun aller-retour supplementaire. `.then` neutre : une migration
+    // manquante ne doit pas casser tout le dashboard.
+    supabase.rpc('get_unseen_admin_message').then((r) => r, () => ({ data: null })),
     supabase
       .from('user_boosts')
       .select('expires_at')
@@ -35,6 +40,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
       .then((r) => r, () => ({ data: null })), // table absente en dev
   ])
   const boostActive = Boolean(boostRes.data)
+  const adminMessage = ((unseenRes.data as AdminMessage[] | null) ?? [])[0] ?? null
 
   return (
     <CoinRewardProvider>
@@ -47,6 +53,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
       />
       {/* Mise à jour silencieuse du streak de connexion */}
       <StreakTracker userId={user.id} />
+      {/* Message du jour (admin) — une fois par utilisateur */}
+      {adminMessage && <AdminMessageModal message={adminMessage} />}
       <main className="relative z-10 mx-auto max-w-6xl px-4 py-8 sm:px-6">
         {children}
       </main>

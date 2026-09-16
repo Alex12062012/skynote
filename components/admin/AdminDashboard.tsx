@@ -2,10 +2,11 @@
 
 import { useState, useEffect } from 'react'
 import { PromoCodesPanel } from './PromoCodesPanel'
+import { AdminMessagesPanel } from './AdminMessagesPanel'
 import {
   Users, BookOpen, Zap, Trophy, DollarSign, LogOut, Search, Trash2, RefreshCw, X, ChevronUp,
   Star, UserX, Coins, Flame, Sparkles, BarChart3, MessageCircle, Settings,
-  FlaskConical, Check, AlertTriangle, Circle,
+  FlaskConical, Check, AlertTriangle, Circle, Megaphone,
 } from 'lucide-react'
 
 const STORAGE_KEY = 'skynote_admin_pin'
@@ -230,7 +231,7 @@ function GrowthLineChart({ data }: { data: TimeSeries[] }) {
 }
 
 export function AdminDashboard({ onLogout }: { onLogout: () => void }) {
-  const [tab, setTab] = useState<'stats' | 'users' | 'feedbacks' | 'settings'>('stats')
+  const [tab, setTab] = useState<'stats' | 'users' | 'feedbacks' | 'messages' | 'settings'>('stats')
   const [period, setPeriod] = useState<Period>('7')
   const [stats, setStats] = useState<Stats | null>(null)
   const [timeSeries, setTimeSeries] = useState<Record<string, TimeSeries[]>>({})
@@ -429,6 +430,7 @@ export function AdminDashboard({ onLogout }: { onLogout: () => void }) {
           ['stats',     'Statistiques', BarChart3],
           ['users',     'Utilisateurs', Users],
           ['feedbacks', 'Feedbacks',    MessageCircle],
+          ['messages',  'Messages',     Megaphone],
           ['settings',  'Paramètres',   Settings],
         ] as const).map(([id, label, Icon]) => (
           <button key={id} onClick={() => setTab(id as any)}
@@ -728,6 +730,9 @@ export function AdminDashboard({ onLogout }: { onLogout: () => void }) {
             </div>
           </div>
         )}
+
+        {/* ── MESSAGES TAB ── */}
+        {tab === 'messages' && <AdminMessagesPanel />}
 
         {/* ── SETTINGS TAB ── */}
         {tab === 'settings' && (

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { verifyAdmin } from '@/lib/admin-auth'
 
 /**
  * Administration des codes promo.
@@ -9,23 +9,6 @@ import { createAdminClient } from '@/lib/supabase/admin'
  * jamais sur le fait que l'interface d'admin ne soit pas accessible : une
  * route reste appelable directement, l'écran n'est pas une protection.
  */
-
-const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || '')
-  .split(',').map(e => e.trim().toLowerCase()).filter(Boolean)
-
-async function verifyAdmin() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) {
-    return { ok: false as const, res: NextResponse.json({ error: 'Non autorise' }, { status: 401 }) }
-  }
-  // Si la variable n'est pas configurée, personne n'est admin — jamais
-  // l'inverse : une erreur de configuration ne doit pas ouvrir la porte.
-  if (ADMIN_EMAILS.length === 0 || !ADMIN_EMAILS.includes(user.email?.toLowerCase() ?? '')) {
-    return { ok: false as const, res: NextResponse.json({ error: 'Acces refuse' }, { status: 403 }) }
-  }
-  return { ok: true as const, userId: user.id }
-}
 
 const FORMAT_CODE = /^[A-Z0-9-]{4,32}$/
 
