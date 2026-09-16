@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
-import { creditMessageContent, type CreditKind } from '@/lib/admin-credit-message'
+import { creditMessage, type CreditKind } from '@/lib/admin-credit-message'
 
 const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || '').split(',').map(e => e.trim().toLowerCase()).filter(Boolean)
 
@@ -25,17 +25,17 @@ export async function POST(request: NextRequest) {
     /**
      * Message cible joint a un credit / retrait Novas ou coins : visible
      * uniquement par cet utilisateur, a sa prochaine connexion (meme popup
-     * que le message du jour). Le contenu = texte libre de l'admin (optionnel)
-     * + ligne generee a partir du montant REELLEMENT applique — un credit
-     * envoie donc toujours un message, meme sans texte. Le credit est deja
-     * applique, le message ne porte aucune recompense. Une erreur ici ne doit
-     * pas annuler le credit : on la renvoie a l'admin sans echouer l'action.
+     * que le message du jour). Contenu = texte libre de l'admin (ou libelle
+     * neutre) ; le montant REELLEMENT applique part en applied_type /
+     * applied_amount, affiche en badge. Jamais dans reward_* : ces colonnes
+     * font crediter par /api/messages/ack, et le credit est deja applique ici.
+     * Une erreur ici ne doit pas annuler le credit : renvoyee a l'admin.
      */
     async function sendTargetedMessage(kind: CreditKind, delta: number): Promise<string | null> {
-      const content = creditMessageContent(kind, delta, message)
-      if (!content) return null
+      const msg = creditMessage(kind, delta, message)
+      if (!msg) return null
       const { error } = await supabase.from('admin_messages').insert({
-        content,
+        ...msg,
         target_user_id: userId,
         active: true,
         created_by: adminId,

@@ -17,7 +17,7 @@ export async function GET() {
 
   const { data, error } = await createAdminClient()
     .from('admin_messages')
-    .select('id, content, reward_type, reward_amount, active, created_at, target_user_id, target:profiles!admin_messages_target_user_id_fkey(email, full_name), user_seen_messages(count)')
+    .select('id, content, reward_type, reward_amount, applied_type, applied_amount, active, created_at, target_user_id, target:profiles!admin_messages_target_user_id_fkey(email, full_name), user_seen_messages(count)')
     .order('created_at', { ascending: false })
     .limit(100)
 

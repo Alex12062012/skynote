@@ -8,12 +8,17 @@ import { Button } from '@/components/ui/Button'
 import { SkyCoin } from '@/components/ui/SkyCoin'
 import { NovaCoin } from '@/components/ui/NovaCoin'
 import { useCoinReward } from '@/components/providers/CoinRewardProvider'
+import { creditBadge } from '@/lib/admin-credit-message'
 
 export interface AdminMessage {
   id: string
   content: string
+  /** Récompense à créditer au clic OK (broadcasts) */
   reward_type: 'sky_coins' | 'nova' | null
   reward_amount: number | null
+  /** Montant DÉJÀ appliqué par l'admin (crédit / retrait ciblé), affiché seulement */
+  applied_type?: 'sky_coins' | 'nova' | null
+  applied_amount?: number | null
 }
 
 /**
@@ -51,7 +56,14 @@ export function AdminMessageModal({ message }: { message: AdminMessage }) {
     }
   }
 
-  const hasReward = Boolean(message.reward_type && message.reward_amount)
+  // Un seul badge : récompense à venir (broadcast) ou montant déjà appliqué
+  // (crédit ciblé). Même rendu, en bas à gauche du bouton OK.
+  const badge = message.reward_type && message.reward_amount
+    ? { kind: message.reward_type, amount: message.reward_amount }
+    : message.applied_type && message.applied_amount
+      ? { kind: message.applied_type, amount: message.applied_amount }
+      : null
+  const badgeLabel = badge ? creditBadge(badge.kind, badge.amount) : null
 
   return (
     <Modal isOpen={open} onClose={acknowledge} title="Message de Skynote">
@@ -64,16 +76,16 @@ export function AdminMessageModal({ message }: { message: AdminMessage }) {
         </p>
       </div>
 
-      {hasReward && (
-        <div className="mt-5 flex items-center gap-2 rounded-input border border-amber-200 bg-amber-50 px-4 py-3 dark:border-amber-800/40 dark:bg-amber-950/20">
-          {message.reward_type === 'nova' ? <NovaCoin size={20} /> : <SkyCoin size={20} />}
-          <span className="font-body text-[14px] font-semibold text-text-main dark:text-text-dark-main">
-            +{message.reward_amount} {message.reward_type === 'nova' ? 'Novas' : 'Sky Coins'} offerts
+      <div className="mt-6 flex items-center justify-between gap-3">
+        {badge && badgeLabel ? (
+          <span
+            data-testid="admin-message-badge"
+            className="inline-flex items-center gap-1.5 rounded-pill border border-amber-200 bg-amber-50 px-3 py-1.5 font-body text-[13px] font-semibold text-text-main dark:border-amber-800/40 dark:bg-amber-950/20 dark:text-text-dark-main"
+          >
+            {badge.kind === 'nova' ? <NovaCoin size={16} /> : <SkyCoin size={16} />}
+            {badgeLabel}
           </span>
-        </div>
-      )}
-
-      <div className="mt-6 flex justify-end">
+        ) : <span />}
         <Button onClick={acknowledge} loading={sending}>OK</Button>
       </div>
     </Modal>

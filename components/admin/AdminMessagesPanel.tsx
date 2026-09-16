@@ -24,6 +24,8 @@ type AdminMessage = {
   seen_count: number
   target_user_id: string | null
   target_label: string | null
+  applied_type: 'sky_coins' | 'nova' | null
+  applied_amount: number | null
 }
 
 const VIDE = { content: '', reward_type: '', reward_amount: '10', active: true }
@@ -167,7 +169,11 @@ export function AdminMessagesPanel() {
                       : <span className="text-[11px] text-slate-500">Tous</span>}
                   </td>
                   <td className="py-2.5 pr-4 text-slate-300">
-                    {m.reward_type ? `${m.reward_amount} ${m.reward_type === 'nova' ? 'Novas' : 'Sky Coins'}` : '—'}
+                    {m.reward_type
+                      ? `${m.reward_amount} ${m.reward_type === 'nova' ? 'Novas' : 'Sky Coins'} (au clic OK)`
+                      : m.applied_type
+                        ? `${m.applied_amount! > 0 ? '+' : ''}${m.applied_amount} ${m.applied_type === 'nova' ? 'Novas' : 'Sky Coins'} (déjà crédité)`
+                        : '—'}
                   </td>
                   <td className="py-2.5 pr-4 tabular-nums text-slate-300">{m.seen_count}</td>
                   <td className="py-2.5 pr-4 text-slate-400">{new Date(m.created_at).toLocaleDateString('fr-FR')}</td>
