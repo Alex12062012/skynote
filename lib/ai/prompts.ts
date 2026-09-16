@@ -66,8 +66,16 @@ export type QcmDifficulty = 'peaceful' | 'easy' | 'medium'
 
 export const QCM_DIFFICULTIES: readonly QcmDifficulty[] = ['peaceful', 'easy', 'medium']
 
-/** Nombre de questions attendu par fiche et par niveau. */
+/** Nombre de questions conservees par fiche et par niveau. */
 export const QCM_QUESTIONS_PER_FLASHCARD = 5
+
+/**
+ * Nombre de questions DEMANDEES au modele : une de plus que necessaire.
+ * Mesure en prod : le modele laisse souvent 1 question biaisee (bonne reponse
+ * trop longue) par fiche ; avec exactement 5, la fiche devenait invalide et
+ * declenchait un second appel. Avec 6, la validation en garde 5 sans retry.
+ */
+export const QCM_QUESTIONS_REQUESTED = QCM_QUESTIONS_PER_FLASHCARD + 1
 
 export function isQcmDifficulty(value: unknown): value is QcmDifficulty {
   return typeof value === 'string' && (QCM_DIFFICULTIES as readonly string[]).includes(value)
@@ -121,7 +129,7 @@ ${QCM_DIFFICULTY_INSTRUCTIONS[difficulty]}
 
 CONTRAINTES STRICTES :
 1. Reponds UNIQUEMENT en JSON valide.
-2. Genere EXACTEMENT ${QCM_QUESTIONS_PER_FLASHCARD} questions par fiche.
+2. Genere EXACTEMENT ${QCM_QUESTIONS_REQUESTED} questions par fiche.
 3. Chaque question a EXACTEMENT 4 options (options[0] a options[3]).
 4. correct_index est l'index (0-3) de la bonne reponse.
 5. explanation : explication courte et pedagogique de la bonne reponse (2-3 phrases max).

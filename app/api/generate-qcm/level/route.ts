@@ -10,10 +10,10 @@ export const dynamic = 'force-dynamic'
 export const maxDuration = 60
 
 /**
- * Génération initiale d'UN niveau pour TOUTES les fiches d'un cours, en un
- * seul appel Claude (au lieu d'un appel par fiche × niveau : 18 → 3 appels
- * pour un cours à 6 fiches). Appelée 3 fois en parallèle par QcmGenerator,
- * un niveau qui échoue n'affecte pas les deux autres.
+ * Génération initiale d'UN niveau pour TOUTES les fiches d'un cours en une
+ * requête HTTP : un appel Claude par fiche, tous en parallèle (voir la mesure
+ * plus bas pour la raison). Appelée 3 fois en parallèle par QcmGenerator, un
+ * niveau qui échoue n'affecte pas les deux autres.
  *
  * Gratuit : couvert par les Novas du cours. Ne touche jamais aux fiches qui
  * ont déjà des questions à ce niveau (la régénération payante reste sur
@@ -31,10 +31,6 @@ export async function POST(request: NextRequest) {
     const difficulty = body?.difficulty
     if (!/^[0-9a-f-]{36}$/i.test(courseId)) throw Errors.badRequest('courseId invalide')
     if (!isQcmDifficulty(difficulty)) throw Errors.badRequest('difficulty invalide')
-
-    // Plafonds 40/h + 200/jour : 1 appel = 1 unité, quel que soit le nombre de fiches.
-    const limited = await checkQcmRateLimits(user.id)
-    if (limited) return limited
 
     const { data: course } = await supabase
       .from('courses')
@@ -64,6 +60,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ ok: true, skipped: true, inserted: 0 })
     }
 
+    // Plafonds 40/h + 200/jour : une unité par fiche (= par appel Claude).
+    const limited = await checkQcmRateLimits(user.id, missing.length)
+    if (limited) return limited
+
     const inputs = missing.map((f) => ({
       title: f.title,
       summary: f.summary,
@@ -72,18 +72,16 @@ export async function POST(request: NextRequest) {
         : (() => { try { return JSON.parse(String(f.key_points || '[]')) } catch { return [] } })(),
     }))
 
-    // Mesure en prod (plan Hobby, maxDuration 60 s) : 6 fiches × 5 questions
-    // en UN appel = 36 s en Paisible mais > 60 s en Normal/Hardcore (reponses
-    // plus longues + passe de retry) → FUNCTION_INVOCATION_TIMEOUT. On decoupe
-    // donc en lots de LOT_FICHES fiches lances en parallele, et le retry est
-    // saute passe un budget de temps : un lot partiel vaut mieux qu'un 504.
-    const LOT_FICHES = 3
-    const retryDeadline = startedAt + 32_000
-    const lots: typeof inputs[] = []
-    for (let i = 0; i < inputs.length; i += LOT_FICHES) lots.push(inputs.slice(i, i + LOT_FICHES))
-
+    // Mesure en prod (plan Hobby, maxDuration 60 s, sortie ≈ 125 tokens/s) :
+    // 6 fiches en UN appel = 36 s en Paisible, > 60 s en Normal/Hardcore (504) ;
+    // 3 fiches par appel = 35-43 s sans place pour le retry. Seul un appel PAR
+    // FICHE (≈ 2 300 tokens, ≈ 20 s) laisse la marge d'un retry sous 60 s. Les
+    // appels sont lances en parallele : la latence du niveau reste ≈ 20-40 s.
+    // Le retry est saute passe un budget de temps : un lot partiel vaut mieux
+    // qu'un timeout, les fiches manquantes restent regenerables gratuitement.
+    const retryDeadline = startedAt + 30_000
     const settled = await Promise.allSettled(
-      lots.map((lot) => generateAllQcmQuestions(lot, difficulty, { retryDeadline }))
+      inputs.map((fiche) => generateAllQcmQuestions([fiche], difficulty, { retryDeadline }))
     )
     const byTitle = new Map<string, GeneratedQuestion[]>()
     for (const r of settled) {
