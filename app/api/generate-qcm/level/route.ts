@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { generateAllQcmQuestions } from '@/lib/ai/generate'
+import { generateAllQcmQuestions, type GeneratedQuestion } from '@/lib/ai/generate'
 import { isQcmDifficulty } from '@/lib/ai/prompts'
 import { Errors, apiError } from '@/lib/errors'
 import { checkQcmRateLimits } from '@/lib/rate-limit'
@@ -20,6 +20,7 @@ export const maxDuration = 60
  * /api/generate-qcm, par fiche).
  */
 export async function POST(request: NextRequest) {
+  const startedAt = Date.now()
   try {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
@@ -71,9 +72,24 @@ export async function POST(request: NextRequest) {
         : (() => { try { return JSON.parse(String(f.key_points || '[]')) } catch { return [] } })(),
     }))
 
-    // Un seul appel Claude pour toutes les fiches manquantes (retry interne
-    // par fiche invalide, erreur explicite si un lot reste inutilisable).
-    const byTitle = await generateAllQcmQuestions(inputs, difficulty)
+    // Mesure en prod (plan Hobby, maxDuration 60 s) : 6 fiches × 5 questions
+    // en UN appel = 36 s en Paisible mais > 60 s en Normal/Hardcore (reponses
+    // plus longues + passe de retry) → FUNCTION_INVOCATION_TIMEOUT. On decoupe
+    // donc en lots de LOT_FICHES fiches lances en parallele, et le retry est
+    // saute passe un budget de temps : un lot partiel vaut mieux qu'un 504.
+    const LOT_FICHES = 3
+    const retryDeadline = startedAt + 32_000
+    const lots: typeof inputs[] = []
+    for (let i = 0; i < inputs.length; i += LOT_FICHES) lots.push(inputs.slice(i, i + LOT_FICHES))
+
+    const settled = await Promise.allSettled(
+      lots.map((lot) => generateAllQcmQuestions(lot, difficulty, { retryDeadline }))
+    )
+    const byTitle = new Map<string, GeneratedQuestion[]>()
+    for (const r of settled) {
+      if (r.status === 'fulfilled') r.value.forEach((qs, title) => byTitle.set(title, qs))
+      else console.error('[generate-qcm/level]', difficulty, r.reason)
+    }
 
     const rows = missing.flatMap((f) =>
       (byTitle.get(f.title) ?? []).map((q) => ({
@@ -99,6 +115,7 @@ export async function POST(request: NextRequest) {
       inserted: rows.length,
       fiches: fichesCovered,
       fichesMissing: missing.length - fichesCovered,
+      durationMs: Date.now() - startedAt,
     })
   } catch (error: unknown) {
     return apiError(error)

@@ -314,7 +314,16 @@ Réponds avec un JSON structuré ainsi :
 //     AUCUNE fiche n'est utilisable (jamais de tableau vide silencieux).
 export async function generateAllQcmQuestions(
   flashcards: QcmFlashcardInput[],
-  difficulty: QcmDifficulty = 'easy'
+  difficulty: QcmDifficulty = 'easy',
+  options: {
+    /**
+     * Timestamp (ms) au-dela duquel on ne lance PAS la passe de retry : la
+     * fonction Vercel est tuee a maxDuration (60 s sur Hobby), mieux vaut
+     * livrer un lot partiel que rien du tout. Les fiches manquantes restent
+     * regenerables gratuitement.
+     */
+    retryDeadline?: number
+  } = {}
 ): Promise<Map<string, GeneratedQuestion[]>> {
   if (flashcards.length === 0) return new Map()
 
@@ -334,6 +343,18 @@ export async function generateAllQcmQuestions(
   }
 
   if (toRetry.length === 0) return result
+
+  if (options.retryDeadline && Date.now() > options.retryDeadline) {
+    const message = `Génération QCM ${difficulty} : retry saute (budget temps depasse) pour ${toRetry.length}/${flashcards.length} fiche(s) — ${[...firstReasons.entries()].map(([t, r]) => `${t}: ${r}`).join(' | ')}`
+    if (result.size === 0) {
+      const error = new Error(message)
+      Sentry.captureException(error, { tags: { feature: 'qcm-generation', difficulty } })
+      throw error
+    }
+    Sentry.captureMessage(message, 'warning')
+    console.warn('[generateAllQcmQuestions]', message)
+    return result
+  }
 
   console.warn(
     `[generateAllQcmQuestions] ${difficulty} : retry pour ${toRetry.length}/${flashcards.length} fiche(s) —`,
