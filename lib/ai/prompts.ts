@@ -63,6 +63,26 @@ export const FLASHCARD_SYSTEM_PROMPT = getFlashcardSystemPrompt()
 
 export type QcmDifficulty = 'peaceful' | 'easy' | 'medium' | 'hard'
 
+export const QCM_DIFFICULTIES: readonly QcmDifficulty[] = ['peaceful', 'easy', 'medium', 'hard']
+
+export function isQcmDifficulty(value: unknown): value is QcmDifficulty {
+  return typeof value === 'string' && (QCM_DIFFICULTIES as readonly string[]).includes(value)
+}
+
+/**
+ * Anti-biais de longueur (niveaux Normal et Hardcore uniquement).
+ * Sans cette regle, la bonne reponse est presque toujours la plus longue et la
+ * plus detaillee des 4 options : l'eleve la repere sans lire la question.
+ * On n'abrege JAMAIS la bonne reponse — on enrichit UN distracteur au hasard
+ * avec une fausse justification pour l'aligner en longueur.
+ */
+const QCM_LENGTH_BALANCE_RULE = `- REGLE ANTI-BIAIS DE LONGUEUR (obligatoire) : la bonne reponse ne doit JAMAIS etre reconnaissable parce qu'elle est plus longue ou plus detaillee que les autres. Les 4 options doivent avoir une longueur comparable (ecart de 30% maximum en nombre de mots).
+  Pour y arriver : ne raccourcis JAMAIS la bonne reponse. Choisis au hasard UNE des 3 mauvaises reponses et enrichis-la avec une justification plausible mais fausse, de meme longueur que la bonne reponse. Les 2 autres mauvaises reponses peuvent rester courtes.
+  Exemple — question "Que devient l'eau de pluie qui tombe sur un sol chaud ?" :
+    MAUVAIS (bonne reponse reperable) : ["Elle s'infiltre dans le sol, puis rejoint les nappes phreatiques ou ruisselle vers les rivieres", "Elle repart aussitot en evaporation", "Elle gele", "Elle disparait"]
+    BON (longueurs equilibrees) : ["Elle s'infiltre dans le sol, puis rejoint les nappes phreatiques ou ruisselle vers les rivieres", "Elle repart aussitot en evaporation, car la chaleur residuelle du sol la rechauffe immediatement", "Elle gele", "Elle disparait"]
+  Varie la position (index) de la bonne reponse et celle du distracteur enrichi d'une question a l'autre.`
+
 const QCM_DIFFICULTY_INSTRUCTIONS: Record<QcmDifficulty, string> = {
   peaceful: `NIVEAU PAISIBLE (tres facile) :
 - Questions ultra-directes sur les definitions et faits principaux du cours.
@@ -76,14 +96,16 @@ const QCM_DIFFICULTY_INSTRUCTIONS: Record<QcmDifficulty, string> = {
 - Les mauvaises reponses sont plausibles mais clairement identifiables avec un peu de reflexion.
 - Quelques pièges simples (formulations proches, inversions de details).
 - Formulations claires, niveau college.
-- L'eleve qui a bien lu sa fiche doit obtenir un bon score.`,
+- L'eleve qui a bien lu sa fiche doit obtenir un bon score.
+${QCM_LENGTH_BALANCE_RULE}`,
 
   medium: `NIVEAU HARDCORE :
 - Questions de comprehension avancee : l'eleve doit avoir vraiment compris, pas juste memorise.
 - Les mauvaises reponses sont tres plausibles et proches de la bonne reponse.
 - Inclure des questions d'application, de comparaison, et quelques pièges subtils.
 - Ajouter 1 ou 2 questions avec des connaissances complementaires liees au sujet (pas hors-sujet).
-- Formulations qui demandent de reflechir et de croiser les informations.`,
+- Formulations qui demandent de reflechir et de croiser les informations.
+${QCM_LENGTH_BALANCE_RULE}`,
 
   hard: `NIVEAU TESTE TES PARENTS :
 - Questions tres avancees : analyse, cas concrets, pièges subtils, nuances importantes.
