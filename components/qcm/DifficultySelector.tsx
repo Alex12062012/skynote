@@ -1,6 +1,6 @@
 'use client'
 
-import { Leaf, Target, Flame, Trophy } from 'lucide-react'
+import { Leaf, Target, Flame } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { SkyCoin } from '@/components/ui/SkyCoin'
 import { DIFFICULTY_COINS } from '@/lib/gamification/config'
@@ -59,18 +59,6 @@ const DIFFICULTIES: {
     bgDark: 'dark:bg-orange-950/20',
     borderLight: 'border-orange-200',
     borderDark: 'dark:border-orange-800/40',
-  },
-  {
-    key: 'hard',
-    label: 'Teste tes parents',
-    Icon: Trophy,
-    description: 'Niveau expert : pieges avances + culture generale du domaine.',
-    coins: DIFFICULTY_COINS.hard,
-    color: 'text-red-600 dark:text-red-400',
-    bgLight: 'bg-red-50',
-    bgDark: 'dark:bg-red-950/20',
-    borderLight: 'border-red-200',
-    borderDark: 'dark:border-red-800/40',
   },
 ]
 

@@ -1,4 +1,5 @@
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[]
+import type { QcmDifficulty } from '@/lib/ai/prompts'
 
 export interface Profile {
   id: string; email: string; full_name: string | null; avatar_url: string | null
@@ -79,7 +80,7 @@ export interface Flashcard {
 export interface QcmQuestion {
   id: string; flashcard_id: string; course_id: string; user_id: string
   question: string; options: string[]; correct_index: number; explanation: string
-  difficulty: 'peaceful' | 'easy' | 'medium' | 'hard'; created_at: string
+  difficulty: QcmDifficulty; created_at: string
 }
 
 export interface QcmAttempt {

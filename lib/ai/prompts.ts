@@ -58,12 +58,16 @@ FORMAT JSON EXACT :
 RAPPEL : Idealement 4 fiches, jusqu'a 6 si vraiment necessaire. 3 key_points par fiche, pas plus. Aucun doublon. TOUT DANS LA LANGUE SPECIFIEE.`
 }
 
-// Compat : sans lang = auto-detect
-export const FLASHCARD_SYSTEM_PROMPT = getFlashcardSystemPrompt()
+/**
+ * Source unique de verite pour les niveaux QCM (les autres modules re-exportent ce type).
+ * Le niveau 'hard' ("Teste tes parents") a ete supprime — migration 034.
+ */
+export type QcmDifficulty = 'peaceful' | 'easy' | 'medium'
 
-export type QcmDifficulty = 'peaceful' | 'easy' | 'medium' | 'hard'
+export const QCM_DIFFICULTIES: readonly QcmDifficulty[] = ['peaceful', 'easy', 'medium']
 
-export const QCM_DIFFICULTIES: readonly QcmDifficulty[] = ['peaceful', 'easy', 'medium', 'hard']
+/** Nombre de questions attendu par fiche et par niveau. */
+export const QCM_QUESTIONS_PER_FLASHCARD = 5
 
 export function isQcmDifficulty(value: unknown): value is QcmDifficulty {
   return typeof value === 'string' && (QCM_DIFFICULTIES as readonly string[]).includes(value)
@@ -106,13 +110,6 @@ ${QCM_LENGTH_BALANCE_RULE}`,
 - Ajouter 1 ou 2 questions avec des connaissances complementaires liees au sujet (pas hors-sujet).
 - Formulations qui demandent de reflechir et de croiser les informations.
 ${QCM_LENGTH_BALANCE_RULE}`,
-
-  hard: `NIVEAU TESTE TES PARENTS :
-- Questions tres avancees : analyse, cas concrets, pièges subtils, nuances importantes.
-- Les mauvaises reponses sont extremement plausibles, seule la maitrise totale permet de les distinguer.
-- Inclure des "lequel n'est PAS...", des cas limites, des contradictions apparentes.
-- Ajouter des connaissances supplementaires liees au sujet (culture generale du domaine).
-- Niveau tel qu'un adulte sans connaissance du sujet aurait du mal a repondre.`,
 }
 
 export function getQcmSystemPrompt(difficulty: QcmDifficulty = 'easy'): string {
@@ -122,7 +119,7 @@ ${QCM_DIFFICULTY_INSTRUCTIONS[difficulty]}
 
 CONTRAINTES STRICTES :
 1. Reponds UNIQUEMENT en JSON valide.
-2. Genere EXACTEMENT 5 questions.
+2. Genere EXACTEMENT ${QCM_QUESTIONS_PER_FLASHCARD} questions par fiche.
 3. Chaque question a EXACTEMENT 4 options (options[0] a options[3]).
 4. correct_index est l'index (0-3) de la bonne reponse.
 5. explanation : explication courte et pedagogique de la bonne reponse (2-3 phrases max).
@@ -148,17 +145,3 @@ TITRE DU COURS : ${courseTitle}
 CONTENU DU COURS :
 ${content}`
 }
-
-export function buildQcmPrompt(flashcardTitle: string, summary: string, keyPoints: string[]): string {
-  return `FICHE : ${flashcardTitle}
-
-RESUME : ${summary}
-
-POINTS CLES :
-${keyPoints.map((p, i) => `${i + 1}. ${p}`).join('\n')}
-
-Genere 5 questions QCM basees sur cette fiche.`
-}
-
-// Legacy exports pour la compatibilite
-export const QCM_SYSTEM_PROMPT = getQcmSystemPrompt('easy')

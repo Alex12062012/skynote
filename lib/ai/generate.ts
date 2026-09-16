@@ -4,6 +4,7 @@ import {
   getFlashcardSystemPrompt,
   getQcmSystemPrompt,
   buildFlashcardPrompt,
+  QCM_QUESTIONS_PER_FLASHCARD,
   type QcmDifficulty,
 } from './prompts'
 
@@ -113,12 +114,9 @@ export async function generateFlashcards(
 // Un seul mecanisme pour deux problemes : contenu vide/malforme ET biais de
 // longueur (bonne reponse systematiquement plus longue que les distracteurs).
 
-/** Nombre de questions attendu par fiche et par niveau. */
-export const QCM_QUESTIONS_PER_FLASHCARD = 3
-
 /**
  * Sous ce nombre de questions valides apres le retry, on prefere echouer
- * explicitement plutot que de livrer un QCM squelettique.
+ * explicitement plutot que de livrer un QCM squelettique (3 sur 5).
  */
 const QCM_MIN_ACCEPTABLE_QUESTIONS = 3
 
@@ -255,8 +253,9 @@ Réponds avec un JSON structuré ainsi :
 
   const message = await anthropic().messages.create({
     model: 'claude-sonnet-5', // Sonnet 5 : $2/$10 par Mtok vs $3/$15 pour 4.6, ~33% moins cher à qualité égale
-    // ~300 tokens par question × N fiches — budget dynamique, plafonné à 4096
-    max_tokens: Math.min(300 * flashcards.length * QCM_QUESTIONS_PER_FLASHCARD + 200, 4096),
+    // ~300 tokens par question × 5 × N fiches — 6 fiches = 9 200 tokens, il faut
+    // un plafond au-dessus de l'ancien 4096 sinon le JSON est tronqué.
+    max_tokens: Math.min(300 * flashcards.length * QCM_QUESTIONS_PER_FLASHCARD + 200, 10000),
     system: getQcmSystemPrompt(difficulty),
     messages: [{ role: 'user', content: userPrompt }],
   })

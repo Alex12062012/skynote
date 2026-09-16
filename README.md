@@ -160,16 +160,15 @@ Générées par Claude avec contraintes strictes : 3 à 6 fiches par cours (idé
 
 ### QCM
 
-4 niveaux de difficulté avec des instructions de prompt distinctes :
+3 niveaux de difficulté avec des instructions de prompt distinctes, 5 questions par fiche et par niveau :
 
 | Niveau | Label | Coins si parfait |
 |---|---|---|
 | peaceful | Paisible | 2 |
 | easy | Normal | 5 |
 | medium | Hardcore | 10 |
-| hard | Teste tes parents | 15 |
 
-Chaque question inclut l'énoncé, 4 options, l'index de la bonne réponse et une explication.
+Chaque question inclut l'énoncé, 4 options, l'index de la bonne réponse et une explication. Les 3 niveaux sont générés dès la création du cours (inclus dans le coût du cours) ; chaque lot est validé (4 options non vides, explication, pas de bonne réponse plus longue que les distracteurs en Normal/Hardcore) et relancé une fois en cas d'échec.
 
 ### Répétition espacée — SM-2
 

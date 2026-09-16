@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from './server'
+import type { QcmDifficulty } from '@/lib/ai/prompts'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { revalidatePath } from 'next/cache'
 import {
@@ -22,7 +23,7 @@ export interface SaveAttemptV2Input {
   flashcardId: string
   score: number
   total: number
-  difficulty: 'peaceful' | 'easy' | 'medium' | 'hard'
+  difficulty: QcmDifficulty
 }
 
 export interface SaveAttemptV2Result {

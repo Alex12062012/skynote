@@ -54,7 +54,6 @@ const DIFFICULTY_LABELS: Record<QcmDifficulty, { label: string; Icon: React.Elem
   peaceful: { label: 'Paisible',          Icon: Leaf,         color: 'text-emerald-600 dark:text-emerald-400' },
   easy:     { label: 'Normal',            Icon: Target,       color: 'text-brand dark:text-brand-dark' },
   medium:   { label: 'Hardcore',          Icon: Flame,        color: 'text-orange-600 dark:text-orange-400' },
-  hard:     { label: 'Teste tes parents', Icon: Trophy,       color: 'text-red-600 dark:text-red-400' },
 }
 
 export function QcmEngine({ flashcard, questions, courseId, difficulty = 'medium', onRegenerate, onChangeDifficulty }: QcmEngineProps) {

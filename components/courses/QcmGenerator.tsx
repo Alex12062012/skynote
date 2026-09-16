@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 
-const DIFFICULTIES = ['peaceful', 'easy', 'medium', 'hard']
+import { QCM_DIFFICULTIES } from '@/lib/ai/prompts'
 
 interface QcmGeneratorProps {
   courseId: string
@@ -28,7 +28,7 @@ export function QcmGenerator({ courseId, flashcards }: QcmGeneratorProps) {
 
     for (const flashcard of flashcards) {
       const results = await Promise.allSettled(
-        DIFFICULTIES.map(async (difficulty) => {
+        QCM_DIFFICULTIES.map(async (difficulty) => {
           const res = await fetch('/api/generate-qcm', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -111,7 +111,7 @@ export function QcmGenerator({ courseId, flashcards }: QcmGeneratorProps) {
         <div className="flex items-center gap-2">
           <div className="h-4 w-4 animate-spin rounded-full border-2 border-brand border-t-transparent dark:border-brand-dark" />
           <p className="font-body text-[14px] font-semibold text-text-main dark:text-text-dark-main">
-            Génération des QCM (4 niveaux) en cours...
+            Génération des QCM (3 niveaux) en cours...
           </p>
         </div>
         <span className="font-display text-[14px] font-bold text-brand dark:text-brand-dark">

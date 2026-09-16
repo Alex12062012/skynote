@@ -40,20 +40,19 @@
  */
 
 // ─── DIFFICULTÉS ──────────────────────────────────────────────────────────────
-export type QcmDifficulty = 'peaceful' | 'easy' | 'medium' | 'hard'
+import type { QcmDifficulty } from '@/lib/ai/prompts'
+export type { QcmDifficulty }
 
 export const DIFFICULTY_COINS: Record<QcmDifficulty, number> = {
   peaceful: 2,   // "Facile"
   easy:     5,   // "Normal"
   medium:  10,   // "Hardcore"
-  hard:    15,   // "Expert"
 }
 
 export const DIFFICULTY_LABELS: Record<QcmDifficulty, string> = {
   peaceful: 'Paisible',
   easy:     'Normal',
   medium:   'Hardcore',
-  hard:     'Teste tes parents',
 }
 
 // ─── SCORING ──────────────────────────────────────────────────────────────────

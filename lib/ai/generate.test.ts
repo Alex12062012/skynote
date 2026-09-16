@@ -2,12 +2,8 @@ import { describe, it, expect, vi } from 'vitest'
 
 vi.mock('@sentry/nextjs', () => ({ captureException: vi.fn(), captureMessage: vi.fn() }))
 
-import {
-  hasLengthBias,
-  validateGeneratedQuestions,
-  QCM_QUESTIONS_PER_FLASHCARD,
-  type GeneratedQuestion,
-} from './generate'
+import { hasLengthBias, validateGeneratedQuestions, type GeneratedQuestion } from './generate'
+import { QCM_QUESTIONS_PER_FLASHCARD } from './prompts'
 
 function q(overrides: Partial<GeneratedQuestion> = {}): GeneratedQuestion {
   return {
