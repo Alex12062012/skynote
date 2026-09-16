@@ -1,7 +1,7 @@
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, Zap } from 'lucide-react'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, getCachedUser } from '@/lib/supabase/server'
 import { getCourse, getCourseFlashcards } from '@/lib/supabase/queries'
 import { QcmPageClient } from '@/components/qcm/QcmPageClient'
 import { QcmProcessingPoller } from '@/components/qcm/QcmProcessingPoller'
@@ -20,9 +20,9 @@ export default async function QcmPage({ params }: Props) {
   const t = createServerT(locale)
 
   const { id } = await params
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getCachedUser()
   if (!user) redirect('/login')
+  const supabase = await createClient()
 
   const course = await getCourse(id, user.id)
   if (!course) notFound()
@@ -31,21 +31,18 @@ export default async function QcmPage({ params }: Props) {
     redirect(`/courses/${id}`)
   }
 
-  const flashcards = await getCourseFlashcards(id)
+  // Fiches et questions en parallele (etaient 3 allers-retours successifs).
+  // Pour les élèves, les questions sont celles du prof (user_id = course.user_id).
+  const [flashcards, { data: rawQuestions }] = await Promise.all([
+    getCourseFlashcards(id),
+    supabase.from('qcm_questions').select('*').eq('course_id', id).eq('user_id', course.user_id),
+  ])
+  const allQuestions = (rawQuestions ?? []) as QcmQuestion[]
 
   // Si les QCM sont encore en cours de génération → vérifier si des questions existent quand même
   if ((course as any).qcm_status === 'processing') {
-    // Vérifier si des questions existent déjà (cas élève : le prof a généré mais qcm_status pas encore à jour)
-    const flashcardIds = flashcards.map((f) => f.id)
-    let hasExistingQuestions = false
-    if (flashcardIds.length > 0) {
-      const { count } = await supabase
-        .from('qcm_questions')
-        .select('*', { count: 'exact', head: true })
-        .in('flashcard_id', flashcardIds)
-        .eq('user_id', course.user_id)
-      hasExistingQuestions = (count ?? 0) > 0
-    }
+    // Cas élève : le prof a généré mais qcm_status pas encore à jour
+    const hasExistingQuestions = allQuestions.length > 0
 
     if (!hasExistingQuestions) {
       return (
@@ -81,17 +78,6 @@ export default async function QcmPage({ params }: Props) {
       </div>
     )
   }
-
-  // Récupérer toutes les questions pour toutes les fiches et tous les niveaux
-  // Pour les élèves, les questions sont celles du prof (user_id = course.user_id)
-  const flashcardIds = flashcards.map((f) => f.id)
-  const { data: rawQuestions } = await supabase
-    .from('qcm_questions')
-    .select('*')
-    .in('flashcard_id', flashcardIds)
-    .eq('user_id', course.user_id)
-
-  const allQuestions = (rawQuestions ?? []) as QcmQuestion[]
 
   return (
     <div className="mx-auto max-w-2xl animate-fade-in">

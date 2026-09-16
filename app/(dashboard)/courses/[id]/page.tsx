@@ -1,7 +1,7 @@
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, getCachedUser } from '@/lib/supabase/server'
 import { getCourse, getCourseFlashcards } from '@/lib/supabase/queries'
 import { EditableTitle } from '@/components/courses/EditableTitle'
 import { ProcessingLoader } from '@/components/courses/ProcessingLoader'
@@ -21,8 +21,7 @@ interface Props { params: Promise<{ id: string }> }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getCachedUser()
   if (!user) return { title: 'Cours' }
   const course = await getCourse(id, user.id)
   return { title: course?.title ?? 'Cours' }
@@ -32,8 +31,7 @@ export default async function CourseDetailPage({ params }: Props) {
   const locale = await getServerLocale()
   const t = createServerT(locale)
   const { id } = await params
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getCachedUser()
   if (!user) redirect('/login')
 
   const course = await getCourse(id, user.id)
@@ -90,19 +88,18 @@ export default async function CourseDetailPage({ params }: Props) {
 
 async function ReadyCourse({ courseId, userId, courseTitle }: { courseId: string; userId: string; courseTitle: string }) {
   const supabase = await createClient()
-  const flashcards = await getCourseFlashcards(courseId)
-
-  // Verifier si des questions existent reellement
-  let qcmReady = false
-  if (flashcards.length > 0) {
-    const flashcardIds = flashcards.map((f) => f.id)
-    const { count } = await supabase
+  // Fiches, plan et presence de QCM ne dependent pas les uns des autres :
+  // une seule vague au lieu de 3 allers-retours successifs.
+  const [flashcards, planLimits, { count: qcmCount }] = await Promise.all([
+    getCourseFlashcards(courseId),
+    getUserPlanLimits(userId),
+    supabase
       .from('qcm_questions')
       .select('*', { count: 'exact', head: true })
-      .in('flashcard_id', flashcardIds)
-      .eq('user_id', userId)
-    qcmReady = (count ?? 0) > 0
-  }
+      .eq('course_id', courseId)
+      .eq('user_id', userId),
+  ])
+  const qcmReady = flashcards.length > 0 && (qcmCount ?? 0) > 0
 
   if (flashcards.length === 0) {
     return (
@@ -128,7 +125,7 @@ async function ReadyCourse({ courseId, userId, courseTitle }: { courseId: string
       <CourseChat
         courseId={courseId}
         courseTitle={courseTitle}
-        isPremium={(await getUserPlanLimits(userId)).isStarter}
+        isPremium={planLimits.isStarter}
       />
 
       {/* Fiches avec bouton QCM contextuel */}

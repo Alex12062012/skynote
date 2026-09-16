@@ -2,7 +2,7 @@ export const revalidate = 30
 
 import { Suspense } from 'react'
 import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, getCachedUser } from '@/lib/supabase/server'
 import { Navbar } from '@/components/layout/Navbar'
 import { SkyBackground } from '@/components/ui/SkyBackground'
 import { StreakTracker } from '@/components/dashboard/StreakTracker'
@@ -15,31 +15,26 @@ import { NovaUpgradeWidget } from '@/components/ui/NovaUpgradeWidget'
 import type { Profile } from '@/types/database'
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getCachedUser()
   if (!user) redirect('/login')
+  const supabase = await createClient()
 
-  const [{ data: profile }, { data: betaRow }, novaBalance] = await Promise.all([
+  // Une seule vague de requetes : chaque `await` sequentiel coute un
+  // aller-retour Vercel → Supabase. getNovaBalance(user.id) evite en plus un
+  // second auth.getUser() interne.
+  const [{ data: profile }, novaBalance, boostRes] = await Promise.all([
     supabase.from('profiles').select('*').eq('id', user.id).single(),
-    supabase.from('admin_settings').select('value').eq('key', 'beta_mode').maybeSingle(),
-    getNovaBalance(),
-  ])
-
-  // Table user_boosts peut ne pas exister en dev — on protège
-  let boostActive = false
-  try {
-    const { data: boostRow } = await supabase
+    getNovaBalance(user.id),
+    supabase
       .from('user_boosts')
       .select('expires_at')
       .eq('user_id', user.id)
       .eq('boost_type', 'x2_coins')
       .gt('expires_at', new Date().toISOString())
       .maybeSingle()
-    boostActive = Boolean(boostRow)
-  } catch { /* table absente */ }
-
-  // betaRow unused after B2B removal — kept for future use
-  void betaRow
+      .then((r) => r, () => ({ data: null })), // table absente en dev
+  ])
+  const boostActive = Boolean(boostRes.data)
 
   return (
     <CoinRewardProvider>

@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { Plus, ArrowRight, GraduationCap } from 'lucide-react'
 import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, getCachedUser } from '@/lib/supabase/server'
 import { getDashboardStats, getProfileWithCoins } from '@/lib/supabase/queries'
 import { StatsBar } from '@/components/dashboard/StatsBar'
 import { CourseCard } from '@/components/dashboard/CourseCard'
@@ -19,18 +19,28 @@ export default async function DashboardPage() {
   const locale = await getServerLocale()
   const t = createServerT(locale)
 
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getCachedUser()
   if (!user) redirect('/login')
+  const supabase = await createClient()
 
-  const [stats, profile] = await Promise.all([
+  // Une seule vague de requetes (etaient 5 `await` successifs = 5 allers-retours).
+  const [
+    stats,
+    profile,
+    { count: totalCourses },
+    { count: totalQcm },
+    { data: top100Check },
+    { data: objectives },
+    { data: userObjectives },
+  ] = await Promise.all([
     getDashboardStats(user.id),
     getProfileWithCoins(user.id),
-  ])
-
-  const [{ count: totalCourses }, { count: totalQcm }] = await Promise.all([
-    supabase.from('courses').select('id', { count: 'exact' }).eq('user_id', user.id),
-    supabase.from('qcm_attempts').select('id', { count: 'exact' }).eq('user_id', user.id),
+    supabase.from('courses').select('id', { count: 'exact', head: true }).eq('user_id', user.id),
+    supabase.from('qcm_attempts').select('id', { count: 'exact', head: true }).eq('user_id', user.id),
+    // Pseudo requis pour le top 100
+    supabase.from('profiles').select('id').order('sky_coins', { ascending: false }).limit(100),
+    supabase.from('objectives').select('*'),
+    supabase.from('user_objectives').select('*').eq('user_id', user.id).eq('completed', false),
   ])
 
   const firstName = profile?.full_name?.split(' ')[0] ?? 'toi'
@@ -40,12 +50,6 @@ export default async function DashboardPage() {
   const hour = new Date().getHours()
   const greeting = hour < 12 ? t('dash.goodMorning') : hour < 18 ? t('dash.goodAfternoon') : t('dash.goodEvening')
 
-  // Pseudo requis pour le top 100
-  const { data: top100Check } = await supabase
-    .from('profiles')
-    .select('id')
-    .order('sky_coins', { ascending: false })
-    .limit(100)
   const isInTop100 = (top100Check || []).some((p: any) => p.id === user.id)
   const needsPseudo = isInTop100 && !profile?.pseudo
 
@@ -118,19 +122,20 @@ export default async function DashboardPage() {
         )}
       </Reveal>
 
-      <ObjectivesSummary userId={user.id} />
+      <ObjectivesSummary objectives={objectives} userObjectives={userObjectives} t={t} />
     </div>
   )
 }
 
-async function ObjectivesSummary({ userId }: { userId: string }) {
-  const locale = await getServerLocale()
-  const t = createServerT(locale)
-  const supabase = await createClient()
-  const { data: objectives } = await supabase.from('objectives').select('*')
-  const { data: userObjectives } = await supabase
-    .from('user_objectives').select('*').eq('user_id', userId).eq('completed', false)
-
+function ObjectivesSummary({
+  objectives,
+  userObjectives,
+  t,
+}: {
+  objectives: any[] | null
+  userObjectives: any[] | null
+  t: ReturnType<typeof createServerT>
+}) {
   if (!objectives || !userObjectives || userObjectives.length === 0) return null
 
   const inProgress = userObjectives

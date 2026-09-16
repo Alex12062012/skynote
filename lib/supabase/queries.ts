@@ -1,3 +1,4 @@
+import { cache } from 'react'
 import { createClient } from './server'
 import type { Course, Flashcard, Profile, QcmQuestion } from '@/types/database'
 
@@ -25,7 +26,11 @@ export async function getTeacherCourses(studentUserId: string): Promise<Course[]
   return data || []
 }
 
-export async function getCourse(courseId: string, userId: string): Promise<Course | null> {
+/**
+ * Memoise par requete : generateMetadata et la page appellent getCourse avec
+ * les memes arguments, un seul aller-retour suffit.
+ */
+export const getCourse = cache(async (courseId: string, userId: string): Promise<Course | null> => {
   const supabase = await createClient()
   // D'abord essayer en tant que propriétaire
   const { data } = await supabase.from('courses').select('*').eq('id', courseId).eq('user_id', userId).single()
@@ -37,12 +42,12 @@ export async function getCourse(courseId: string, userId: string): Promise<Cours
     return teacherCourse ?? null
   }
   return null
-}
-export async function getCourseFlashcards(courseId: string): Promise<Flashcard[]> {
+})
+export const getCourseFlashcards = cache(async (courseId: string): Promise<Flashcard[]> => {
   const supabase = await createClient()
   const { data } = await supabase.from('flashcards').select('*').eq('course_id', courseId).order('order_index', { ascending: true })
   return data || []
-}
+})
 export async function getFlashcardQcm(flashcardId: string): Promise<QcmQuestion[]> {
   const supabase = await createClient()
   const { data } = await supabase.from('qcm_questions').select('*').eq('flashcard_id', flashcardId)
