@@ -43,10 +43,18 @@
 import type { QcmDifficulty } from '@/lib/ai/prompts'
 export type { QcmDifficulty }
 
+/**
+ * Grille FIXE de base par niveau (score parfait). Le total affiché à l'élève
+ * (computeReward) ajoute ensuite, de façon déterministe : bonus de série
+ * (3e et 5e 5/5 consécutifs), bonus « early game » (10 premières fiches
+ * parfaites), multiplicateur de prestige et boost ×2 de la boutique — ce n'est
+ * ni un bug ni de l'aléatoire.
+ * 5 / 10 / 15 depuis le passage à 3 niveaux (avant : 2 / 5 / 10 / 15 sur 4).
+ */
 export const DIFFICULTY_COINS: Record<QcmDifficulty, number> = {
-  peaceful: 2,   // "Facile"
-  easy:     5,   // "Normal"
-  medium:  10,   // "Hardcore"
+  peaceful:  5,   // "Paisible"
+  easy:     10,   // "Normal"
+  medium:   15,   // "Hardcore"
 }
 
 export const DIFFICULTY_LABELS: Record<QcmDifficulty, string> = {
