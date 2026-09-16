@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { generateQcmQuestions } from '@/lib/ai/generate'
 import { isQcmDifficulty } from '@/lib/ai/prompts'
 import { NOVA_COST_QCM_SINGLE, deductNovasForUser, addNovasForUser } from '@/lib/supabase/nova-actions'
@@ -86,17 +87,23 @@ export async function POST(request: NextRequest) {
       throw Errors.internal("Aucune question générée par l'IA")
     }
 
+    // Ecritures via service role : qcm_questions est en lecture seule cote
+    // client (migration 037). La fiche a ete lue avec le filtre user_id, et le
+    // delete le repete par securite.
+    const admin = createAdminClient()
+
     if (isPaidRegeneration) {
       // On ne supprime l'ancien jeu qu'une fois le nouveau genere : un echec IA
       // ne doit jamais laisser le niveau vide.
-      await supabase
+      await admin
         .from('qcm_questions')
         .delete()
         .eq('flashcard_id', flashcardId)
+        .eq('user_id', user.id)
         .eq('difficulty', difficulty)
     }
 
-    const { error: insertError } = await supabase.from('qcm_questions').insert(
+    const { error: insertError } = await admin.from('qcm_questions').insert(
       questions.map((q) => ({
         flashcard_id: flashcard.id,
         course_id:    flashcard.course_id,

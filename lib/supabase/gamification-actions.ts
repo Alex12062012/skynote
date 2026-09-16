@@ -106,7 +106,8 @@ export async function saveQcmAttemptV2(input: SaveAttemptV2Input): Promise<SaveA
 
   // 7. Marquer fiche comme maîtrisée si 5/5
   if (reward.perfect) {
-    await supabase.from('flashcards')
+    // Service role : flashcards en lecture seule cote client (migration 037).
+    await svc().from('flashcards')
       .update({ is_mastered: true })
       .eq('id', input.flashcardId)
       .eq('user_id', user.id)

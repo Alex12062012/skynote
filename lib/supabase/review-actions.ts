@@ -34,8 +34,9 @@ export async function submitReview(
 
     const result = applySM2(card, grade)
 
-    // Update flashcard
-    await supabase
+    // Update flashcard — service role (migration 037 : lecture seule cote
+    // client), la carte a ete lue avec le filtre user_id.
+    await createAdminClient()
       .from('flashcards')
       .update({
         ease_factor: result.ease_factor,

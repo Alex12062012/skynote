@@ -65,7 +65,10 @@ export async function processCourse(courseId: string, contentLang?: string): Pro
       order_index: index,
     }))
 
-    const { error: fcError } = await supabase
+    // Ecriture via service role : depuis la migration 037, flashcards est en
+    // lecture seule pour le client (RLS SELECT). Le cours a ete lu avec le
+    // client de session, donc il appartient bien a l'utilisateur courant.
+    const { error: fcError } = await createAdminClient()
       .from('flashcards')
       .insert(flashcardInserts)
 

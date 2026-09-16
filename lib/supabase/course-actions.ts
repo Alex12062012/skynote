@@ -1,5 +1,6 @@
 'use server'
 import { createClient } from './server'
+import { createAdminClient } from './admin'
 import { revalidatePath } from 'next/cache'
 import { canCreateCourse, incrementWeeklyCourseCount } from './plan'
 
@@ -74,7 +75,8 @@ export async function toggleFlashcardMastered(flashcardId: string, isMastered: b
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Non connecté' }
-  await supabase.from('flashcards').update({ is_mastered: isMastered }).eq('id', flashcardId).eq('user_id', user.id)
+  // Ecriture via service role (migration 037 : lecture seule cote client) ; le filtre user_id garantit l'appartenance.
+  await createAdminClient().from('flashcards').update({ is_mastered: isMastered }).eq('id', flashcardId).eq('user_id', user.id)
   const { data: flashcard } = await supabase.from('flashcards').select('course_id').eq('id', flashcardId).single()
   if (flashcard) {
     const { data: all } = await supabase.from('flashcards').select('is_mastered').eq('course_id', flashcard.course_id)

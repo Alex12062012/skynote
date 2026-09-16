@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from './server'
+import { createAdminClient } from './admin'
 import Anthropic from '@anthropic-ai/sdk'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
@@ -46,10 +47,14 @@ export async function triggerErrorAnalysis(flashcardId: string): Promise<Trigger
 
     // Incrémenter consecutive_errors
     const newErrors = (card.consecutive_errors ?? 0) + 1
-    await supabase
+    // Ecritures flashcards via service role (migration 037 : lecture seule cote
+    // client) ; la fiche a ete lue ci-dessus avec le filtre user_id.
+    const admin = createAdminClient()
+    await admin
       .from('flashcards')
       .update({ consecutive_errors: newErrors, last_error_at: new Date().toISOString() })
       .eq('id', flashcardId)
+      .eq('user_id', user.id)
 
     // 2. Vérifier seuil (2 erreurs consécutives)
     if (newErrors < 2) return { status: 'skipped' }
@@ -132,7 +137,7 @@ IMPORTANT: JSON only, no markdown, maximum 120 words total.`
     const simplifiedTitle = `[Rappel] ${card.title}`
     const simplifiedSummary = `${parsed.rule}\n\nExemple : ${parsed.example}`
 
-    const { data: newCard } = await supabase
+    const { data: newCard } = await admin
       .from('flashcards')
       .insert({
         user_id: user.id,
@@ -158,7 +163,7 @@ IMPORTANT: JSON only, no markdown, maximum 120 words total.`
     })
 
     // 9. Mettre à jour last_ai_analysis_at + reset consecutive_errors
-    await supabase
+    await admin
       .from('flashcards')
       .update({ last_ai_analysis_at: new Date().toISOString(), consecutive_errors: 0 })
       .eq('id', flashcardId)

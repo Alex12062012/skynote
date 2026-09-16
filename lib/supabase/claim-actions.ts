@@ -176,7 +176,9 @@ export async function claimSharedCourse(
     order_index: f.order_index,
   }))
 
-  const { data: newFlashcards, error: flashcardsError } = await supabase
+  // Ecritures via service role (migration 037 : tables en lecture seule cote
+  // client). Les lignes inserees portent user_id = user.id, verifie ci-dessus.
+  const { data: newFlashcards, error: flashcardsError } = await publicClient
     .from('flashcards')
     .insert(flashcardsToInsert)
     .select('id, order_index')
@@ -213,7 +215,7 @@ export async function claimSharedCourse(
       .filter((q): q is NonNullable<typeof q> => q !== null)
 
     if (questionsToInsert.length > 0) {
-      await supabase.from('qcm_questions').insert(questionsToInsert)
+      await publicClient.from('qcm_questions').insert(questionsToInsert)
     }
   }
 
