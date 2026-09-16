@@ -28,11 +28,14 @@ export async function POST(request: NextRequest) {
   // dont l'id aurait été retenu.
   const { data: message } = await admin
     .from('admin_messages')
-    .select('id, reward_type, reward_amount')
+    .select('id, reward_type, reward_amount, target_user_id')
     .eq('id', messageId)
     .eq('active', true)
     .maybeSingle()
-  if (!message) return NextResponse.json({ error: 'Message introuvable' }, { status: 404 })
+  // Un message cible sur quelqu'un d'autre n'est ni visible ni acquittable.
+  if (!message || (message.target_user_id && message.target_user_id !== user.id)) {
+    return NextResponse.json({ error: 'Message introuvable' }, { status: 404 })
+  }
 
   // ignoreDuplicates : si la ligne existait déjà, `inserted` est vide et on ne
   // crédite rien — c'est ce qui rend la récompense idempotente.

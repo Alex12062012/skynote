@@ -17,7 +17,7 @@ export async function GET() {
 
   const { data, error } = await createAdminClient()
     .from('admin_messages')
-    .select('id, content, reward_type, reward_amount, active, created_at, user_seen_messages(count)')
+    .select('id, content, reward_type, reward_amount, active, created_at, target_user_id, target:profiles!admin_messages_target_user_id_fkey(email, full_name), user_seen_messages(count)')
     .order('created_at', { ascending: false })
     .limit(100)
 
@@ -26,6 +26,8 @@ export async function GET() {
   const messages = (data ?? []).map((m: any) => ({
     ...m,
     seen_count: m.user_seen_messages?.[0]?.count ?? 0,
+    target_label: m.target_user_id ? (m.target?.email ?? m.target?.full_name ?? m.target_user_id) : null,
+    target: undefined,
     user_seen_messages: undefined,
   }))
   return NextResponse.json({ messages })
@@ -61,9 +63,10 @@ export async function POST(req: NextRequest) {
   const admin = createAdminClient()
   const active = Boolean(body.active)
 
-  // Un seul message actif à la fois : activer celui-ci désactive les autres.
+  // Un seul BROADCAST actif à la fois : activer celui-ci désactive les autres
+  // broadcasts. Les messages ciblés (target_user_id) ne sont pas concernés.
   if (active) {
-    await admin.from('admin_messages').update({ active: false }).eq('active', true)
+    await admin.from('admin_messages').update({ active: false }).eq('active', true).is('target_user_id', null)
   }
 
   const { data, error } = await admin
@@ -98,7 +101,10 @@ export async function PATCH(req: NextRequest) {
   const active = Boolean(body.active)
 
   if (active) {
-    await admin.from('admin_messages').update({ active: false }).eq('active', true).neq('id', id)
+    const { data: target } = await admin.from('admin_messages').select('target_user_id').eq('id', id).maybeSingle()
+    if (target && target.target_user_id === null) {
+      await admin.from('admin_messages').update({ active: false }).eq('active', true).is('target_user_id', null).neq('id', id)
+    }
   }
 
   const { error } = await admin.from('admin_messages').update({ active }).eq('id', id)

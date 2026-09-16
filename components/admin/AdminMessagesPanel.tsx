@@ -22,6 +22,8 @@ type AdminMessage = {
   active: boolean
   created_at: string
   seen_count: number
+  target_user_id: string | null
+  target_label: string | null
 }
 
 const VIDE = { content: '', reward_type: '', reward_amount: '10', active: true }
@@ -90,7 +92,7 @@ export function AdminMessagesPanel() {
         Message du jour
       </h2>
       <p className="mb-4 text-[12px] text-slate-400">
-        Affiché une fois à chaque utilisateur, en popup, au chargement du tableau de bord. Un seul message actif à la fois.
+        Affiché une fois à chaque utilisateur, en popup, au chargement du tableau de bord. Un seul broadcast actif à la fois. Les messages ciblés (envoyés depuis la fiche d&apos;un utilisateur, avec un crédit) apparaissent aussi ci-dessous.
       </p>
 
       <form onSubmit={creer} className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -145,6 +147,7 @@ export function AdminMessagesPanel() {
             <thead className="text-[11px] uppercase tracking-wide text-slate-400">
               <tr>
                 <th className="py-2 pr-4">Message</th>
+                <th className="py-2 pr-4">Cible</th>
                 <th className="py-2 pr-4">Récompense</th>
                 <th className="py-2 pr-4">Vu par</th>
                 <th className="py-2 pr-4">Créé le</th>
@@ -157,6 +160,11 @@ export function AdminMessagesPanel() {
                 <tr key={m.id} className="border-t border-slate-800 align-top">
                   <td className="max-w-md py-2.5 pr-4 text-slate-100">
                     <span className="line-clamp-3 whitespace-pre-wrap">{m.content}</span>
+                  </td>
+                  <td className="py-2.5 pr-4 text-slate-300">
+                    {m.target_user_id
+                      ? <span className="rounded-full bg-indigo-900/40 px-2 py-0.5 text-[11px] text-indigo-300">{m.target_label}</span>
+                      : <span className="text-[11px] text-slate-500">Tous</span>}
                   </td>
                   <td className="py-2.5 pr-4 text-slate-300">
                     {m.reward_type ? `${m.reward_amount} ${m.reward_type === 'nova' ? 'Novas' : 'Sky Coins'}` : '—'}

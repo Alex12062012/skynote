@@ -14,11 +14,31 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Acces refuse' }, { status: 403 })
     }
 
-    const { userId, action, value } = await request.json()
+    const adminId = user.id
+    const { userId, action, value, message } = await request.json()
     const supabase = createServiceClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     )
+
+    /**
+     * Message cible optionnel, joint a un credit Novas / coins : visible
+     * uniquement par cet utilisateur, a sa prochaine connexion (meme popup
+     * que le message du jour). Le credit est deja applique, le message ne
+     * porte donc aucune recompense. Une erreur ici ne doit pas annuler le
+     * credit : on la renvoie a l'admin sans echouer l'action.
+     */
+    async function sendTargetedMessage(): Promise<string | null> {
+      const content = typeof message === 'string' ? message.trim().slice(0, 2000) : ''
+      if (!content) return null
+      const { error } = await supabase.from('admin_messages').insert({
+        content,
+        target_user_id: userId,
+        active: true,
+        created_by: adminId,
+      })
+      return error ? `Crédit OK mais message non envoyé : ${error.message}` : null
+    }
 
     switch (action) {
       case 'add_coins': {
@@ -30,7 +50,8 @@ export async function POST(request: NextRequest) {
           user_id: userId, amount: Number(value),
           reason: `Ajustement admin ${Number(value) > 0 ? '+' : ''}${value} coins`,
         })
-        return NextResponse.json({ ok: true, newCoins })
+        const warning = await sendTargetedMessage()
+        return NextResponse.json({ ok: true, newCoins, warning })
       }
 
       case 'set_name': {
@@ -93,7 +114,8 @@ export async function POST(request: NextRequest) {
         const { data: wallet } = await supabase.from('wallets').select('novas_balance').eq('user_id', userId).single()
         const newBalance = Math.max(0, (wallet?.novas_balance ?? 0) + amount)
         await supabase.from('wallets').upsert({ user_id: userId, novas_balance: newBalance }, { onConflict: 'user_id' })
-        return NextResponse.json({ ok: true, newBalance })
+        const warning = await sendTargetedMessage()
+        return NextResponse.json({ ok: true, newBalance, warning })
       }
 
       case 'set_novas': {

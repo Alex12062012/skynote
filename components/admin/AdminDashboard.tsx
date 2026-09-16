@@ -247,6 +247,8 @@ export function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   const [selectedUser, setSelectedUser] = useState<User | null>(null)
   const [coinAmount, setCoinAmount] = useState('')
   const [novaAmount, setNovaAmount] = useState('')
+  // Message cible optionnel, joint au prochain credit coins / Novas
+  const [creditMessage, setCreditMessage] = useState('')
   const [newName, setNewName] = useState('')
   const [actionLoading, setActionLoading] = useState(false)
   const [feedback, setFeedback] = useState('')
@@ -313,13 +315,26 @@ export function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     setBetaLoading(false)
   }
 
+  const creditMessageField = (
+    <div className="mt-2 rounded-xl border border-dashed border-slate-700 p-3">
+      <p className="text-[12px] font-medium text-slate-300 mb-1.5">
+        Message pour cet utilisateur (optionnel) — popup à sa prochaine connexion
+      </p>
+      <textarea aria-label="Message pour cet utilisateur" rows={2} maxLength={2000} value={creditMessage} onChange={(e) => setCreditMessage(e.target.value)}
+        placeholder="Ex : Voici 100 Novas suite au bug de génération du 16/09. Bonne révision !"
+        className="w-full rounded-xl border border-slate-700 bg-slate-800 px-3 py-2 text-[13px] text-white focus:border-blue-500 focus:outline-none" />
+    </div>
+  )
+
   async function doAction(userId: string, action: string, value?: any) {
     setActionLoading(true); setFeedback('')
     try {
-      const res = await fetch('/api/admin/update-user', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId, action, value }) })
+      const withMessage = (action === 'add_coins' || action === 'add_novas') && creditMessage.trim()
+      const res = await fetch('/api/admin/update-user', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId, action, value, message: withMessage ? creditMessage.trim() : undefined }) })
       const data = await res.json()
       if (data.ok) {
-        setFeedback('OK: Action effectuée')
+        setFeedback(data.warning ? `ERREUR: ${data.warning}` : withMessage ? 'OK: Crédit effectué, message envoyé (visible à sa prochaine connexion)' : 'OK: Action effectuée')
+        if (withMessage && !data.warning) setCreditMessage('')
         loadData()
         if (action === 'delete_user') setSelectedUser(null)
         if (action === 'add_novas' || action === 'set_novas') {
@@ -606,6 +621,7 @@ export function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                         <button onClick={() => doAction(selectedUser.id, 'add_coins', coinAmount)} disabled={actionLoading || !coinAmount}
                           className="px-4 rounded-xl bg-blue-600 text-[13px] font-semibold text-white hover:bg-blue-500 disabled:opacity-50">+/-</button>
                       </div>
+                      {coinAmount && creditMessageField}
                     </div>
 
                     {/* Novas ✦ */}
@@ -621,6 +637,7 @@ export function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                         <button onClick={() => doAction(selectedUser.id, 'add_novas', novaAmount)} disabled={actionLoading || !novaAmount}
                           className="px-4 rounded-xl bg-indigo-600 text-[13px] font-semibold text-white hover:bg-indigo-500 disabled:opacity-50">+/-</button>
                       </div>
+                      {novaAmount && creditMessageField}
                       <div className="flex gap-2 mt-2">
                         {[600, 2000, 4000].map(v => (
                           <button key={v} onClick={() => doAction(selectedUser.id, 'set_novas', v)} disabled={actionLoading}
