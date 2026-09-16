@@ -4,7 +4,7 @@ import { generateQcmQuestions } from '@/lib/ai/generate'
 import { isQcmDifficulty } from '@/lib/ai/prompts'
 import { NOVA_COST_QCM_SINGLE, deductNovasForUser, addNovasForUser } from '@/lib/supabase/nova-actions'
 import { Errors, apiError } from '@/lib/errors'
-import { checkRateLimit, RATE_LIMITS } from '@/lib/rate-limit'
+import { checkQcmRateLimits } from '@/lib/rate-limit'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 60
@@ -44,22 +44,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ ok: true, skipped: true })
     }
 
+    // Plafonds 40/h + 200/jour sur CHAQUE appel, avant tout appel IA : c'est
+    // le garde-fou de la facture Anthropic, independant des Novas.
+    const limited = await checkQcmRateLimits(user.id)
+    if (limited) return limited
+
     // Facturation : les 118✦ du cours couvrent TOUS les QCM. Un niveau vide
     // (jamais genere, ou echec initial a la charge de Skynote) se genere donc
     // gratuitement. Les 4✦ ne sont deduits que pour REMPLACER des questions
-    // existantes — c'est aussi le seul cas soumis au rate limit, puisque la
-    // generation initiale enchaine fiches × niveaux appels d'un coup.
+    // existantes.
     const isPaidRegeneration = hasExisting
 
     if (isPaidRegeneration) {
-      const rl = await checkRateLimit(user.id, 'generate-qcm', RATE_LIMITS.generateQcm)
-      if (!rl.allowed) {
-        return NextResponse.json(
-          { error: 'Limite atteinte : 20 régénérations de QCM par jour. Réessaie demain.' },
-          { status: 429, headers: { 'X-RateLimit-Reset': String(rl.resetAt) } }
-        )
-      }
-
       const deductResult = await deductNovasForUser(
         user.id,
         NOVA_COST_QCM_SINGLE,
