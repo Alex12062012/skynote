@@ -1,10 +1,8 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { NovaCoin } from '@/components/ui/NovaCoin'
 
 const DIFFICULTIES = ['peaceful', 'easy', 'medium', 'hard']
-const NOVA_PER_QCM = 4
 
 interface QcmGeneratorProps {
   courseId: string
@@ -74,7 +72,6 @@ export function QcmGenerator({ courseId, flashcards }: QcmGeneratorProps) {
   }
 
   const percent = total > 0 ? Math.round((done / total) * 100) : 0
-  const novaCost = total * DIFFICULTIES.length * NOVA_PER_QCM
 
   if (complete) {
     return (
@@ -129,15 +126,9 @@ export function QcmGenerator({ courseId, flashcards }: QcmGeneratorProps) {
         />
       </div>
 
-      <div className="mt-2 flex items-center justify-between">
-        <p className="font-body text-[12px] text-text-tertiary dark:text-text-dark-tertiary">
-          Lis tes fiches pendant ce temps !
-        </p>
-        <span className="flex items-center gap-1 rounded-full bg-sky-cloud px-2 py-0.5 font-body text-[11px] font-semibold text-text-secondary dark:bg-night-border dark:text-text-dark-secondary" title="Cout total en Novas pour generer tous les QCM">
-          <NovaCoin size={11} />
-          {novaCost} ✦
-        </span>
-      </div>
+      <p className="mt-2 font-body text-[12px] text-text-tertiary dark:text-text-dark-tertiary">
+        Lis tes fiches pendant ce temps ! Les QCM sont inclus dans le coût du cours.
+      </p>
 
     </div>
   )

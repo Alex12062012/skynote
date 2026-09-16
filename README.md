@@ -223,7 +223,6 @@ Timeout Vercel : **60 secondes** sur toutes les routes.
 |---|---|---|
 | /api/generate | POST | Génère les fiches Claude pour un cours |
 | /api/generate-qcm | POST | Génère les QCM pour une fiche |
-| /api/generate-qcm/batch | POST | Génération QCM en masse |
 | /api/mark-qcm-ready | POST | Marque les QCM comme prêts |
 | /api/qcm-questions | GET | Récupère les questions d'un QCM |
 | /api/extract-photo | POST | Extrait le texte d'une image (Claude Vision) |

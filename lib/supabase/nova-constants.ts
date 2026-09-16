@@ -5,7 +5,6 @@
 // Couts
 export const NOVA_COST_OCR              =   2
 export const NOVA_COST_QCM_SINGLE       =   4
-export const NOVA_COST_QCM_BATCH        =  88   // regeneration des 4 niveaux de difficulte d'une fiche
 export const NOVA_COST_CHAT             =  36
 export const NOVA_COST_EVAL_PLAN        =   5
 export const NOVA_COST_COURSE           = 118

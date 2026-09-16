@@ -1,13 +1,12 @@
-import { generateFlashcards, generateQcmQuestions } from './generate'
+import { generateFlashcards } from './generate'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import type { QcmDifficulty } from './prompts'
-
-const ALL_DIFFICULTIES: QcmDifficulty[] = ['peaceful', 'easy', 'medium', 'hard']
 
 /**
  * PHASE 1 — Genere les fiches et marque le cours comme pret.
- * Les QCM restent en qcm_status='processing' pour etre generes en arriere-plan.
+ * Les QCM restent en qcm_status='processing' : ils sont generes ensuite cote
+ * client par QcmGenerator (fiches × niveaux appels a /api/generate-qcm),
+ * couverts par les Novas deja deduits pour le cours.
  * Rapide : 1 seul appel Claude (~15s).
  */
 export async function processCourse(courseId: string, contentLang?: string): Promise<void> {
@@ -88,114 +87,6 @@ export async function processCourse(courseId: string, contentLang?: string): Pro
       .from('courses')
       .update({ status: 'error', progress: 0 })
       .eq('id', courseId)
-    throw error
-  }
-}
-
-/**
- * PHASE 2 — Genere les QCM (4 niveaux) pour toutes les fiches du cours.
- * Appelee en arriere-plan apres que le cours est deja marque 'ready'.
- * Peut prendre jusqu'a 60s selon le nombre de fiches.
- */
-export async function processQcmsForCourse(courseId: string): Promise<void> {
-  const supabase = await createClient()
-
-  const { data: course } = await supabase
-    .from('courses')
-    .select('user_id, qcm_status')
-    .eq('id', courseId)
-    .single()
-
-  if (!course) {
-    console.warn('[QCM Pipeline] Cours introuvable :', courseId)
-    return
-  }
-
-  if (course.qcm_status === 'ready') {
-    console.log('[QCM Pipeline] QCM deja generes pour', courseId)
-    return
-  }
-
-  const { data: flashcards } = await supabase
-    .from('flashcards')
-    .select('id, title, summary, key_points')
-    .eq('course_id', courseId)
-    .order('order_index')
-
-  if (!flashcards || flashcards.length === 0) {
-    console.warn('[QCM Pipeline] Aucune fiche pour', courseId)
-    return
-  }
-
-  // Verifier si des QCM existent deja (anti-doublon)
-  const { count: existingQcm } = await supabase
-    .from('qcm_questions')
-    .select('id', { count: 'exact' })
-    .eq('course_id', courseId)
-
-  if ((existingQcm ?? 0) > 0) {
-    // QCM partiellement ou completement generes — on marque ready
-    await supabase
-      .from('courses')
-      .update({ qcm_status: 'ready' })
-      .eq('id', courseId)
-    return
-  }
-
-  try {
-    let totalInserted = 0
-
-    for (const flashcard of flashcards) {
-      const keyPoints: string[] = Array.isArray(flashcard.key_points)
-        ? flashcard.key_points
-        : (() => { try { return JSON.parse(String(flashcard.key_points || '[]')) } catch { return [] } })()
-
-      // 4 niveaux en parallele pour cette fiche
-      const results = await Promise.allSettled(
-        ALL_DIFFICULTIES.map(async (difficulty) => {
-          try {
-            const questions = await generateQcmQuestions(
-              flashcard.title,
-              flashcard.summary,
-              keyPoints,
-              difficulty
-            )
-            if (questions.length > 0) {
-              const { error } = await supabase.from('qcm_questions').insert(
-                questions.map((q) => ({
-                  flashcard_id: flashcard.id,
-                  course_id: courseId,
-                  user_id: course.user_id,
-                  question: q.question,
-                  options: q.options,
-                  correct_index: q.correct_index,
-                  explanation: q.explanation,
-                  difficulty,
-                }))
-              )
-              if (!error) return questions.length
-            }
-            return 0
-          } catch (err) {
-            console.error(`[QCM Pipeline] ${difficulty} pour fiche ${flashcard.id}:`, err)
-            return 0
-          }
-        })
-      )
-      totalInserted += results.reduce((sum, r) => sum + (r.status === 'fulfilled' ? (r.value ?? 0) : 0), 0)
-    }
-
-    // Marquer ready seulement si des questions ont ete inserees
-    if (totalInserted > 0) {
-      await supabase.from('courses').update({ qcm_status: 'ready' }).eq('id', courseId)
-      console.log(`[QCM Pipeline] ${totalInserted} questions generees pour ${courseId}`)
-    } else {
-      console.warn(`[QCM Pipeline] Aucune question generee pour ${courseId} — qcm_status reste processing`)
-    }
-
-  } catch (error) {
-    console.error(`[QCM Pipeline] Erreur pour le cours ${courseId}:`, error)
-    // On ne marque pas en erreur — les QCM peuvent etre regeneres via QcmGenerator
     throw error
   }
 }

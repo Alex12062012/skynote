@@ -4,8 +4,7 @@
  * Coûts par action :
  *   OCR (1 photo)        :  2 ✦  — NOVA_COST_OCR
  *   Fiches (batch)       : 30 ✦  — NOVA_COST_FICHES
- *   QCM (batch)          : 88 ✦  — NOVA_COST_QCM_BATCH
- *   QCM (1 regen)        :  4 ✦  — NOVA_COST_QCM_SINGLE
+ *   QCM (1 regen)        :  4 ✦  — NOVA_COST_QCM_SINGLE (remplacer un niveau existant ; un niveau vide est gratuit)
  *   Chat (1 msg)         : 36 ✦  — NOVA_COST_CHAT (corrigé : envoie le cours complet à chaque message, sous-évalué à 12✦)
  *   Plan de révision IA  :  5 ✦  — NOVA_COST_EVAL_PLAN
  *   Épreuve brevet/bac   : 200 ✦  — NOVA_COST_EXAM_SIMULATION (génération annales + correction IA, tout inclus)
@@ -29,7 +28,6 @@ import { createClient as createServiceClient } from '@supabase/supabase-js'
 export {
   NOVA_COST_OCR,
   NOVA_COST_QCM_SINGLE,
-  NOVA_COST_QCM_BATCH,
   NOVA_COST_CHAT,
   NOVA_COST_EVAL_PLAN,
   NOVA_COST_COURSE,
