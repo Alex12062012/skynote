@@ -12,16 +12,19 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Volume2, Square } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { loadVoices, pickVoice, toSpeechLang } from '@/lib/speech-lang'
 
 interface SpeakButtonProps {
   /** Texte à lire à voix haute */
   text: string
   /** Libellé accessible (par défaut : « Écouter ») */
   label?: string
+  /** Code langue du produit ('fr', 'en', 'auto'…) ou tag BCP 47 — langue de la voix */
+  lang?: string | null
   className?: string
 }
 
-export function SpeakButton({ text, label = 'Écouter', className }: SpeakButtonProps) {
+export function SpeakButton({ text, label = 'Écouter', lang, className }: SpeakButtonProps) {
   const [supported, setSupported] = useState(false)
   const [speaking, setSpeaking]   = useState(false)
 
@@ -38,7 +41,7 @@ export function SpeakButton({ text, label = 'Écouter', className }: SpeakButton
     }
   }, [])
 
-  const speak = useCallback(() => {
+  const speak = useCallback(async () => {
     if (!supported || !text.trim()) return
 
     // Une lecture en cours : le bouton devient un stop
@@ -48,24 +51,31 @@ export function SpeakButton({ text, label = 'Écouter', className }: SpeakButton
       return
     }
 
+    const speechLang = toSpeechLang(lang)
     const utterance = new SpeechSynthesisUtterance(text)
-    utterance.lang  = 'fr-FR'
+    utterance.lang  = speechLang
     utterance.rate  = 0.95   // légèrement ralenti : plus confortable à l'écoute
     utterance.pitch = 1
+
+    // Pour une même langue le navigateur expose souvent plusieurs voix de
+    // qualité très inégale (voix « Google » réseau vs voix locale de l'OS,
+    // robotique). Sans sélection explicite il prend la première venue.
+    const voice = pickVoice(await loadVoices(), speechLang)
+    if (voice) utterance.voice = voice
 
     utterance.onend   = () => setSpeaking(false)
     utterance.onerror = () => setSpeaking(false)
 
     setSpeaking(true)
     window.speechSynthesis.speak(utterance)
-  }, [supported, text])
+  }, [supported, text, lang])
 
   if (!supported) return null
 
   return (
     <button
       type="button"
-      onClick={speak}
+      onClick={() => { void speak() }}
       aria-label={speaking ? 'Arrêter la lecture' : label}
       title={speaking ? 'Arrêter la lecture' : label}
       className={cn(

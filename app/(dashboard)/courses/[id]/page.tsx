@@ -80,13 +80,14 @@ export default async function CourseDetailPage({ params }: Props) {
           courseId={id}
           userId={user.id}
           courseTitle={course.title}
+          contentLang={course.content_lang}
         />
       )}
     </div>
   )
 }
 
-async function ReadyCourse({ courseId, userId, courseTitle }: { courseId: string; userId: string; courseTitle: string }) {
+async function ReadyCourse({ courseId, userId, courseTitle, contentLang }: { courseId: string; userId: string; courseTitle: string; contentLang: string | null }) {
   const supabase = await createClient()
   // Fiches, plan et presence de QCM ne dependent pas les uns des autres :
   // une seule vague au lieu de 3 allers-retours successifs.
@@ -129,7 +130,7 @@ async function ReadyCourse({ courseId, userId, courseTitle }: { courseId: string
       />
 
       {/* Fiches avec bouton QCM contextuel */}
-      <FlashcardViewer flashcards={flashcards} courseId={courseId} userId={userId} qcmReady={qcmReady} />
+      <FlashcardViewer flashcards={flashcards} courseId={courseId} userId={userId} qcmReady={qcmReady} lang={contentLang} />
     </div>
   )
 }

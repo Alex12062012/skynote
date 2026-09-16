@@ -69,6 +69,8 @@ export interface Course {
   file_url: string | null; status: 'processing' | 'ready' | 'error'; progress: number
   qcm_status: 'pending' | 'processing' | 'ready' | 'error'
   origin_course_id: string | null
+  /** Langue des fiches choisie a la creation ('fr', 'en'…) ; null = auto-detectee */
+  content_lang: string | null
   created_at: string; updated_at: string
 }
 

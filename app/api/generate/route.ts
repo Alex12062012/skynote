@@ -72,9 +72,15 @@ export async function POST(request: NextRequest) {
       throw new AppError(deductResult.error ?? 'Novas insuffisantes', 402, 'insufficient_novas')
     }
 
+    // Langue explicitement choisie persistée pour la voix de lecture des fiches
+    // ('auto' → null : la langue réelle est détectée par l'IA, pas connue ici).
+    const contentLangValue =
+      typeof contentLang === 'string' && contentLang !== 'auto' && /^[a-z]{2}$/.test(contentLang)
+        ? contentLang
+        : null
     await supabase
       .from('courses')
-      .update({ progress: 1 })
+      .update({ progress: 1, content_lang: contentLangValue })
       .eq('id', courseId)
 
     waitUntil(

@@ -1,7 +1,8 @@
 'use client'
-import { useState, useRef } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { Mic, Square, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { toSpeechLang } from '@/lib/speech-lang'
 
 interface VoiceRecorderProps {
   onTranscript?: (t: string) => void
@@ -9,13 +10,19 @@ interface VoiceRecorderProps {
   transcript?: string
   value?: string
   error?: string
+  /** Code langue du produit ('fr', 'en', 'auto'…) — langue de reconnaissance */
+  lang?: string
 }
 
-export function VoiceRecorder({ onTranscript, onChange, transcript, value, error }: VoiceRecorderProps) {
+export function VoiceRecorder({ onTranscript, onChange, transcript, value, error, lang }: VoiceRecorderProps) {
   const [recording, setRecording] = useState(false)
   const [recError, setRecError] = useState('')
   const recognitionRef = useRef<any>(null)
   const finalRef = useRef('')
+  // Le navigateur coupe seul la reconnaissance apres un silence (ou ~60 s sur
+  // Chrome), sans que l'eleve ait clique stop : on redemarre tant que l'arret
+  // n'est pas volontaire.
+  const stoppedByUserRef = useRef(false)
 
   const currentTranscript = transcript ?? value ?? ''
   const handleChange = onTranscript ?? onChange ?? (() => {})
@@ -24,8 +31,9 @@ export function VoiceRecorder({ onTranscript, onChange, transcript, value, error
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
     if (!SpeechRecognition) { setRecError("La reconnaissance vocale n'est pas supportee par ce navigateur."); return }
     const recognition = new SpeechRecognition()
-    recognition.lang = 'fr-FR'; recognition.continuous = true; recognition.interimResults = true
+    recognition.lang = toSpeechLang(lang); recognition.continuous = true; recognition.interimResults = true
     finalRef.current = currentTranscript
+    stoppedByUserRef.current = false
     recognition.onresult = (e: any) => {
       let interim = ''
       for (let i = e.resultIndex; i < e.results.length; i++) {
@@ -34,13 +42,29 @@ export function VoiceRecorder({ onTranscript, onChange, transcript, value, error
       }
       handleChange(finalRef.current + interim)
     }
-    recognition.onerror = () => { setRecording(false); setRecError('Erreur microphone.') }
-    recognition.onend = () => setRecording(false)
+    recognition.onerror = (e: any) => {
+      // 'no-speech' et 'aborted' sont des arrets benins : onend suit et redemarre.
+      if (e?.error === 'no-speech' || e?.error === 'aborted') return
+      stoppedByUserRef.current = true
+      setRecording(false)
+      setRecError(e?.error === 'not-allowed' ? 'Accès au micro refusé.' : 'Erreur microphone.')
+    }
+    recognition.onend = () => {
+      if (stoppedByUserRef.current) { setRecording(false); return }
+      try { recognition.start() } catch { setRecording(false) }
+    }
     recognitionRef.current = recognition
     recognition.start(); setRecording(true); setRecError('')
   }
 
-  function stop() { recognitionRef.current?.stop(); setRecording(false) }
+  function stop() {
+    stoppedByUserRef.current = true
+    recognitionRef.current?.stop()
+    setRecording(false)
+  }
+
+  // Demontage pendant une dictee : couper sans redemarrer.
+  useEffect(() => () => { stoppedByUserRef.current = true; recognitionRef.current?.stop() }, [])
 
   return (
     <div className="flex flex-col gap-3">

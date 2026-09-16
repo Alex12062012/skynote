@@ -432,7 +432,7 @@ export function CreateCourseForm({
 
         {/* Vocal */}
         {sourceType === 'vocal' && (
-          <VoiceRecorder value={voiceTranscript} onChange={setVoiceTranscript} error={errors.content} />
+          <VoiceRecorder value={voiceTranscript} onChange={setVoiceTranscript} error={errors.content} lang={contentLang} />
         )}
 
         {/* Limite atteinte */}

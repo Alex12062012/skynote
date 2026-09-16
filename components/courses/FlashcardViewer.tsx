@@ -21,9 +21,11 @@ interface FlashcardViewerProps {
   userId: string
   /** Passer true si un QCM est disponible pour ce cours */
   qcmReady?: boolean
+  /** Langue des fiches (courses.content_lang) — pour la voix de lecture */
+  lang?: string | null
 }
 
-export function FlashcardViewer({ flashcards, courseId, userId, qcmReady = false }: FlashcardViewerProps) {
+export function FlashcardViewer({ flashcards, courseId, userId, qcmReady = false, lang }: FlashcardViewerProps) {
   const { t } = useI18n()
   const [index, setIndex] = useState(0)
   // Sens du dernier deplacement : +1 en avant, -1 en arriere. Sert a faire
@@ -174,6 +176,7 @@ export function FlashcardViewer({ flashcards, courseId, userId, qcmReady = false
               <SpeakButton
                 key={card.id}
                 text={[card.title, card.summary, ...keyPoints].filter(Boolean).join('. ')}
+                lang={lang}
                 className="rounded-input px-2.5 py-1.5"
               />
               <button onClick={handleShare}
