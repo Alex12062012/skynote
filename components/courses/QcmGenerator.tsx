@@ -6,15 +6,14 @@ import { QCM_DIFFICULTIES } from '@/lib/ai/prompts'
 
 interface QcmGeneratorProps {
   courseId: string
-  flashcards: { id: string; title: string }[]
 }
 
-export function QcmGenerator({ courseId, flashcards }: QcmGeneratorProps) {
+export function QcmGenerator({ courseId }: QcmGeneratorProps) {
   const [done, setDone] = useState(0)
   const [error, setError] = useState<string | null>(null)
   const [complete, setComplete] = useState(false)
   const started = useRef(false)
-  const total = flashcards.length
+  const total = QCM_DIFFICULTIES.length
 
   useEffect(() => {
     if (started.current) return
@@ -22,40 +21,40 @@ export function QcmGenerator({ courseId, flashcards }: QcmGeneratorProps) {
     generateAll()
   }, []) // eslint-disable-line
 
+  // Un appel par niveau, les 3 en parallele : toutes les fiches du cours sont
+  // generees dans le meme appel Claude (3 appels par cours au lieu de
+  // fiches × niveaux). Un niveau qui echoue n'empeche pas les deux autres.
   async function generateAll() {
-    let completed = 0
     const failures: string[] = []
+    const labels: Record<string, string> = { peaceful: 'Paisible', easy: 'Normal', medium: 'Hardcore' }
 
-    for (const flashcard of flashcards) {
-      const results = await Promise.allSettled(
-        QCM_DIFFICULTIES.map(async (difficulty) => {
-          const res = await fetch('/api/generate-qcm', {
+    await Promise.allSettled(
+      QCM_DIFFICULTIES.map(async (difficulty) => {
+        try {
+          const res = await fetch('/api/generate-qcm/level', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ flashcardId: flashcard.id, difficulty }),
+            body: JSON.stringify({ courseId, difficulty }),
           })
           if (!res.ok) {
-            const body = await res.text().catch(() => '')
-            throw new Error(`${difficulty}: ${res.status} ${body.slice(0, 200)}`)
+            const body = await res.json().catch(() => ({}))
+            throw new Error(body?.error || `${res.status}`)
           }
-          return res.json()
-        })
-      )
-
-      const rejected = results.filter((r) => r.status === 'rejected')
-      if (rejected.length > 0) {
-        rejected.forEach((r: any) =>
-          failures.push(`${flashcard.title} — ${r.reason?.message || r.reason}`)
-        )
-        console.error('[QcmGenerator] Failures', flashcard.title, rejected)
-      }
-
-      completed++
-      setDone(completed)
-    }
+          const data = await res.json()
+          if (data?.fichesMissing > 0) {
+            failures.push(`${labels[difficulty]} : ${data.fichesMissing} fiche(s) non générée(s)`)
+          }
+        } catch (err: any) {
+          failures.push(`${labels[difficulty]} — ${err?.message || err}`)
+          console.error('[QcmGenerator]', difficulty, err)
+        } finally {
+          setDone((d) => d + 1)
+        }
+      })
+    )
 
     if (failures.length > 0) {
-      setError(failures.slice(0, 3).join(' | '))
+      setError(failures.join(' | '))
       return
     }
 
@@ -111,7 +110,7 @@ export function QcmGenerator({ courseId, flashcards }: QcmGeneratorProps) {
         <div className="flex items-center gap-2">
           <div className="h-4 w-4 animate-spin rounded-full border-2 border-brand border-t-transparent dark:border-brand-dark" />
           <p className="font-body text-[14px] font-semibold text-text-main dark:text-text-dark-main">
-            Génération des QCM (3 niveaux) en cours...
+            Génération des QCM (3 niveaux, toutes les fiches) en cours...
           </p>
         </div>
         <span className="font-display text-[14px] font-bold text-brand dark:text-brand-dark">
@@ -127,7 +126,7 @@ export function QcmGenerator({ courseId, flashcards }: QcmGeneratorProps) {
       </div>
 
       <p className="mt-2 font-body text-[12px] text-text-tertiary dark:text-text-dark-tertiary">
-        Lis tes fiches pendant ce temps ! Les QCM sont inclus dans le coût du cours.
+        Lis tes fiches pendant ce temps ! Les QCM sont inclus dans le coût du cours. Une fiche qui n'a pas pu être générée reste disponible gratuitement depuis la page QCM.
       </p>
 
     </div>

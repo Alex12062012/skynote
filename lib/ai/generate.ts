@@ -310,7 +310,8 @@ Réponds avec un JSON structuré ainsi :
 // Skynote, transparent pour l'utilisateur). Si le retry echoue encore :
 //   - au moins QCM_MIN_ACCEPTABLE_QUESTIONS valides → on livre en mode degrade
 //     et on remonte un warning Sentry ;
-//   - sinon → erreur explicite (jamais de tableau vide silencieux).
+//   - sinon la fiche est absente du resultat ; erreur explicite seulement si
+//     AUCUNE fiche n'est utilisable (jamais de tableau vide silencieux).
 export async function generateAllQcmQuestions(
   flashcards: QcmFlashcardInput[],
   difficulty: QcmDifficulty = 'easy'
@@ -361,12 +362,18 @@ export async function generateAllQcmQuestions(
   }
 
   if (failed.length > 0) {
-    const error = new Error(
-      `Génération QCM ${difficulty} échouée après retry pour ${failed.length} fiche(s) : ${failed.join(' ; ')}`
-    )
-    Sentry.captureException(error, { tags: { feature: 'qcm-generation', difficulty } })
-    console.error('[generateAllQcmQuestions]', error.message)
-    throw error
+    const message = `Génération QCM ${difficulty} échouée après retry pour ${failed.length}/${flashcards.length} fiche(s) : ${failed.join(' ; ')}`
+    if (result.size === 0) {
+      // Rien d'utilisable : erreur explicite (jamais de tableau vide silencieux).
+      const error = new Error(message)
+      Sentry.captureException(error, { tags: { feature: 'qcm-generation', difficulty } })
+      console.error('[generateAllQcmQuestions]', message)
+      throw error
+    }
+    // Lot partiel : on livre les fiches reussies, les manquantes restent
+    // regenerables gratuitement (niveau vide) — ne pas perdre 5 fiches pour 1.
+    Sentry.captureMessage(message, 'warning')
+    console.warn('[generateAllQcmQuestions]', message)
   }
 
   return result

@@ -116,10 +116,7 @@ async function ReadyCourse({ courseId, userId, courseTitle, contentLang }: { cou
     <div className="flex flex-col gap-6">
       {/* QCM en cours de generation uniquement */}
       {!qcmReady && (
-        <QcmGenerator
-          courseId={courseId}
-          flashcards={flashcards.map(f => ({ id: f.id, title: f.title }))}
-        />
+        <QcmGenerator courseId={courseId} />
       )}
 
       {/* Chatbot IA */}
