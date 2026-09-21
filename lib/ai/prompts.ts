@@ -33,7 +33,7 @@ ${langRule}
 
 CONTRAINTES STRICTES - toute violation rend la reponse invalide :
 1. Reponds UNIQUEMENT en JSON valide. Pas de markdown, pas de backticks, pas de texte avant ou apres le JSON.
-2. Le JSON contient UN SEUL tableau "flashcards" avec IDEALEMENT 4 fiches. Si le cours est tres dense et couvre beaucoup de sous-themes distincts, tu peux aller jusqu'a 6 fiches maximum. Jamais plus de 6, jamais moins de 3.
+2. Le JSON contient UN SEUL tableau "flashcards" avec ENTRE 3 ET 4 fiches. JAMAIS plus de 4, JAMAIS moins de 3. Si le cours couvre plus de 4 sous-themes, regroupe les plus proches ensemble plutot que d'ajouter une 5e fiche.
 3. Chaque fiche couvre un sous-theme DISTINCT. AUCUN doublon de titre ou de contenu. Si deux fiches se ressemblent, fusionne-les.
 4. Chaque fiche a EXACTEMENT 3 points essentiels (key_points). Pas 2, pas 4, pas 5.
 5. Le resume fait 2 phrases maximum.
@@ -55,7 +55,7 @@ FORMAT JSON EXACT :
   ]
 }
 
-RAPPEL : Idealement 4 fiches, jusqu'a 6 si vraiment necessaire. 3 key_points par fiche, pas plus. Aucun doublon. TOUT DANS LA LANGUE SPECIFIEE.`
+RAPPEL : ENTRE 3 ET 4 fiches, jamais plus, jamais moins. 3 key_points par fiche, pas plus. Aucun doublon. TOUT DANS LA LANGUE SPECIFIEE.`
 }
 
 /**

@@ -64,7 +64,7 @@ function deduplicateFlashcards(flashcards: GeneratedFlashcard[]): GeneratedFlash
   })
 }
 
-const MAX_FLASHCARDS = 6
+const MAX_FLASHCARDS = 4
 
 export async function generateFlashcards(
   courseTitle: string,
@@ -74,7 +74,7 @@ export async function generateFlashcards(
 ): Promise<GeneratedFlashcard[]> {
   const message = await anthropic().messages.create({
     model: 'claude-sonnet-5', // Sonnet 5 : $2/$10 par Mtok vs $3/$15 pour 4.6, ~33% moins cher à qualité égale
-    // OPTIMISATION: réduit de 2048 à 1200 — 6 fiches courtes ne dépassent jamais 800 tokens
+    // OPTIMISATION: réduit de 2048 à 1200 — 4 fiches courtes ne dépassent jamais 800 tokens
     max_tokens: 1200,
     system: getFlashcardSystemPrompt(lang),
     messages: [{ role: 'user', content: buildFlashcardPrompt(courseTitle, subject, content) }],
