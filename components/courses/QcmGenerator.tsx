@@ -14,12 +14,12 @@ type LevelState = { complete: boolean; fiches: number; fichesTotal: number }
  * Nombre de passages cote navigateur. Chaque passage appelle les niveaux encore
  * incomplets ; la route est idempotente et ne regenere que ce qui manque.
  *
- * Mesure du 2026-09-26 (scripts/qcm-bench, 216 appels) : un appel Claude par
- * fiche reussit du premier coup dans ~100 % des cas et la route elle-meme
- * reessaie tant qu'il lui reste du temps. Trois passages sont donc tres
- * largement suffisants — et si ça ne suffisait pas, le reconciliateur serveur
- * (pg_cron, chaque minute) termine le travail meme onglet ferme. Cette boucle
- * n'est pas la garantie, elle est la version rapide pour l'eleve qui attend.
+ * Mesure du 2026-09-26 (scripts/qcm-bench, 72 appels sur le prompt deploye) :
+ * la route elle-meme reessaie tant qu'il lui reste du temps et sort complete
+ * en 1 a 2 tours. Trois passages sont donc tres largement suffisants — et si
+ * ça ne suffisait pas, le reconciliateur serveur (pg_cron, chaque minute)
+ * termine le travail meme onglet ferme. Cette boucle n'est pas la garantie,
+ * elle est la version rapide pour l'eleve qui attend.
  */
 const MAX_PASSES = 3
 const PAUSE_BETWEEN_PASSES_MS = 1500
@@ -79,11 +79,17 @@ export function QcmGenerator({ courseId }: QcmGeneratorProps) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ courseId }),
       }).catch(() => {})
+      setPhase('complete')
+      setTimeout(() => window.location.reload(), 800)
+      return
     }
 
-    setPhase(allComplete ? 'complete' : 'partial')
-    // Recharge dans les deux cas : ce qui est genere est jouable tout de suite.
-    setTimeout(() => window.location.reload(), 800)
+    // Pas de rechargement ici, et c'est delibere : la page ne monte ce composant
+    // que si le cours a ZERO question (voir ReadyCourse). Recharger apres un
+    // echec total le remonterait, qui rechargerait, sans fin. On affiche l'etat
+    // et on laisse le reconciliateur serveur finir — il n'a pas besoin de cet
+    // onglet pour travailler.
+    setPhase('partial')
   }
 
   const done = QCM_DIFFICULTIES.filter((d) => levels[d]?.complete).length
@@ -112,8 +118,10 @@ export function QcmGenerator({ courseId }: QcmGeneratorProps) {
           Tes QCM arrivent
         </p>
         <p className="font-body text-[13px] text-text-secondary dark:text-text-dark-secondary">
-          {done}/{total} niveaux sont prêts et jouables maintenant. Les derniers finissent de se
-          préparer en arrière-plan — reviens dans une minute, tu n&apos;as rien à faire.
+          {done > 0
+            ? `${done}/${total} niveaux sont prêts et jouables maintenant. Les derniers finissent`
+            : 'Ils finissent'}{' '}
+          de se préparer en arrière-plan — reviens dans une minute, tu n&apos;as rien à faire.
         </p>
       </div>
     )
