@@ -27,3 +27,11 @@ __pycache__/
 .github/skills/
 .github/hooks/
 skills-lock.json
+brag-output*/
+
+.vercel
+.env*
+
+# Resultats bruts du benchmark QCM (regenerables, volumineux)
+scripts/qcm-bench/*.json
+scripts/qcm-bench/*.log

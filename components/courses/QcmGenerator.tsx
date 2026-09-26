@@ -8,71 +8,89 @@ interface QcmGeneratorProps {
   courseId: string
 }
 
+type LevelState = { complete: boolean; fiches: number; fichesTotal: number }
+
+/**
+ * Nombre de passages cote navigateur. Chaque passage appelle les niveaux encore
+ * incomplets ; la route est idempotente et ne regenere que ce qui manque.
+ *
+ * Mesure du 2026-09-26 (scripts/qcm-bench, 216 appels) : un appel Claude par
+ * fiche reussit du premier coup dans ~100 % des cas et la route elle-meme
+ * reessaie tant qu'il lui reste du temps. Trois passages sont donc tres
+ * largement suffisants — et si ça ne suffisait pas, le reconciliateur serveur
+ * (pg_cron, chaque minute) termine le travail meme onglet ferme. Cette boucle
+ * n'est pas la garantie, elle est la version rapide pour l'eleve qui attend.
+ */
+const MAX_PASSES = 3
+const PAUSE_BETWEEN_PASSES_MS = 1500
+
 export function QcmGenerator({ courseId }: QcmGeneratorProps) {
-  const [done, setDone] = useState(0)
-  const [error, setError] = useState<string | null>(null)
-  const [complete, setComplete] = useState(false)
+  const [levels, setLevels] = useState<Record<string, LevelState>>({})
+  const [phase, setPhase] = useState<'working' | 'complete' | 'partial'>('working')
   const started = useRef(false)
-  const total = QCM_DIFFICULTIES.length
 
   useEffect(() => {
     if (started.current) return
     started.current = true
-    generateAll()
+    void run()
   }, []) // eslint-disable-line
 
-  // Un appel par niveau, les 3 en parallele : toutes les fiches du cours sont
-  // generees dans le meme appel Claude (3 appels par cours au lieu de
-  // fiches × niveaux). Un niveau qui echoue n'empeche pas les deux autres.
-  async function generateAll() {
-    const failures: string[] = []
-    const labels: Record<string, string> = { peaceful: 'Paisible', easy: 'Normal', medium: 'Hardcore' }
-
-    await Promise.allSettled(
-      QCM_DIFFICULTIES.map(async (difficulty) => {
-        try {
-          const res = await fetch('/api/generate-qcm/level', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ courseId, difficulty }),
-          })
-          if (!res.ok) {
-            const body = await res.json().catch(() => ({}))
-            throw new Error(body?.error || `${res.status}`)
-          }
-          const data = await res.json()
-          if (data?.fichesMissing > 0) {
-            failures.push(`${labels[difficulty]} : ${data.fichesMissing} fiche(s) non générée(s)`)
-          }
-        } catch (err: any) {
-          failures.push(`${labels[difficulty]} — ${err?.message || err}`)
-          console.error('[QcmGenerator]', difficulty, err)
-        } finally {
-          setDone((d) => d + 1)
-        }
-      })
-    )
-
-    if (failures.length > 0) {
-      setError(failures.join(' | '))
-      return
-    }
-
-    await fetch('/api/mark-qcm-ready', {
+  async function callLevel(difficulty: string): Promise<LevelState> {
+    const res = await fetch('/api/generate-qcm/level', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ courseId }),
-    }).catch(() => {})
-
-    setComplete(true)
-    setTimeout(() => {
-      window.location.reload()
-    }, 800)
+      body: JSON.stringify({ courseId, difficulty }),
+    })
+    if (!res.ok) throw new Error(String(res.status))
+    const d = await res.json()
+    return {
+      complete: Boolean(d?.complete),
+      fiches: Number(d?.fiches ?? 0),
+      fichesTotal: Number(d?.fichesTotal ?? 0),
+    }
   }
 
-  const percent = total > 0 ? Math.round((done / total) * 100) : 0
+  async function run() {
+    const state: Record<string, LevelState> = {}
 
-  if (complete) {
+    for (let pass = 1; pass <= MAX_PASSES; pass++) {
+      const todo = QCM_DIFFICULTIES.filter((d) => !state[d]?.complete)
+      if (todo.length === 0) break
+      if (pass > 1) await new Promise((r) => setTimeout(r, PAUSE_BETWEEN_PASSES_MS))
+
+      await Promise.allSettled(
+        todo.map(async (difficulty) => {
+          try {
+            state[difficulty] = await callLevel(difficulty)
+          } catch (err) {
+            console.error('[QcmGenerator]', difficulty, err)
+            state[difficulty] = state[difficulty] ?? { complete: false, fiches: 0, fichesTotal: 0 }
+          }
+          setLevels({ ...state })
+        })
+      )
+    }
+
+    const allComplete = QCM_DIFFICULTIES.every((d) => state[d]?.complete)
+
+    if (allComplete) {
+      await fetch('/api/mark-qcm-ready', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ courseId }),
+      }).catch(() => {})
+    }
+
+    setPhase(allComplete ? 'complete' : 'partial')
+    // Recharge dans les deux cas : ce qui est genere est jouable tout de suite.
+    setTimeout(() => window.location.reload(), 800)
+  }
+
+  const done = QCM_DIFFICULTIES.filter((d) => levels[d]?.complete).length
+  const total = QCM_DIFFICULTIES.length
+  const percent = Math.round((done / total) * 100)
+
+  if (phase === 'complete') {
     return (
       <div className="rounded-card border border-sky-border bg-sky-surface px-5 py-4 dark:border-night-border dark:bg-night-surface">
         <div className="flex items-center gap-2">
@@ -85,21 +103,18 @@ export function QcmGenerator({ courseId }: QcmGeneratorProps) {
     )
   }
 
-  if (error) {
+  if (phase === 'partial') {
+    // Pas un message d'erreur : le serveur termine tout seul, l'élève n'a rien
+    // à faire et surtout rien à relancer à la main.
     return (
-      <div className="rounded-card border border-red-300 bg-red-50 px-5 py-4 dark:border-red-900 dark:bg-red-950">
-        <p className="font-body text-[14px] font-semibold text-red-700 dark:text-red-300 mb-2">
-          Erreur lors de la génération des QCM
+      <div className="rounded-card border border-sky-border bg-sky-surface px-5 py-4 dark:border-night-border dark:bg-night-surface">
+        <p className="font-body text-[14px] font-semibold text-text-main dark:text-text-dark-main mb-1">
+          Tes QCM arrivent
         </p>
-        <p className="font-body text-[12px] text-red-600 dark:text-red-400 mb-3 break-words">
-          {error}
+        <p className="font-body text-[13px] text-text-secondary dark:text-text-dark-secondary">
+          {done}/{total} niveaux sont prêts et jouables maintenant. Les derniers finissent de se
+          préparer en arrière-plan — reviens dans une minute, tu n&apos;as rien à faire.
         </p>
-        <button
-          onClick={() => window.location.reload()}
-          className="font-body text-[13px] font-semibold text-red-700 underline dark:text-red-300"
-        >
-          Réessayer
-        </button>
       </div>
     )
   }
@@ -126,9 +141,8 @@ export function QcmGenerator({ courseId }: QcmGeneratorProps) {
       </div>
 
       <p className="mt-2 font-body text-[12px] text-text-tertiary dark:text-text-dark-tertiary">
-        Lis tes fiches pendant ce temps ! Les QCM sont inclus dans le coût du cours. Une fiche qui n'a pas pu être générée reste disponible gratuitement depuis la page QCM.
+        Lis tes fiches pendant ce temps ! Les QCM sont inclus dans le coût du cours.
       </p>
-
     </div>
   )
 }

@@ -85,28 +85,30 @@ export function isQcmDifficulty(value: unknown): value is QcmDifficulty {
  * Anti-biais de longueur (niveaux Normal et Hardcore uniquement).
  * Sans cette regle, la bonne reponse est presque toujours la plus longue et la
  * plus detaillee des 4 options : l'eleve la repere sans lire la question.
- * On n'abrege JAMAIS la bonne reponse — on enrichit UN distracteur au hasard
- * avec une fausse justification pour l'aligner en longueur.
+ *
+ * L'ancienne formulation demandait d'ENRICHIR un distracteur avec une fausse
+ * justification pour l'aligner sur la bonne reponse. Meme objectif, mais elle
+ * gonflait la sortie : mesure du 26/09, le niveau Hardcore depassait les
+ * 3 900 tokens de max_tokens et le JSON etait tronque (2 fiches sur 12 dans le
+ * benchmark, et la cause n°1 des niveaux incomplets en prod). On demande
+ * maintenant l'inverse : 4 options COURTES et de longueur comparable.
  */
-const QCM_LENGTH_BALANCE_RULE = `- REGLE ANTI-BIAIS DE LONGUEUR (obligatoire) : la bonne reponse ne doit JAMAIS etre reconnaissable parce qu'elle est plus longue ou plus detaillee que les autres. Les 4 options doivent avoir une longueur comparable (ecart de 30% maximum en nombre de mots).
-  Pour y arriver : ne raccourcis JAMAIS la bonne reponse. Choisis au hasard UNE des 3 mauvaises reponses et enrichis-la avec une justification plausible mais fausse, de meme longueur que la bonne reponse. Les 2 autres mauvaises reponses peuvent rester courtes.
-  Exemple — question "Que devient l'eau de pluie qui tombe sur un sol chaud ?" :
-    MAUVAIS (bonne reponse reperable) : ["Elle s'infiltre dans le sol, puis rejoint les nappes phreatiques ou ruisselle vers les rivieres", "Elle repart aussitot en evaporation", "Elle gele", "Elle disparait"]
-    BON (longueurs equilibrees) : ["Elle s'infiltre dans le sol, puis rejoint les nappes phreatiques ou ruisselle vers les rivieres", "Elle repart aussitot en evaporation, car la chaleur residuelle du sol la rechauffe immediatement", "Elle gele", "Elle disparait"]
-  Varie la position (index) de la bonne reponse et celle du distracteur enrichi d'une question a l'autre.`
+const QCM_LENGTH_BALANCE_RULE = `- REGLE ANTI-BIAIS DE LONGUEUR (obligatoire) : les 4 options doivent avoir une longueur COMPARABLE (ecart de 30 % maximum en nombre de mots) et rester COURTES : 12 mots maximum chacune. La bonne reponse ne doit JAMAIS etre reconnaissable parce qu'elle est plus longue ou plus detaillee que les autres.
+  Varie la position (index) de la bonne reponse d'une question a l'autre.`
 
 const QCM_DIFFICULTY_INSTRUCTIONS: Record<QcmDifficulty, string> = {
   peaceful: `NIVEAU PAISIBLE (tres facile) :
-- Questions ultra-directes sur les definitions et faits principaux du cours.
+- Questions ultra-directes sur les definitions et faits principaux de la fiche.
 - Les mauvaises reponses sont clairement et evidemment differentes de la bonne.
-- ZERO piege, ZERO nuance subtile, ZERO connaissance hors-cours.
+- ZERO piege, ZERO nuance subtile, ZERO connaissance hors-fiche.
 - Formulations tres simples, une seule idee par question.
-- L'eleve qui a lu la fiche une seule fois doit pouvoir repondre facilement.`,
+- L'eleve qui a lu la fiche une seule fois doit pouvoir repondre facilement.
+- Varie la position (index) de la bonne reponse d'une question a l'autre.`,
 
   easy: `NIVEAU NORMAL :
-- Questions directes sur les definitions et faits principaux du cours.
-- Les mauvaises reponses sont plausibles mais clairement identifiables avec un peu de reflexion.
-- Quelques pièges simples (formulations proches, inversions de details).
+- Questions directes sur les definitions et faits principaux de la fiche.
+- Les mauvaises reponses sont plausibles mais identifiables avec un peu de reflexion.
+- Quelques pieges simples (formulations proches, inversions de details).
 - Formulations claires, niveau college.
 - Reste STRICTEMENT dans le perimetre de la fiche : aucune notion hors-programme, aucune connaissance que la fiche ne contient pas.
 - L'eleve qui a bien lu sa fiche doit obtenir un bon score.
@@ -115,37 +117,46 @@ ${QCM_LENGTH_BALANCE_RULE}`,
   medium: `NIVEAU HARDCORE :
 - Questions de comprehension avancee : l'eleve doit avoir vraiment compris, pas juste memorise.
 - Les mauvaises reponses sont tres plausibles et proches de la bonne reponse.
-- Inclure des questions d'application, de comparaison, et quelques pièges subtils.
+- Inclure des questions d'application, de comparaison, et quelques pieges subtils.
 - Ajouter 1 ou 2 questions de culture generale directement liees au sujet de la fiche (pas hors-sujet).
 - Formulations qui demandent de reflechir et de croiser les informations.
 - La difficulte doit venir de la subtilite sur le contenu REELLEMENT enseigne dans CETTE fiche, jamais d'un saut vers des notions techniques plus avancees non couvertes par le cours. Exemple a ne PAS faire : une fiche de base sur les entrees/sorties d'un ordinateur ne doit pas amener une question sur l'ALU ou le codage binaire. Une question hors-programme n'est pas "difficile", elle est injuste.
 ${QCM_LENGTH_BALANCE_RULE}`,
 }
 
-export function getQcmSystemPrompt(difficulty: QcmDifficulty = 'easy'): string {
+/**
+ * Prompt systeme QCM — UNE fiche par appel.
+ *
+ * L'ancienne version annonçait le format `{"questions": [...]}` alors que le
+ * prompt utilisateur demandait `{"fiches": [{title, questions}]}` : deux
+ * formats contradictoires dans le meme appel. Un seul format desormais, et
+ * plus de wrapper `fiches` inutile puisqu'un appel = une fiche.
+ */
+export function getQcmSystemPrompt(
+  difficulty: QcmDifficulty = 'easy',
+  requested: number = QCM_QUESTIONS_REQUESTED
+): string {
   return `Tu es un assistant pedagogique qui cree des QCM pour des eleves de college et lycee.
 
 ${QCM_DIFFICULTY_INSTRUCTIONS[difficulty]}
 
 CONTRAINTES STRICTES :
-1. Reponds UNIQUEMENT en JSON valide.
-2. Genere EXACTEMENT ${QCM_QUESTIONS_REQUESTED} questions par fiche.
+1. Reponds UNIQUEMENT en JSON valide. Rien avant, rien apres, pas de backticks.
+2. Genere EXACTEMENT ${requested} questions.
 3. Chaque question a EXACTEMENT 4 options (options[0] a options[3]).
 4. correct_index est l'index (0-3) de la bonne reponse.
-5. explanation : explication courte et pedagogique de la bonne reponse (2-3 phrases max).
+5. explanation : UNE phrase courte, 20 mots maximum.
 6. Les questions sont dans la langue de la fiche.
 
 FORMAT JSON EXACT :
-{
-  "questions": [
-    {
-      "question": "La question posee a l'eleve ?",
-      "options": ["Option A", "Option B", "Option C", "Option D"],
-      "correct_index": 0,
-      "explanation": "Explication courte de pourquoi c'est la bonne reponse."
-    }
-  ]
-}`
+{"questions":[{"question":"...","options":["A","B","C","D"],"correct_index":0,"explanation":"..."}]}`
+}
+
+/** Prompt utilisateur QCM : le contenu de la fiche, rien de plus. */
+export function buildQcmPrompt(fiche: { title: string; summary: string; key_points: string[] }): string {
+  return `FICHE : ${fiche.title}
+Resume : ${fiche.summary}
+Points cles : ${fiche.key_points.join(' ; ')}`
 }
 
 export function buildFlashcardPrompt(courseTitle: string, subject: string, content: string): string {

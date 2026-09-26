@@ -4,6 +4,7 @@ import {
   getFlashcardSystemPrompt,
   getQcmSystemPrompt,
   buildFlashcardPrompt,
+  buildQcmPrompt,
   QCM_QUESTIONS_PER_FLASHCARD,
   QCM_QUESTIONS_REQUESTED,
   type QcmDifficulty,
@@ -116,12 +117,6 @@ export async function generateFlashcards(
 // longueur (bonne reponse systematiquement plus longue que les distracteurs).
 
 /**
- * Sous ce nombre de questions valides apres le retry, on prefere echouer
- * explicitement plutot que de livrer un QCM squelettique (3 sur 5).
- */
-const QCM_MIN_ACCEPTABLE_QUESTIONS = 3
-
-/**
  * Seuil du check anti-biais : la bonne reponse est rejetee si elle compte plus
  * de (1 + seuil) x les mots du distracteur LE PLUS LONG. 0.4 = +40 %.
  * On compare au plus long et non a la moyenne : le prompt demande d'enrichir
@@ -213,205 +208,134 @@ function normalizeTitle(title: string): string {
     .trim()
 }
 
-type QcmFlashcardInput = { title: string; summary: string; key_points: string[] }
+export type QcmFlashcardInput = { title: string; summary: string; key_points: string[] }
 
 /**
- * Un appel Claude pour N fiches. Retourne les questions normalisees (non
- * validees) indexees par titre EXACT de la fiche d'entree — le modele est
- * apparie par titre normalise, puis par position en dernier recours.
+ * Modele de generation des QCM.
+ *
+ * Mesure du 2026-09-26 (scripts/qcm-bench, 4 fiches reelles x 3 niveaux) :
+ * voir scripts/qcm-bench/README.md pour le tableau complet. Le choix se joue
+ * sur la latence, parce que c'est elle qui decide si un retry rentre dans les
+ * 60 s de la fonction Vercel.
  */
-async function requestQcmBatch(
-  flashcards: QcmFlashcardInput[],
-  difficulty: QcmDifficulty
-): Promise<Map<string, GeneratedQuestion[]>> {
-  const fichesList = flashcards
-    .map(
-      (f, i) =>
-        `--- Fiche ${i + 1}: ${f.title} ---\nRésumé: ${f.summary}\nPoints clés: ${f.key_points.join(', ')}`
-    )
-    .join('\n\n')
+export const QCM_MODEL = 'claude-haiku-4-5-20251001'
 
-  const userPrompt = `Génère exactement ${QCM_QUESTIONS_REQUESTED} questions QCM pour CHACUNE des ${flashcards.length} fiches suivantes.
+/**
+ * Plafond de sortie par appel. Une fiche = `QCM_QUESTIONS_REQUESTED` questions
+ * courtes (options <= 12 mots, explication <= 20 mots) : environ 900 tokens
+ * mesures. 3 000 laisse trois fois la marge.
+ *
+ * L'ancienne formule (600 x fiches x questions + 300) donnait 3 900 pour une
+ * fiche et le niveau Hardcore la depassait vraiment : reponse tronquee, JSON
+ * invalide, et comme rien ne regardait `stop_reason`, ca ressortait en
+ * « Parse failed » sans dire pourquoi.
+ */
+const QCM_MAX_TOKENS = 3000
 
-${fichesList}
+export type FicheQcmResult = {
+  /** Questions valides retenues (vide si l'appel n'a rien d'utilisable). */
+  questions: GeneratedQuestion[]
+  /** Renseigne des que le lot n'est pas complet — sert aux logs et au retry. */
+  reason?: string
+}
 
-Réponds avec un JSON structuré ainsi :
-{
-  "fiches": [
-    {
-      "title": "titre exact de la fiche",
-      "questions": [
-        {
-          "question": "...",
-          "options": ["A", "B", "C", "D"],
-          "correct_index": 0,
-          "explanation": "..."
-        }
-      ]
-    }
-  ]
-}`
-
-  const message = await anthropic().messages.create({
-    model: 'claude-sonnet-5', // Sonnet 5 : $2/$10 par Mtok vs $3/$15 pour 4.6, ~33% moins cher à qualité égale
-    // Mesure en prod : 300 tokens/question tronquait le JSON en Normal/Hardcore
-    // (4 options longues + explication ≈ 350-400 tokens). 600/question laisse
-    // de la marge ; le plafond n'est atteint qu'au-dela de 3 fiches par appel.
-    max_tokens: Math.min(600 * flashcards.length * QCM_QUESTIONS_REQUESTED + 300, 12000),
-    system: getQcmSystemPrompt(difficulty),
-    messages: [{ role: 'user', content: userPrompt }],
-  })
-
-  const raw = message.content
+function extractText(message: { content: Array<{ type: string }> }): string {
+  return message.content
     .filter((b) => b.type === 'text')
-    .map((b) => (b as { type: 'text'; text: string }).text)
+    .map((b) => (b as unknown as { text: string }).text)
     .join('')
+}
 
-  const parsed = parseClaudeJSON<{ fiches: Array<{ title: string; questions: any[] }> }>(raw)
-  const result = new Map<string, GeneratedQuestion[]>()
+function normalizeQuestions(raw: unknown[]): GeneratedQuestion[] {
+  return raw.map((item) => {
+    const q = item as Record<string, unknown>
+    const idxRaw = q.correct_index ?? q.correctIndex ?? q.correct ?? q.answer_index ?? 0
+    const idx = typeof idxRaw === 'string' ? parseInt(idxRaw, 10) : Number(idxRaw)
+    const opts = Array.isArray(q.options) ? q.options : Array.isArray(q.choices) ? q.choices : []
+    return {
+      question: String(q.question || q.text || '').trim(),
+      options: opts.map((o) => String(o).trim()),
+      correct_index: Number.isFinite(idx) ? idx : -1,
+      explanation: String(q.explanation || q.explication || q.reason || '').trim(),
+    }
+  })
+}
 
-  if (!parsed?.fiches || !Array.isArray(parsed.fiches)) {
-    console.error('[requestQcmBatch] Parse failed. Raw (first 500):', raw.slice(0, 500))
-    return result
-  }
-
-  const byNormalizedTitle = new Map(flashcards.map((f) => [normalizeTitle(f.title), f.title]))
-
-  parsed.fiches.forEach((fiche, position) => {
-    if (!Array.isArray(fiche.questions)) return
-    const inputTitle =
-      byNormalizedTitle.get(normalizeTitle(String(fiche.title ?? ''))) ?? flashcards[position]?.title
-    if (!inputTitle || result.has(inputTitle)) return
-
-    const normalized: GeneratedQuestion[] = fiche.questions.map((q: any) => {
-      const idxRaw = q.correct_index ?? q.correctIndex ?? q.correct ?? q.answer_index ?? 0
-      const idx = typeof idxRaw === 'string' ? parseInt(idxRaw, 10) : Number(idxRaw)
-      return {
-        question: String(q.question || q.text || '').trim(),
-        options: Array.isArray(q.options)
-          ? q.options.map((o: any) => String(o).trim())
-          : Array.isArray(q.choices)
-            ? q.choices.map((o: any) => String(o).trim())
-            : [],
-        correct_index: Number.isFinite(idx) ? idx : -1,
-        explanation: String(q.explanation || q.explication || q.reason || '').trim(),
-      }
-    })
-
-    result.set(inputTitle, normalized)
+/**
+ * UNE tentative pour UNE fiche. Ne relance rien : la convergence est le travail
+ * de `fillQcmLevel`, qui sait combien de temps il lui reste. Melanger les deux
+ * est ce qui produisait l'ancien « retry saute (budget temps depasse) ».
+ */
+async function requestQcmForFiche(
+  fiche: QcmFlashcardInput,
+  difficulty: QcmDifficulty
+): Promise<FicheQcmResult> {
+  const message = await anthropic().messages.create({
+    model: QCM_MODEL,
+    max_tokens: QCM_MAX_TOKENS,
+    system: getQcmSystemPrompt(difficulty, QCM_QUESTIONS_REQUESTED),
+    messages: [{ role: 'user', content: buildQcmPrompt(fiche) }],
   })
 
-  return result
-}
-
-// OPTIMISATION: toutes les fiches d'un cours en 1 seul appel API
-// Avant : 1 appel par fiche (jusqu'à 6 appels). Maintenant : 1 appel total.
-//
-// Fiabilite : chaque fiche est validee (validateGeneratedQuestions). Les fiches
-// invalides sont relancees UNE fois dans un second appel (retry a la charge de
-// Skynote, transparent pour l'utilisateur). Si le retry echoue encore :
-//   - au moins QCM_MIN_ACCEPTABLE_QUESTIONS valides → on livre en mode degrade
-//     et on remonte un warning Sentry ;
-//   - sinon la fiche est absente du resultat ; erreur explicite seulement si
-//     AUCUNE fiche n'est utilisable (jamais de tableau vide silencieux).
-export async function generateAllQcmQuestions(
-  flashcards: QcmFlashcardInput[],
-  difficulty: QcmDifficulty = 'easy',
-  options: {
-    /**
-     * Timestamp (ms) au-dela duquel on ne lance PAS la passe de retry : la
-     * fonction Vercel est tuee a maxDuration (60 s sur Hobby), mieux vaut
-     * livrer un lot partiel que rien du tout. Les fiches manquantes restent
-     * regenerables gratuitement.
-     */
-    retryDeadline?: number
-  } = {}
-): Promise<Map<string, GeneratedQuestion[]>> {
-  if (flashcards.length === 0) return new Map()
-
-  const result = new Map<string, GeneratedQuestion[]>()
-  const firstPass = await requestQcmBatch(flashcards, difficulty)
-
-  const toRetry: QcmFlashcardInput[] = []
-  const firstReasons = new Map<string, string>()
-  for (const f of flashcards) {
-    const check = validateGeneratedQuestions(firstPass.get(f.title) ?? [], QCM_QUESTIONS_PER_FLASHCARD, difficulty)
-    if (check.valid) {
-      result.set(f.title, check.questions)
-    } else {
-      toRetry.push(f)
-      firstReasons.set(f.title, check.reason)
-    }
+  // Diagnostic explicite : une troncature n'est pas un JSON mal forme, et le
+  // remede n'est pas le meme.
+  if (message.stop_reason === 'max_tokens') {
+    return { questions: [], reason: `reponse tronquee a ${QCM_MAX_TOKENS} tokens` }
   }
 
-  if (toRetry.length === 0) return result
+  const raw = extractText(message)
+  if (!raw.trim()) return { questions: [], reason: 'reponse vide' }
 
-  if (options.retryDeadline && Date.now() > options.retryDeadline) {
-    const message = `Génération QCM ${difficulty} : retry saute (budget temps depasse) pour ${toRetry.length}/${flashcards.length} fiche(s) — ${[...firstReasons.entries()].map(([t, r]) => `${t}: ${r}`).join(' | ')}`
-    if (result.size === 0) {
-      const error = new Error(message)
-      Sentry.captureException(error, { tags: { feature: 'qcm-generation', difficulty } })
-      throw error
-    }
-    Sentry.captureMessage(message, 'warning')
-    console.warn('[generateAllQcmQuestions]', message)
-    return result
+  const parsed = parseClaudeJSON<{ questions: unknown[] }>(raw)
+  if (!parsed?.questions || !Array.isArray(parsed.questions)) {
+    console.error('[requestQcmForFiche] JSON illisible. Debut brut :', raw.slice(0, 300))
+    return { questions: [], reason: 'JSON illisible' }
   }
 
-  console.warn(
-    `[generateAllQcmQuestions] ${difficulty} : retry pour ${toRetry.length}/${flashcards.length} fiche(s) —`,
-    [...firstReasons.entries()].map(([t, r]) => `${t}: ${r}`).join(' | ')
+  const check = validateGeneratedQuestions(
+    normalizeQuestions(parsed.questions),
+    QCM_QUESTIONS_PER_FLASHCARD,
+    difficulty
   )
-
-  const secondPass = await requestQcmBatch(toRetry, difficulty)
-  const failed: string[] = []
-
-  for (const f of toRetry) {
-    const check = validateGeneratedQuestions(secondPass.get(f.title) ?? [], QCM_QUESTIONS_PER_FLASHCARD, difficulty)
-    if (check.valid) {
-      result.set(f.title, check.questions)
-      continue
-    }
-    if (check.questions.length >= QCM_MIN_ACCEPTABLE_QUESTIONS) {
-      // Mode degrade : mieux vaut 3-4 bonnes questions qu'un niveau vide.
-      result.set(f.title, check.questions)
-      Sentry.captureMessage(
-        `QCM degrade (${difficulty}) : ${check.questions.length}/${QCM_QUESTIONS_PER_FLASHCARD} questions pour "${f.title}" — ${check.reason}`,
-        'warning'
-      )
-      continue
-    }
-    failed.push(`${f.title} (${check.reason})`)
-  }
-
-  if (failed.length > 0) {
-    const message = `Génération QCM ${difficulty} échouée après retry pour ${failed.length}/${flashcards.length} fiche(s) : ${failed.join(' ; ')}`
-    if (result.size === 0) {
-      // Rien d'utilisable : erreur explicite (jamais de tableau vide silencieux).
-      const error = new Error(message)
-      Sentry.captureException(error, { tags: { feature: 'qcm-generation', difficulty } })
-      console.error('[generateAllQcmQuestions]', message)
-      throw error
-    }
-    // Lot partiel : on livre les fiches reussies, les manquantes restent
-    // regenerables gratuitement (niveau vide) — ne pas perdre 5 fiches pour 1.
-    Sentry.captureMessage(message, 'warning')
-    console.warn('[generateAllQcmQuestions]', message)
-  }
-
-  return result
+  return check.valid
+    ? { questions: check.questions }
+    : { questions: check.questions, reason: check.reason }
 }
 
-// Conservé pour compatibilité si appelé sur une fiche isolée (ex: nouvelle fiche ajoutée)
+/**
+ * Une tentative pour chaque fiche, en parallele. Les fiches sont independantes :
+ * l'echec de l'une ne prive pas les autres de leur resultat.
+ */
+export async function generateQcmForFiches(
+  fiches: QcmFlashcardInput[],
+  difficulty: QcmDifficulty
+): Promise<Map<string, FicheQcmResult>> {
+  const settled = await Promise.allSettled(
+    fiches.map((f) => requestQcmForFiche(f, difficulty))
+  )
+  const out = new Map<string, FicheQcmResult>()
+  settled.forEach((r, i) => {
+    const title = fiches[i].title
+    if (r.status === 'fulfilled') {
+      out.set(title, r.value)
+    } else {
+      const err = r.reason as { status?: number; message?: string }
+      out.set(title, { questions: [], reason: `appel echoue: ${err?.status ?? ''} ${err?.message ?? ''}`.trim() })
+    }
+  })
+  return out
+}
+
+/** Une fiche isolee (regeneration payante d'un niveau). */
 export async function generateQcmQuestions(
   flashcardTitle: string,
   summary: string,
   keyPoints: string[],
   difficulty: QcmDifficulty = 'easy'
 ): Promise<GeneratedQuestion[]> {
-  const map = await generateAllQcmQuestions(
+  const map = await generateQcmForFiches(
     [{ title: flashcardTitle, summary, key_points: keyPoints }],
     difficulty
   )
-  return map.get(flashcardTitle) ?? []
+  return map.get(flashcardTitle)?.questions ?? []
 }

@@ -1,28 +1,31 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { createAdminClient } from '@/lib/supabase/admin'
-import { generateAllQcmQuestions, type GeneratedQuestion } from '@/lib/ai/generate'
+import { fillQcmLevel } from '@/lib/ai/qcm-fill'
 import { isQcmDifficulty } from '@/lib/ai/prompts'
 import { Errors, apiError } from '@/lib/errors'
 import { checkQcmRateLimits } from '@/lib/rate-limit'
-import { acquireGenerationLock, releaseGenerationLock, lockKeys } from '@/lib/generation-lock'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 60
 
 /**
- * Génération initiale d'UN niveau pour TOUTES les fiches d'un cours en une
- * requête HTTP : un appel Claude par fiche, tous en parallèle (voir la mesure
- * plus bas pour la raison). Appelée 3 fois en parallèle par QcmGenerator, un
- * niveau qui échoue n'affecte pas les deux autres.
+ * Remplissage d'UN niveau de QCM pour toutes les fiches d'un cours, declenche
+ * par l'eleve (QcmGenerator appelle les 3 niveaux en parallele).
  *
- * Gratuit : couvert par les Novas du cours. Ne touche jamais aux fiches qui
- * ont déjà des questions à ce niveau (la régénération payante reste sur
- * /api/generate-qcm, par fiche).
+ * Gratuit : couvert par les Novas du cours. La logique vit dans fillQcmLevel,
+ * partagee avec le reconciliateur serveur (/api/qcm/reconcile) — c'est lui qui
+ * garantit la completude si cette requete-ci n'y arrive pas, ou si l'eleve
+ * ferme l'onglet.
  */
+
+/**
+ * Budget laisse a la generation. maxDuration est a 60 s : on garde ~8 s pour
+ * l'auth, les lectures, l'insertion du dernier tour et la reponse.
+ */
+const GENERATION_BUDGET_MS = 52_000
+
 export async function POST(request: NextRequest) {
   const startedAt = Date.now()
-  let lockKey: string | null = null
   try {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
@@ -42,121 +45,36 @@ export async function POST(request: NextRequest) {
       .single()
     if (!course) throw Errors.notFound('Cours')
 
-    // Bail AVANT de décider quoi générer. Deux requêtes concurrentes sur le
-    // même (cours, niveau) lisaient toutes les deux « aucune question », puis
-    // inséraient toutes les deux : relevé en prod le 21/09, deux vagues
-    // complètes des 3 niveaux à quelques secondes d'écart, 10 questions par
-    // fiche au lieu de 5, en 2 INSERT distincts.
-    //
-    // L'ordre compte : si on calculait `missing` avant de prendre le bail, la
-    // requête qui l'obtient en second travaillerait sur un état périmé et
-    // régénérerait ce que la première vient d'écrire. En lisant sous le bail,
-    // elle voit le travail déjà fait et s'arrête sans appeler Claude.
-    const key = lockKeys.qcmLevel(courseId, difficulty)
-    if (!(await acquireGenerationLock(key, user.id))) {
-      return NextResponse.json({ ok: true, skipped: true, locked: true, inserted: 0 })
-    }
-    // Affecté seulement une fois le bail obtenu : le `finally` ne doit jamais
-    // libérer un bail que c'est l'autre requête qui détient.
-    lockKey = key
+    let rateLimited: Response | null = null
+    const outcome = await fillQcmLevel({
+      courseId,
+      userId: user.id,
+      difficulty,
+      deadline: startedAt + GENERATION_BUDGET_MS,
+      // Plafonds 40/h + 200/jour : une unite par fiche (= par appel Claude).
+      // Verifie a chaque tour, pas seulement au premier : un retry coute aussi.
+      consumeRateLimit: async (units) => {
+        rateLimited = await checkQcmRateLimits(user.id, units)
+        return rateLimited !== null
+      },
+    })
 
-    const [{ data: flashcards }, { data: existing }] = await Promise.all([
-      supabase
-        .from('flashcards')
-        .select('id, title, summary, key_points')
-        .eq('course_id', courseId)
-        .order('order_index'),
-      supabase
-        .from('qcm_questions')
-        .select('flashcard_id')
-        .eq('course_id', courseId)
-        .eq('user_id', user.id)
-        .eq('difficulty', difficulty),
-    ])
+    // Le plafond n'a bloque qu'apres avoir deja rempli des fiches : on renvoie
+    // le progres plutot qu'un 429 sec, l'eleve a quand meme gagne du terrain.
+    if (rateLimited && outcome.inserted === 0) return rateLimited
 
-    const alreadyDone = new Set((existing ?? []).map((q) => q.flashcard_id))
-    const missing = (flashcards ?? []).filter((f) => !alreadyDone.has(f.id))
-    if (missing.length === 0) {
-      return NextResponse.json({ ok: true, skipped: true, inserted: 0 })
-    }
-
-    // Plafonds 40/h + 200/jour : une unité par fiche (= par appel Claude).
-    const limited = await checkQcmRateLimits(user.id, missing.length)
-    if (limited) return limited
-
-    const inputs = missing.map((f) => ({
-      title: f.title,
-      summary: f.summary,
-      key_points: Array.isArray(f.key_points)
-        ? f.key_points
-        : (() => { try { return JSON.parse(String(f.key_points || '[]')) } catch { return [] } })(),
-    }))
-
-    // Mesure en prod (plan Hobby, maxDuration 60 s, sortie ≈ 125 tokens/s) :
-    // 6 fiches en UN appel = 36 s en Paisible, > 60 s en Normal/Hardcore (504) ;
-    // 3 fiches par appel = 35-43 s sans place pour le retry. Seul un appel PAR
-    // FICHE (≈ 2 300 tokens, ≈ 20 s) laisse la marge d'un retry sous 60 s. Les
-    // appels sont lances en parallele : la latence du niveau reste ≈ 20-40 s.
-    // Le retry est saute passe un budget de temps : un lot partiel vaut mieux
-    // qu'un timeout, les fiches manquantes restent regenerables gratuitement.
-    const retryDeadline = startedAt + 30_000
-    const settled = await Promise.allSettled(
-      inputs.map((fiche) => generateAllQcmQuestions([fiche], difficulty, { retryDeadline }))
-    )
-    const byTitle = new Map<string, GeneratedQuestion[]>()
-    for (const r of settled) {
-      if (r.status === 'fulfilled') r.value.forEach((qs, title) => byTitle.set(title, qs))
-      else console.error('[generate-qcm/level]', difficulty, r.reason)
-    }
-
-    const rows = missing.flatMap((f) =>
-      (byTitle.get(f.title) ?? []).map((q) => ({
-        flashcard_id: f.id,
-        course_id: courseId,
-        user_id: user.id,
-        question: q.question,
-        options: q.options,
-        correct_index: q.correct_index,
-        explanation: q.explanation,
-        difficulty,
-      }))
-    )
-    if (rows.length === 0) throw Errors.internal("Aucune question générée par l'IA")
-
-    // Deuxième garde, sous le bail : la génération a pris 20-40 s, pendant
-    // lesquelles la régénération payante (/api/generate-qcm, verrouillée par
-    // fiche) a pu remplir une fiche de ce niveau. On n'écrase pas son travail.
-    const { data: filledSince } = await createAdminClient()
-      .from('qcm_questions')
-      .select('flashcard_id')
-      .eq('course_id', courseId)
-      .eq('user_id', user.id)
-      .eq('difficulty', difficulty)
-    const filledDuring = new Set(
-      (filledSince ?? []).map((q) => q.flashcard_id).filter((id) => !alreadyDone.has(id))
-    )
-    const finalRows = rows.filter((r) => !filledDuring.has(r.flashcard_id))
-    if (finalRows.length === 0) {
-      return NextResponse.json({ ok: true, skipped: true, inserted: 0 })
-    }
-
-    // Ecriture via service role : qcm_questions est en lecture seule cote client.
-    const { error: insertError } = await createAdminClient().from('qcm_questions').insert(finalRows)
-    if (insertError) throw Errors.internal(`Insert DB: ${insertError.message}`)
-
-    const fichesCovered = new Set(finalRows.map((r) => r.flashcard_id)).size
     return NextResponse.json({
       ok: true,
-      inserted: finalRows.length,
-      fiches: fichesCovered,
-      fichesMissing: missing.length - fichesCovered - filledDuring.size,
+      locked: outcome.locked ?? false,
+      complete: outcome.complete,
+      inserted: outcome.inserted,
+      fiches: outcome.fichesFilled,
+      fichesTotal: outcome.fichesTotal,
+      fichesMissing: Math.max(0, outcome.fichesTotal - outcome.fichesFilled),
+      rounds: outcome.rounds,
       durationMs: Date.now() - startedAt,
     })
   } catch (error: unknown) {
     return apiError(error)
-  } finally {
-    // Le bail ne doit pas survivre à la requête, quelle qu'en soit l'issue :
-    // la fiche laissée vide par un échec doit rester régénérable tout de suite.
-    if (lockKey) await releaseGenerationLock(lockKey)
   }
 }
