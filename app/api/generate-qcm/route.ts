@@ -6,6 +6,7 @@ import { isQcmDifficulty } from '@/lib/ai/prompts'
 import { NOVA_COST_QCM_SINGLE, deductNovasForUser, addNovasForUser } from '@/lib/supabase/nova-actions'
 import { Errors, apiError } from '@/lib/errors'
 import { checkQcmRateLimits } from '@/lib/rate-limit'
+import { acquireGenerationLock, releaseGenerationLock, lockKeys } from '@/lib/generation-lock'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 60
@@ -14,6 +15,7 @@ export async function POST(request: NextRequest) {
   let novaDeducted = false
   let userId: string | null = null
   let novaBalance: number | null = null
+  let lockKey: string | null = null
 
   try {
     const supabase = await createClient()
@@ -34,9 +36,22 @@ export async function POST(request: NextRequest) {
 
     if (!flashcard) throw Errors.notFound('Fiche')
 
+    // Bail par (fiche, niveau) AVANT de compter les questions existantes : ce
+    // comptage décide à la fois de générer et de facturer 4✦. Deux clics ou
+    // deux onglets le passaient tous les deux, déduisaient tous les deux et
+    // inséraient tous les deux. Lu sous le bail, la seconde requête voit le
+    // travail de la première et s'arrête sans rien débiter.
+    const key = lockKeys.qcmSingle(flashcard.id, difficulty)
+    if (!(await acquireGenerationLock(key, user.id))) {
+      return NextResponse.json({ ok: true, skipped: true, locked: true })
+    }
+    // Affecté seulement une fois le bail obtenu : le `finally` ne doit jamais
+    // libérer un bail que c'est l'autre requête qui détient.
+    lockKey = key
+
     const { count } = await supabase
       .from('qcm_questions')
-      .select('id', { count: 'exact' })
+      .select('id', { count: 'exact', head: true })
       .eq('flashcard_id', flashcardId)
       .eq('difficulty', difficulty)
     const hasExisting = (count ?? 0) > 0
@@ -126,5 +141,7 @@ export async function POST(request: NextRequest) {
       await addNovasForUser(userId, NOVA_COST_QCM_SINGLE, 'Remboursement QCM échoué').catch(() => {})
     }
     return apiError(error)
+  } finally {
+    if (lockKey) await releaseGenerationLock(lockKey)
   }
 }

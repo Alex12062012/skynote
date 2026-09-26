@@ -15,6 +15,14 @@ export async function createCourse(formData: FormData): Promise<{ courseId: stri
   const content = formData.get('content') as string | null
   const folderId = formData.get('folderId') as string | null
   const classroomId = formData.get('classroomId') as string | null
+  // Langue choisie dans le formulaire, persistee des la creation. Avant, elle
+  // ne transitait que par le body de /api/generate : le second appel
+  // concurrent, qui ne la connaissait pas, remettait content_lang a null.
+  const contentLangRaw = formData.get('contentLang') as string | null
+  const contentLang =
+    contentLangRaw && contentLangRaw !== 'auto' && /^[a-z]{2}$/.test(contentLangRaw)
+      ? contentLangRaw
+      : null
 
   if (!title?.trim()) return { courseId: null, error: 'Titre requis' }
   if (!subject?.trim()) return { courseId: null, error: 'Matière requise' }
@@ -38,6 +46,7 @@ export async function createCourse(formData: FormData): Promise<{ courseId: stri
     source_content: content?.trim() || null, file_url: null,
     status: 'processing', progress: 0,
     folder_id: folderId || null, classroom_id: classroomId || null,
+    content_lang: contentLang,
   }).select('id').single()
 
   if (error || !course) return { courseId: null, error: `Erreur: ${error?.message || error?.code || 'inconnue'}` }

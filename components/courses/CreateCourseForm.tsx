@@ -152,6 +152,7 @@ export function CreateCourseForm({
       // Pour les profs, subject = 'General' par defaut (champ requis en BDD)
       formData.set('subject', isTeacher ? 'General' : subject)
       formData.set('sourceType', sourceType)
+      formData.set('contentLang', contentLang)
       const activeFolderId = isTeacher ? selectedFolderId : folderId
       if (activeFolderId) formData.set('folderId', activeFolderId)
       // Recuperer le classroom_id depuis le dossier selectionne si prof
@@ -178,12 +179,12 @@ export function CreateCourseForm({
         return
       }
 
-      fetch('/api/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ courseId, contentLang }),
-      }).catch(console.error)
-
+      // Pas d'appel a /api/generate ici : la generation est declenchee par
+      // GenerationTrigger sur la page du cours, vers laquelle on navigue tout
+      // de suite. Les deux ensemble donnaient DEUX requetes concurrentes a
+      // ~450 ms d'ecart (mesure en prod le 24/09) : 236 Novas debites et 8
+      // fiches au lieu de 4. Un seul declencheur, et un seul endroit a
+      // regarder quand la generation ne part pas.
       router.push(`/courses/${courseId}`)
     })
   }

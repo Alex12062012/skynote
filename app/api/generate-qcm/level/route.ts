@@ -5,6 +5,7 @@ import { generateAllQcmQuestions, type GeneratedQuestion } from '@/lib/ai/genera
 import { isQcmDifficulty } from '@/lib/ai/prompts'
 import { Errors, apiError } from '@/lib/errors'
 import { checkQcmRateLimits } from '@/lib/rate-limit'
+import { acquireGenerationLock, releaseGenerationLock, lockKeys } from '@/lib/generation-lock'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 60
@@ -21,6 +22,7 @@ export const maxDuration = 60
  */
 export async function POST(request: NextRequest) {
   const startedAt = Date.now()
+  let lockKey: string | null = null
   try {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
@@ -39,6 +41,24 @@ export async function POST(request: NextRequest) {
       .eq('user_id', user.id)
       .single()
     if (!course) throw Errors.notFound('Cours')
+
+    // Bail AVANT de décider quoi générer. Deux requêtes concurrentes sur le
+    // même (cours, niveau) lisaient toutes les deux « aucune question », puis
+    // inséraient toutes les deux : relevé en prod le 21/09, deux vagues
+    // complètes des 3 niveaux à quelques secondes d'écart, 10 questions par
+    // fiche au lieu de 5, en 2 INSERT distincts.
+    //
+    // L'ordre compte : si on calculait `missing` avant de prendre le bail, la
+    // requête qui l'obtient en second travaillerait sur un état périmé et
+    // régénérerait ce que la première vient d'écrire. En lisant sous le bail,
+    // elle voit le travail déjà fait et s'arrête sans appeler Claude.
+    const key = lockKeys.qcmLevel(courseId, difficulty)
+    if (!(await acquireGenerationLock(key, user.id))) {
+      return NextResponse.json({ ok: true, skipped: true, locked: true, inserted: 0 })
+    }
+    // Affecté seulement une fois le bail obtenu : le `finally` ne doit jamais
+    // libérer un bail que c'est l'autre requête qui détient.
+    lockKey = key
 
     const [{ data: flashcards }, { data: existing }] = await Promise.all([
       supabase
@@ -103,19 +123,40 @@ export async function POST(request: NextRequest) {
     )
     if (rows.length === 0) throw Errors.internal("Aucune question générée par l'IA")
 
+    // Deuxième garde, sous le bail : la génération a pris 20-40 s, pendant
+    // lesquelles la régénération payante (/api/generate-qcm, verrouillée par
+    // fiche) a pu remplir une fiche de ce niveau. On n'écrase pas son travail.
+    const { data: filledSince } = await createAdminClient()
+      .from('qcm_questions')
+      .select('flashcard_id')
+      .eq('course_id', courseId)
+      .eq('user_id', user.id)
+      .eq('difficulty', difficulty)
+    const filledDuring = new Set(
+      (filledSince ?? []).map((q) => q.flashcard_id).filter((id) => !alreadyDone.has(id))
+    )
+    const finalRows = rows.filter((r) => !filledDuring.has(r.flashcard_id))
+    if (finalRows.length === 0) {
+      return NextResponse.json({ ok: true, skipped: true, inserted: 0 })
+    }
+
     // Ecriture via service role : qcm_questions est en lecture seule cote client.
-    const { error: insertError } = await createAdminClient().from('qcm_questions').insert(rows)
+    const { error: insertError } = await createAdminClient().from('qcm_questions').insert(finalRows)
     if (insertError) throw Errors.internal(`Insert DB: ${insertError.message}`)
 
-    const fichesCovered = new Set(rows.map((r) => r.flashcard_id)).size
+    const fichesCovered = new Set(finalRows.map((r) => r.flashcard_id)).size
     return NextResponse.json({
       ok: true,
-      inserted: rows.length,
+      inserted: finalRows.length,
       fiches: fichesCovered,
-      fichesMissing: missing.length - fichesCovered,
+      fichesMissing: missing.length - fichesCovered - filledDuring.size,
       durationMs: Date.now() - startedAt,
     })
   } catch (error: unknown) {
     return apiError(error)
+  } finally {
+    // Le bail ne doit pas survivre à la requête, quelle qu'en soit l'issue :
+    // la fiche laissée vide par un échec doit rester régénérable tout de suite.
+    if (lockKey) await releaseGenerationLock(lockKey)
   }
 }
