@@ -35,15 +35,29 @@ function unauthorized() {
   return NextResponse.json({ error: 'Non autorise' }, { status: 401 })
 }
 
-export async function POST(request: NextRequest) {
-  const startedAt = Date.now()
-
+/**
+ * Refus commun a POST et GET. `null` = la requete est authentifiee.
+ *
+ * Le 503 distingue « la route n'est pas configuree » de « mauvais secret » :
+ * sans ca, un deploiement ou QCM_RECONCILE_SECRET manque se presente comme un
+ * simple 401 et on cherche le probleme du mauvais cote pendant une heure. Les
+ * deux cas refusent, la difference est purement diagnostique.
+ */
+function rejectUnlessAuthorized(request: NextRequest): NextResponse | null {
   const expected = process.env.QCM_RECONCILE_SECRET
   if (!expected) {
     console.error('[qcm/reconcile] QCM_RECONCILE_SECRET absent : route desactivee')
     return NextResponse.json({ error: 'Non configure' }, { status: 503 })
   }
   if (request.headers.get('x-reconcile-secret') !== expected) return unauthorized()
+  return null
+}
+
+export async function POST(request: NextRequest) {
+  const startedAt = Date.now()
+
+  const refus = rejectUnlessAuthorized(request)
+  if (refus) return refus
 
   try {
     const admin = createAdminClient()
@@ -110,8 +124,8 @@ export async function POST(request: NextRequest) {
 
 /** Sonde de supervision : combien de couples (cours, niveau) restent incomplets. */
 export async function GET(request: NextRequest) {
-  const expected = process.env.QCM_RECONCILE_SECRET
-  if (!expected || request.headers.get('x-reconcile-secret') !== expected) return unauthorized()
+  const refus = rejectUnlessAuthorized(request)
+  if (refus) return refus
 
   const { data, error } = await createAdminClient().rpc('count_incomplete_qcm_levels')
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
