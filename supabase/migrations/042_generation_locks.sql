@@ -47,10 +47,17 @@ CREATE OR REPLACE FUNCTION try_acquire_generation_lock(
 )
 RETURNS boolean
 LANGUAGE plpgsql
+SET search_path = public, pg_temp
 AS $$
 DECLARE
   v_acquired boolean := false;
 BEGIN
+  -- Purge opportuniste : un process tué avant son release laisse sa ligne
+  -- derrière lui. Le TTL la rend reprenable, mais rien ne la supprimerait
+  -- jamais si personne ne redemande cette clé. Balayage indexé, une fois par
+  -- génération : la table reste petite sans cron.
+  DELETE FROM generation_locks WHERE acquired_at < now() - interval '1 hour';
+
   INSERT INTO generation_locks (lock_key, user_id, acquired_at)
   VALUES (p_lock_key, p_user_id, now())
   ON CONFLICT (lock_key) DO UPDATE
@@ -67,6 +74,7 @@ $$;
 CREATE OR REPLACE FUNCTION release_generation_lock(p_lock_key text)
 RETURNS void
 LANGUAGE sql
+SET search_path = public, pg_temp
 AS $$
   DELETE FROM generation_locks WHERE lock_key = p_lock_key;
 $$;

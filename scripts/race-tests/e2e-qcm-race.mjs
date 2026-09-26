@@ -9,6 +9,7 @@ const env = Object.fromEntries(readFileSync('.env.local','utf8').split('\n').fil
   .map(l=>[l.slice(0,l.indexOf('=')).trim(), l.slice(l.indexOf('=')+1).trim()]))
 const URL = env.NEXT_PUBLIC_SUPABASE_URL, ANON = env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 const admin = createClient(URL, env.SUPABASE_SERVICE_ROLE_KEY, { auth:{persistSession:false} })
+const BASE = process.env.BASE ?? 'http://localhost:3000'
 const WAVES = Number(process.argv[2] ?? 3)
 
 const email = `qcm-race-${Date.now()}@skynote-test.invalid`
@@ -41,7 +42,7 @@ await admin.from('flashcards').insert([0,1,2].map(i => ({
 console.log(`cours de test : ${course.id}  (3 fiches, ${WAVES} vagues concurrentes par niveau)\n`)
 
 const post = async (difficulty, wave) => {
-  const res = await fetch('http://localhost:3000/api/generate-qcm/level', {
+  const res = await fetch(`${BASE}/api/generate-qcm/level`, {
     method: 'POST', headers: { 'Content-Type':'application/json', Cookie: cookieHeader },
     body: JSON.stringify({ courseId: course.id, difficulty }),
   })

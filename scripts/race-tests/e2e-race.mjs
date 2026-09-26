@@ -9,7 +9,7 @@ const env = Object.fromEntries(readFileSync('.env.local','utf8').split('\n').fil
   .map(l=>[l.slice(0,l.indexOf('=')).trim(), l.slice(l.indexOf('=')+1).trim()]))
 const URL = env.NEXT_PUBLIC_SUPABASE_URL, ANON = env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 const admin = createClient(URL, env.SUPABASE_SERVICE_ROLE_KEY, { auth:{persistSession:false} })
-const BASE = 'http://localhost:3000'
+const BASE = process.env.BASE ?? 'http://localhost:3000'
 const GAP_MS = Number(process.argv[2] ?? 450)
 
 // ── 1. utilisateur de test jetable ────────────────────────────────────────
