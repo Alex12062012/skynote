@@ -199,15 +199,6 @@ export function validateGeneratedQuestions(
   return { valid: true, questions: sane.slice(0, expectedCount) }
 }
 
-function normalizeTitle(title: string): string {
-  return title
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .replace(/[^a-z0-9]+/g, ' ')
-    .trim()
-}
-
 export type QcmFlashcardInput = { title: string; summary: string; key_points: string[] }
 
 /**
@@ -327,15 +318,54 @@ export async function generateQcmForFiches(
 }
 
 /** Une fiche isolee (regeneration payante d'un niveau). */
+/** Enonce normalise, pour ne pas empiler deux fois la meme question. */
+export function normalizeQuestionText(q: string): string {
+  return q
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim()
+}
+
+/**
+ * Une fiche isolee (regeneration payante d'un niveau), avec la meme mecanique
+ * d'accumulation que `fillQcmLevel` : on relance tant qu'il manque des
+ * questions et qu'il reste du temps, en gardant les valides de chaque tour.
+ *
+ * Indispensable ici : l'appelant a deja debite 4 Novas et va SUPPRIMER le jeu
+ * existant. Rendre 3 questions au lieu de 5 serait une regression payante.
+ * Un tableau plus court que `QCM_QUESTIONS_PER_FLASHCARD` signale a l'appelant
+ * qu'il doit annuler plutot que d'ecraser.
+ */
 export async function generateQcmQuestions(
   flashcardTitle: string,
   summary: string,
   keyPoints: string[],
-  difficulty: QcmDifficulty = 'easy'
+  difficulty: QcmDifficulty = 'easy',
+  options: { deadline?: number } = {}
 ): Promise<GeneratedQuestion[]> {
-  const map = await generateQcmForFiches(
-    [{ title: flashcardTitle, summary, key_points: keyPoints }],
-    difficulty
-  )
-  return map.get(flashcardTitle)?.questions ?? []
+  const fiche = { title: flashcardTitle, summary, key_points: keyPoints }
+  const deadline = options.deadline ?? Date.now() + 40_000
+  const bank: GeneratedQuestion[] = []
+  const seen = new Set<string>()
+  let roundEstimate = 12_000
+
+  for (let round = 0; round < 5; round++) {
+    if (round > 0 && deadline - Date.now() < roundEstimate * 1.25) break
+
+    const startedAt = Date.now()
+    const res = (await generateQcmForFiches([fiche], difficulty)).get(flashcardTitle)
+    roundEstimate = Math.max(Date.now() - startedAt, 3_000)
+
+    for (const q of res?.questions ?? []) {
+      const key = normalizeQuestionText(q.question)
+      if (seen.has(key)) continue
+      seen.add(key)
+      bank.push(q)
+    }
+    if (bank.length >= QCM_QUESTIONS_PER_FLASHCARD) break
+  }
+
+  return bank.slice(0, QCM_QUESTIONS_PER_FLASHCARD)
 }

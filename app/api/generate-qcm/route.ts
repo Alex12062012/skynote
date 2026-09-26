@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { generateQcmQuestions } from '@/lib/ai/generate'
-import { isQcmDifficulty } from '@/lib/ai/prompts'
+import { isQcmDifficulty, QCM_QUESTIONS_PER_FLASHCARD } from '@/lib/ai/prompts'
 import { NOVA_COST_QCM_SINGLE, deductNovasForUser, addNovasForUser } from '@/lib/supabase/nova-actions'
 import { Errors, apiError } from '@/lib/errors'
 import { checkQcmRateLimits } from '@/lib/rate-limit'
@@ -11,7 +11,11 @@ import { acquireGenerationLock, releaseGenerationLock, lockKeys } from '@/lib/ge
 export const dynamic = 'force-dynamic'
 export const maxDuration = 60
 
+/** Budget de generation : maxDuration est a 60 s, on garde la marge de sortie. */
+const GENERATION_BUDGET_MS = 45_000
+
 export async function POST(request: NextRequest) {
+  const startedAt = Date.now()
   let novaDeducted = false
   let userId: string | null = null
   let novaBalance: number | null = null
@@ -95,11 +99,17 @@ export async function POST(request: NextRequest) {
       flashcard.title,
       flashcard.summary,
       keyPoints,
-      difficulty
+      difficulty,
+      { deadline: startedAt + GENERATION_BUDGET_MS }
     )
 
-    if (!questions || questions.length === 0) {
-      throw Errors.internal("Aucune question générée par l'IA")
+    // Lot incomplet = on annule. L'appelant a paye 4 Novas et on s'apprete a
+    // supprimer le jeu existant : livrer 3 questions a la place de 5 serait
+    // une regression payante. Le throw declenche le remboursement plus bas.
+    if (questions.length < QCM_QUESTIONS_PER_FLASHCARD) {
+      throw Errors.internal(
+        `QCM incomplet (${questions.length}/${QCM_QUESTIONS_PER_FLASHCARD}) — rien n'a ete remplace`
+      )
     }
 
     // Ecritures via service role : qcm_questions est en lecture seule cote

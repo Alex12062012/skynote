@@ -1,5 +1,5 @@
 import { createAdminClient } from '@/lib/supabase/admin'
-import { generateQcmForFiches, type GeneratedQuestion } from './generate'
+import { generateQcmForFiches, normalizeQuestionText, type GeneratedQuestion } from './generate'
 import { QCM_QUESTIONS_PER_FLASHCARD, type QcmDifficulty } from './prompts'
 import { acquireGenerationLock, releaseGenerationLock, lockKeys } from '@/lib/generation-lock'
 import * as Sentry from '@sentry/nextjs'
@@ -53,16 +53,6 @@ const FIRST_ROUND_ESTIMATE_MS = 14_000
 const MAX_ROUNDS = 8
 
 type FicheRow = { id: string; title: string; summary: string; key_points: unknown }
-
-/** Enonce normalise, pour ne pas empiler deux fois la meme question. */
-function normalizeQuestionText(q: string): string {
-  return q
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-z0-9]+/g, ' ')
-    .trim()
-}
 
 function parseKeyPoints(raw: unknown): string[] {
   if (Array.isArray(raw)) return raw.map(String)
