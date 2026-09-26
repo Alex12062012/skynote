@@ -87,7 +87,42 @@ async function generateCourse(courseId, label) {
 
 const t0 = Date.now()
 for (const [i, id] of courseIds.entries()) await generateCourse(id, `cours${i + 1}`)
-console.log(`\ngeneration terminee en ${((Date.now() - t0) / 1000).toFixed(0)}s`)
+console.log(`\npasses navigateur terminees en ${((Date.now() - t0) / 1000).toFixed(0)}s`)
+
+// ── Phase 2 : on laisse le reconciliateur serveur finir ───────────────────
+// C'est la vraie garantie. Le navigateur fait au mieux et peut etre bloque
+// (plafond 40 QCM/h par utilisateur, onglet ferme, requete tuee) ; le cron
+// termine le travail sans lui. WAIT_MINUTES=0 pour ne tester que le navigateur.
+const WAIT_MINUTES = Number(process.env.WAIT_MINUTES ?? 12)
+const EXPECTED = courseIds.length * FICHES.length * LEVELS.length
+
+async function countComplete() {
+  const { data } = await admin.from('qcm_questions')
+    .select('course_id, flashcard_id, difficulty').in('course_id', courseIds)
+  const c = new Map()
+  for (const q of data) {
+    const k = `${q.course_id}|${q.flashcard_id}|${q.difficulty}`
+    c.set(k, (c.get(k) ?? 0) + 1)
+  }
+  let ok = 0
+  for (const v of c.values()) if (v >= NEEDED) ok++
+  return ok
+}
+
+if (WAIT_MINUTES > 0) {
+  const deadline = Date.now() + WAIT_MINUTES * 60_000
+  let last = -1
+  while (Date.now() < deadline) {
+    const ok = await countComplete()
+    if (ok !== last) {
+      console.log(`  reconciliation serveur : ${ok}/${EXPECTED} couples complets (+${((Date.now() - t0) / 1000).toFixed(0)}s)`)
+      last = ok
+    }
+    if (ok >= EXPECTED) break
+    await new Promise(r => setTimeout(r, 20_000))
+  }
+}
+console.log(`\ntotal ${((Date.now() - t0) / 1000).toFixed(0)}s`)
 
 // ── verdict lu en base, pas dans les reponses HTTP ────────────────────────
 const { data: qs } = await admin.from('qcm_questions')
